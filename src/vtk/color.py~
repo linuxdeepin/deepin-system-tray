@@ -25,24 +25,25 @@ import cairo
 import pango
 import math
 from constant import ALPHA_PRECISION, PARAM_PRECISION   
-from utils import new_surface
 
-def exponential_blue(surface, radius,  width, height):
+def exponential_blue(surface, surface_context, radius,  width, height):
     if radius < 1: 
         return False;
     # init alpha.
-    alpha = (1 << ALPHA_PRECISION) * (1.0 - math.exp(-2.3 / (radius + 1.0))) 
+    alpha = (1 << ALPHA_PRECISION) * (1.0 - math.exp(-2.3 / (radius + 1.0)))
+    print "alpha:", alpha, width, height
     #
-    original, original_cr= new_surface(width, height) 
+    original = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
     cr = cairo.Context(original)
     #
     cr.set_operator(cairo.OPERATOR_SOURCE)
     cr.set_source_surface(surface, 0, 0)
     cr.paint()
-    
+    #
     pixels = original.get_data()
-    print "pixels:", type(pixels[0])
-    try:
+    print "pixels:%s" % (ord('\xff'))
+    #try:
+    if False:
         # process rows. 
         exponential_blue_rows (pixels,
                                  width,
@@ -80,9 +81,16 @@ def exponential_blue(surface, radius,  width, height):
                                   height, 
                                   alpha)
          
-    except Exception, e:
-        print "exponential_blue[error]:", e
-
+    #except Exception, e:
+    #    print "exponential_blue[error]:", e
+    #
+    original.mark_dirty()
+    #
+    surface_context.set_operator (cairo.OPERATOR_SOURCE);
+    surface_context.set_source_surface (original, 0, 0);
+    surface_context.paint ();
+    surface_context.set_operator (cairo.OPERATOR_OVER);
+    
 def exponential_blue_columns(pixels,
                              width,
                              height,
@@ -94,10 +102,10 @@ def exponential_blue_columns(pixels,
     for column_index in range(start_col, end_col):
         column = pixels[column_index * 4]
         #
-        z_A = column[0] << PARAM_PRECISION
-        z_R = column[1] << PARAM_PRECISION
-        z_G = column[2] << PARAM_PRECISION
-        z_B = column[3] << PARAM_PRECISION
+        z_A = ord(column[0]) << PARAM_PRECISION
+        z_R = ord(column[1]) << PARAM_PRECISION
+        z_G = ord(column[2]) << PARAM_PRECISION
+        z_B = ord(column[3]) << PARAM_PRECISION
         # top to bottom.
         temp_start_y = width * (start_y + 1)
         temp_end_y   = (end_y - 1) * width
@@ -127,36 +135,38 @@ def exponential_blue_rows(pixels,
     for row_index in range(start_row, end_row):
         row = pixels[row_index * width * 4:]
         #
-        z_A = row[start_x + 0] << PARAM_PRECISION 
-        z_R = row[start_x + 1] << PARAM_PRECISION 
-        z_G = row[start_x + 2] << PARAM_PRECISION 
-        z_B = row[start_x + 3] << PARAM_PRECISION 
+        z_A = ord(row[start_x + 0]) << PARAM_PRECISION 
+        z_R = ord(row[start_x + 1]) << PARAM_PRECISION 
+        z_G = ord(row[start_x + 2]) << PARAM_PRECISION 
+        z_B = ord(row[start_x + 3]) << PARAM_PRECISION 
         # left to right.
         for index in range(start_x + 1, end_x):
             row[index * 4], z_A, z_R, z_G, z_B = exponential_blur_inner(
                     row[index * 4], z_A, z_R, z_G, z_B, alpha
                     )
             # save. 
-            pixels[row_index * width * 4:][index * 4] = row[index * 4]
+            #pixels[row_index * width * 4:][index * 4] = row[index * 4]
         # right to left.
         for index in range(end_x - 2, start_x, -1):
             row[index * 4], z_A, z_R, z_G, z_B = exponential_blur_inner(
                     row[index * 4], z_A, z_R, z_G, z_B, alpha
                     )
             # save.
-            pixels[row_index * width * 4:][index * 4] = row[index * 4] 
+            #pixels[row_index * width * 4:][index * 4] = row[index * 4] 
 
 def exponential_blur_inner(pixel, z_A, z_R, z_G, z_B, alpha):
     #
-    z_A += (alpha * ((pixel[0] << PARAM_PRECISION) - z_A)) >> ALPHA_PRECISION
-    z_R += (alpha * ((pixel[1] << PARAM_PRECISION) - z_R)) >> ALPHA_PRECISION
-    z_G += (alpha * ((pixel[2] << PARAM_PRECISION) - z_G)) >> ALPHA_PRECISION
-    z_B += (alpha * ((pixel[3] << PARAM_PRECISION) - z_B)) >> ALPHA_PRECISION
+    print "z_A:", z_A
+    z_A = int(z_A) + int(alpha * ((ord(pixel[0]) << PARAM_PRECISION) - z_A)) >> ALPHA_PRECISION
+    z_R += int(alpha * ((ord(pixel[0]) << PARAM_PRECISION) - z_R)) >> ALPHA_PRECISION
+    z_G += int(alpha * ((ord(pixel[0]) << PARAM_PRECISION) - z_G)) >> ALPHA_PRECISION
+    z_B += int(alpha * ((ord(pixel[0]) << PARAM_PRECISION) - z_B)) >> ALPHA_PRECISION
     # 
-    pixel[0] = z_A >> PARAM_PRECISION 
-    pixel[1] = z_R >> PARAM_PRECISION 
-    pixel[2] = z_G >> PARAM_PRECISION 
-    pixel[3] = z_B >> PARAM_PRECISION 
+    print "z_A:", type(z_A)
+    #pixel[0] = z_A >> 5 #PARAM_PRECISION 
+    #pixel[1] = z_R >> PARAM_PRECISION 
+    #pixel[2] = z_G >> PARAM_PRECISION 
+    #pixel[3] = z_B >> PARAM_PRECISION 
     # return moidfy values.
     return pixel, z_A, z_R, z_G, z_B
 

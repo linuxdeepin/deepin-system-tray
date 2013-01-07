@@ -39,8 +39,10 @@ class TrayIcon(gtk.Window):
         #
         self.set_size_request(150, 250)
         self.connect("expose-event", self.tray_icon_expose_event)
+        self.connect("size-allocate", self.tray_icon_size_allocate)
         self.show_all()
-        
+        self.move(500, 500)
+
     def tray_icon_expose_event(self, widget, event):
         cr = widget.window.cairo_create()
         rect = widget.allocation
@@ -55,13 +57,15 @@ class TrayIcon(gtk.Window):
                       self.radius, 
                       self.arrow_width, self.arrow_height)
         # shadow.
-        surface_context.set_source_rgba(0, 0, 0, 0.9)
+        surface_context.set_source_rgba(1, 1, 1, 0.9)
         surface_context.fill_preserve()
-        exponential_blue(surface, 
-                         6, 
-                         w, h)
+        exponential_blue(surface, surface_context, 
+                         6, w, h)
         surface_context.clip()
         # background.
+        #widget.get_style_context()#.render_background(surface_context, 0, 0, w, h)
+        #cr.set_source_surface(surface, 0, 0)
+        surface_context.reset_clip()
         # border.
         cairo_popover(widget,
                       surface_context,
@@ -71,16 +75,20 @@ class TrayIcon(gtk.Window):
                       self.arrow_width, self.arrow_height)
         surface_context.set_operator(cairo.OPERATOR_SOURCE)
         surface_context.set_line_width(1)
-        surface_context.set_source_rgb(0, 0, 1)
-        surface_context.rectangle(x, y, w, h)
+        surface_context.set_source_rgba(0, 0, 0, 0.9)
         surface_context.stroke()
+        #
+        cr.set_operator(cairo.OPERATOR_SOURCE)
+        cr.set_source_rgba(0, 0, 0, 0)
+        cr.paint()
         #
         cr.set_source_surface(surface, 0, 0)
         cr.paint()
-        return False
-
-    #def cairo_
-
+        #
+        return True
+    
+    def tray_icon_size_allocate(self, widget, rect):
+        widget.get_children()
 if __name__ == "__main__":
     TrayIcon()
     gtk.main()

@@ -20,6 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import cairo
 import math
 
@@ -53,7 +54,7 @@ def cairo_popover (widget,
                    w, h, 
                    radius,
                    arrow_width=20, arrow_height=10):
-    cr = curface_context
+    cr = surface_context
     x = trayicon_x
     y = trayicon_y
     w = w - 20
@@ -62,8 +63,8 @@ def cairo_popover (widget,
     p_x = widget.window.get_origin()[0]
     alloc = widget.get_allocation()
     #
-    #offs = (p_x + alloc.x) - w_x + this.get_
-    offs = -1
+    offs = (w/2)
+    #offs = 50
     if (offs + 50) > (w + 20):
         offs = (w + 20) - 15 - arrow_width
     if (offs < 17):
@@ -87,7 +88,7 @@ def cairo_popover (widget,
            radius,
            0,
            math.pi * 0.5)
-    cr.arc(x + w - radius,
+    cr.arc(x + radius,
            y + h - radius,
            radius,
            math.pi * 0.5,
@@ -101,4 +102,4 @@ def new_surface(width, height):
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
     surface_context = cairo.Context(surface)
     return  surface, surface_context
-
+    
