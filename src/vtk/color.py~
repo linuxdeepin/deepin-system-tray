@@ -41,6 +41,7 @@ def exponential_blue(surface, radius,  width, height):
     cr.paint()
     
     pixels = original.get_data()
+    print "pixels:", type(pixels[0])
     try:
         # process rows. 
         exponential_blue_rows (pixels,

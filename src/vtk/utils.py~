@@ -53,7 +53,7 @@ def cairo_popover (widget,
                    w, h, 
                    radius,
                    arrow_width=20, arrow_height=10):
-    cr = surface_context
+    cr = curface_context
     x = trayicon_x
     y = trayicon_y
     w = w - 20
