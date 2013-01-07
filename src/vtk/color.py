@@ -82,8 +82,37 @@ def exponential_blue(surface, radius,  width, height):
     except Exception, e:
         print "exponential_blue[error]:", e
 
-def exponential_blue_columns(): 
-    pass
+def exponential_blue_columns(pixels,
+                             width,
+                             height,
+                             start_col,
+                             end_col,
+                             start_y,
+                             end_y,
+                             alpha): 
+    for column_index in range(start_col, end_col):
+        column = pixels[column_index * 4]
+        #
+        z_A = column[0] << PARAM_PRECISION
+        z_R = column[1] << PARAM_PRECISION
+        z_G = column[2] << PARAM_PRECISION
+        z_B = column[3] << PARAM_PRECISION
+        # top to bottom.
+        temp_start_y = width * (start_y + 1)
+        temp_end_y   = (end_y - 1) * width
+        for index in range(temp_start_y, temp_endy, width):
+            column[index * 4], z_A, z_R, z_G, z_B = exponential_blur_inner (
+                    column[index * 4], z_A, z_R, z_G, z_B)
+            # save. 
+            pixels[column_index * 4][index * 4] = column[index * 4]
+        # bottom to top.
+        temp_end_y = (end_y - 2) * width
+        temp_start_y = start_y
+        for index in range(temp_end_y, temp_start_y, -width):
+            column[index * 4], z_A, z_R, z_G, z_B = exponential_blur_inner (
+                    column[index * 4], z_A, z_R, z_G, z_B) 
+            # save.
+            pixels[column_index * 4][index * 4] = column[index * 4]
 
 def exponential_blue_rows(pixels,
                           width,
