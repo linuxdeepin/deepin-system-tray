@@ -21,3 +21,29 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import math
+
+def cairo_rounded_rectangle(cr, x, y, width, height, radius):
+    cr.move_to (x + radius, y)
+    cr.arc (x + width - radius, 
+            y + radius, 
+            radius, 
+            math.pi * 1.5,
+            math.pi * 2)
+    cr.arc (x + width - radius,
+            y + radius,
+            radius,
+            0,
+            math.pi * 0.5)
+    cr.arc (x + radius,
+            y + height - radius,
+            radius,
+            math.pi * 0.5,
+            math.pi)
+    cr.arc (x + radius,
+            y + radius,
+            radius,
+            math.pi,
+            math.pi * 1.5)
+    cr.close_path()
+
