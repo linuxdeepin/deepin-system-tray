@@ -24,47 +24,20 @@
 import cairo
 import math
 
-def cairo_rounded_rectangle(cr, x, y, width, height, radius):
-    cr.move_to (x + radius, y)
-    cr.arc (x + width - radius, 
-            y + radius, 
-            radius, 
-            math.pi * 1.5,
-            math.pi * 2)
-    cr.arc (x + width - radius,
-            y + radius,
-            radius,
-            0,
-            math.pi * 0.5)
-    cr.arc (x + radius,
-            y + height - radius,
-            radius,
-            math.pi * 0.5,
-            math.pi)
-    cr.arc (x + radius,
-            y + radius,
-            radius,
-            math.pi,
-            math.pi * 1.5)
-    cr.close_path()
+
 
 def cairo_popover (widget, 
                    surface_context, 
                    trayicon_x, trayicon_y, 
                    w, h, 
                    radius,
-                   arrow_width=20, arrow_height=10, offs=0):
+                   arrow_width, arrow_height, offs=0):
     cr = surface_context
     x = trayicon_x
     y = trayicon_y
-    w = w - 20
-    h = h - 20
-    #offs = offs
-    p_x = 0 #widget.window.get_origin()[0]
-    alloc = widget.get_allocation()
+    w = w - trayicon_x * 2
+    h = h - trayicon_x * 2 
     #
-    #offs = (w/2)
-    #offs = 50
     if (offs + 50) > (w + 20):
         offs = (w + 20) - 15 - arrow_width
     if (offs < 17):

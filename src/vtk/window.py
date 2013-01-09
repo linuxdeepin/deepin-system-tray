@@ -23,24 +23,22 @@
 import cairo
 import gtk
 import math
-from vtk.utils import new_surface
-from vtk.utils import cairo_popover 
+from color import alpha_color_hex_to_cairo, color_hex_to_cairo
+from utils import new_surface
+from utils import cairo_popover 
 from dtk_cairo_blur import gaussian_blur
 
 SAHOW_VALUE = 3 
 ARROW_WIDTH = 20
 
-class TrayIcon(gtk.Window):
+class TrayIconWin(gtk.Window):
     def __init__(self):
-        gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
+        #gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
+        gtk.Window.__init__(self, gtk.WINDOW_POPUP)
         # init values.
         self.init_values()
         #    
         self.init_trayicon_settings()
-        # test.
-        self.main_vbox.pack_start(gtk.Button("test"), True, True)
-        self.main_vbox.pack_start(gtk.Button("test"), True, True)
-        self.main_vbox.pack_start(gtk.Button("test"), True, True)
         #
         self.init_trayicon_events()
         self.show_all()
@@ -57,7 +55,11 @@ class TrayIcon(gtk.Window):
         self.arrow_height = ARROW_WIDTH/2 
         self.offs = 0
         self.ali_size = 10
-    
+        self.alpha = 0.9
+        # colors.
+        self.sahow_color = ("#000000", 0.9)
+        self.border_out_color = ("#000000", 1.0)
+
     def init_trayicon_settings(self):
         self.set_colormap(gtk.gdk.Screen().get_rgba_colormap())
         self.set_modal(True)
@@ -65,24 +67,57 @@ class TrayIcon(gtk.Window):
         self.set_app_paintable(True)
         self.set_skip_pager_hint(True)
         self.set_skip_taskbar_hint(True)
-        self.set_position(gtk.WIN_POS_NONE)
+        #self.set_position(gtk.WIN_POS_NONE)
         self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_MENU)
-        self.set_opacity(0.9)
-        self.set_size_request(350, 290)
-        self.main_vbox = gtk.VBox()
+        self.set_opacity(self.alpha)
+        #
         self.draw = gtk.EventBox()
-        self.ali  = gtk.Alignment(0, 0, 1, 1)
-        self.ali.set_padding(self.ali_size + int(self.trayicon_x + self.arrow_height),
+        self.main_ali  = gtk.Alignment(0, 0, 1, 1)
+        self.main_ali.set_padding(self.ali_size + int(self.trayicon_x + self.arrow_height),
                              int(self.ali_size + self.trayicon_x),
                              int(self.ali_size + self.trayicon_x),
                              int(self.ali_size + self.trayicon_x))
         self.add(self.draw)
-        self.draw.add(self.ali)
-        self.ali.add(self.main_vbox)
-    
+        self.draw.add(self.main_ali)
+        self.socket = gtk.Socket()
+        self.socket.connect("plug-added", self.plugs_add_event)
+        self.socket.connect("plug-removed", self.plugs_remove_event)
+        self.main_ali.add(self.socket)
+        self.hide_all()
+
+    def move_trayicon(self, x, y):
+        self.move(x, y)
+
+    def plugs_add_event(self, socket):
+        pass 
+
+    def plugs_remove_event(self, socket):
+        pass
+
+    def get_id(self):
+        return self.socket.get_id()
+
     def init_trayicon_events(self):
+        self.add_events(gtk.gdk.ALL_EVENTS_MASK)
         self.connect("size-allocate", self.on_size_allocate)
         self.draw.connect("expose-event", self.draw_expose_event)
+        self.connect("show", self.trayicon_show_event)
+        self.connect("destroy", lambda w : gtk.main_quit())
+
+    def trayicon_show_event(self, widget):
+        gtk.gdk.pointer_grab(
+            self.window,
+            True,
+            gtk.gdk.POINTER_MOTION_MASK
+            | gtk.gdk.BUTTON_PRESS_MASK
+            | gtk.gdk.BUTTON_RELEASE_MASK
+            | gtk.gdk.ENTER_NOTIFY_MASK
+            | gtk.gdk.LEAVE_NOTIFY_MASK,
+            None,
+            None,
+            gtk.gdk.CURRENT_TIME)
+        gtk.gdk.keyboard_grab(self.window, owner_events=False, time=gtk.gdk.CURRENT_TIME)
+        self.grab_add()        
 
     def draw_expose_event(self, widget, event):
         cr = widget.window.cairo_create()
@@ -121,7 +156,7 @@ class TrayIcon(gtk.Window):
                       w, h,
                       self.radius, self.arrow_width, self.arrow_height, self.offs)
         gaussian_blur(self.surface, SAHOW_VALUE)
-        self.surface_cr.set_source_rgba(1.0, 0.0, 0.0, 0.9)
+        self.surface_cr.set_source_rgba(*alpha_color_hex_to_cairo((self.sahow_color)))
         self.surface_cr.fill_preserve()
         gaussian_blur(self.surface, SAHOW_VALUE)
         # border.
@@ -130,7 +165,7 @@ class TrayIcon(gtk.Window):
                       self.trayicon_x + self.trayicon_border, self.trayicon_y + self.trayicon_border, 
                       w, h, 
                       self.radius, self.arrow_width, self.arrow_height, self.offs) 
-        self.surface_cr.set_source_rgba(0, 0, 0, 1.0)
+        self.surface_cr.set_source_rgba(*alpha_color_hex_to_cairo(self.border_out_color))
         self.surface_cr.set_line_width(self.border_width)
         self.surface_cr.fill_preserve()
         #
@@ -147,9 +182,8 @@ class TrayIcon(gtk.Window):
     def expose_event_draw(self, cr):
         if self.surface:
             cr.set_source_surface(self.surface, 0, 0)
-            #cr.paint_with_alpha(1.0)
             cr.paint()
         
 if __name__ == "__main__":
-    TrayIcon()
+    TrayIconWin()
     gtk.main()

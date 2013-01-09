@@ -21,8 +21,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from vtk.window import TrayIconWin
-#from trayicon_plugin_manage import PluginManage
+from trayicon_plugin_manage import PluginManage
 import gtk
+
+
 
 class TrayIcon(TrayIconWin):
     def __init__(self,
@@ -34,40 +36,63 @@ class TrayIcon(TrayIconWin):
         # Init values.
         self.save_trayicon = None
         self.trayicon_list = []
-        #self.plugin_manage = PluginManage()
+        self.plugin_manage = PluginManage()
         self.width, self.height = 100,-1
         self.tray_icon_to_screen_width = tray_icon_to_screen_width
         self.align_size = align_size
         self.menu_to_icon_y_padding = menu_to_icon_y_padding
+        self.draw_mask = self.draw_menu_mask
         # Init trayicon position.
         self.metry = None
+        # Init setting.
+        self.set_title("LD TrayIcon")
+        self.set_can_focus(True)
+        self.set_skip_pager_hint(True)
+        self.set_skip_taskbar_hint(True)
+        self.set_size_request(self.width, self.height)
         # Init event.
+        self.add_events(gtk.gdk.ALL_EVENTS_MASK)
+        self.connect("show", self.init_menu)
         self.connect("configure-event", self.menu_configure_event)
+        self.connect("destroy", lambda w : gtk.main_quit())
         self.connect("button-press-event", self.menu_grab_window_button_press)
         # Init root scrren.
         root = self.get_root_window()
         self.screen = root.get_screen()
         # Init event window.
-        #self.init_event_window()
+        self.init_event_window()
+        # Init main ali.
+        self.init_tray_alignment()
         # create trayicon.
-        '''
         for plug in self.plugin_manage.keywords:
             self.trayicon_list.append(self.create_tray_icon(plug))
-        '''
         #
         self.hide_all()
-        self.plug = gtk.Plug(self.socket.get_id())
-        self.main_vbox = gtk.VBox()
-        self.main_vbox.pack_start(gtk.Button("fjdsf"), False, False)
-        self.main_vbox.pack_start(gtk.Button("fjdsf"), False, False)
-        self.main_vbox.pack_start(gtk.Button("fjdsf"), False, False)
-        self.main_vbox.pack_start(gtk.Button("fjdsf"), False, False)
-        self.main_vbox.pack_start(gtk.Button("fjdsf"), False, False)
-        self.plug.add(self.main_vbox)
-        self.plug.show_all()
-        print "socket:", self.get_id()
-        self.plug.remove(self.main_vbox)
-        
+
+    def test_btn_clicked(self, widget):
+        main_vbox = widget.get_parent()
+        main_vbox.remove(widget)
+
+    def draw_menu_mask(self, cr, x, y, w, h):        
+        cr.set_source_rgba(1, 1, 1, 0.9)
+        cr.rectangle(x, y, w, h)
+        cr.fill()
+ 
+    def init_menu(self, widget):
+        gtk.gdk.pointer_grab(
+            self.window,
+            True,
+            gtk.gdk.POINTER_MOTION_MASK
+            | gtk.gdk.BUTTON_PRESS_MASK
+            | gtk.gdk.BUTTON_RELEASE_MASK
+            | gtk.gdk.ENTER_NOTIFY_MASK
+            | gtk.gdk.LEAVE_NOTIFY_MASK,
+            None,
+            None,
+            gtk.gdk.CURRENT_TIME)
+        gtk.gdk.keyboard_grab(self.window, owner_events=False, time=gtk.gdk.CURRENT_TIME)
+        self.grab_add()        
+
     def menu_configure_event(self, widget, event):
         self.resize(1, 1)
         self.move_menu() 
@@ -79,15 +104,30 @@ class TrayIcon(TrayIconWin):
      
     def show_menu(self):
         self.move_menu()
+        self.show_event_window()
         self.show_all()
     
+    def show_event_window(self):
+        self.event_window.show_all()
+        
     def hide_menu(self):
+        self.hide_event_window()
         self.hide_all()        
         self.grab_remove()
         # run plug hide menu function.
         if self.save_trayicon:
             self.save_trayicon.hide_menu()
 
+    def hide_event_window(self):
+        self.event_window.hide_all()            
+
+    def init_event_window(self):    
+        self.event_window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.event_window.set_skip_pager_hint(True)
+        self.event_window.set_skip_taskbar_hint(True)        
+        self.event_window.maximize()
+        self.event_window.set_opacity(0.0)
+            
     def move_menu(self):        
         if self.metry:
             metry = self.metry  
@@ -141,29 +181,35 @@ class TrayIcon(TrayIconWin):
 
     def init_popup_menu(self, statusicon, plug):
         # save plug.
-        #self.save_trayicon = plug
+        self.save_trayicon = plug
+        width = plug.width() # get menu width.
         # remove child widget.
-        width = 30
-        # add child widgets plugs.
-        
+        self.remove_main_vbox()
+        if plug.widget():
+            self.add_widget(plug.widget())
         # get tray icon metry.
         self.metry = statusicon.get_geometry()
         self.resize(1, 1)
         self.set_size_request(width, -1)
         self.show_menu()
 
-    def plugs_add_event(self, socket):
-        print "add .. add ..."
-        self.show_menu()
+    def init_tray_alignment(self):    
+        self.main_ali = gtk.Alignment(0, 0, 1, 1)
+        self.main_ali.set_padding(self.align_size, 
+                                  self.align_size, 
+                                  self.align_size, 
+                                  self.align_size)
+        self.window_frame.pack_start(self.main_ali, True, True)
         
-    def plugs_remove_event(self, socket):
-        print "remove...remove..."
+    def add_widget(self, widget):
+        self.main_ali.add(widget)
+
+    def remove_main_vbox(self):
+        remove_child = self.main_ali.get_children()
+        if remove_child != []:
+            self.main_ali.remove(remove_child[0])
 
 if __name__ == "__main__":
-    '''
-    win = gtk.Window(gtk.WINDOW_TOPLEVEL)
-    win.show_all()
-    '''
     TrayIcon()
     gtk.main()
 

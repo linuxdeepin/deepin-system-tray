@@ -23,8 +23,9 @@
 import cairo
 import gtk
 import math
-from vtk.utils import new_surface
-from vtk.utils import cairo_popover 
+from color import alpha_color_hex_to_cairo, color_hex_to_cairo
+from utils import new_surface
+from utils import cairo_popover 
 from dtk_cairo_blur import gaussian_blur
 
 SAHOW_VALUE = 3 
@@ -57,7 +58,10 @@ class TrayIcon(gtk.Window):
         self.arrow_height = ARROW_WIDTH/2 
         self.offs = 0
         self.ali_size = 10
-    
+        # colors.
+        self.sahow_color = ("#000000", 0.9)
+        self.border_out_color = ("#000000", 1.0)
+
     def init_trayicon_settings(self):
         self.set_colormap(gtk.gdk.Screen().get_rgba_colormap())
         self.set_modal(True)
@@ -68,7 +72,6 @@ class TrayIcon(gtk.Window):
         self.set_position(gtk.WIN_POS_NONE)
         self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_MENU)
         self.set_opacity(0.9)
-        self.set_size_request(350, 290)
         self.main_vbox = gtk.VBox()
         self.draw = gtk.EventBox()
         self.ali  = gtk.Alignment(0, 0, 1, 1)
@@ -121,7 +124,7 @@ class TrayIcon(gtk.Window):
                       w, h,
                       self.radius, self.arrow_width, self.arrow_height, self.offs)
         gaussian_blur(self.surface, SAHOW_VALUE)
-        self.surface_cr.set_source_rgba(1.0, 0.0, 0.0, 0.9)
+        self.surface_cr.set_source_rgba(*alpha_color_hex_to_cairo((self.sahow_color)))
         self.surface_cr.fill_preserve()
         gaussian_blur(self.surface, SAHOW_VALUE)
         # border.
@@ -130,7 +133,7 @@ class TrayIcon(gtk.Window):
                       self.trayicon_x + self.trayicon_border, self.trayicon_y + self.trayicon_border, 
                       w, h, 
                       self.radius, self.arrow_width, self.arrow_height, self.offs) 
-        self.surface_cr.set_source_rgba(0, 0, 0, 1.0)
+        self.surface_cr.set_source_rgba(*alpha_color_hex_to_cairo(self.border_out_color))
         self.surface_cr.set_line_width(self.border_width)
         self.surface_cr.fill_preserve()
         #
@@ -147,7 +150,6 @@ class TrayIcon(gtk.Window):
     def expose_event_draw(self, cr):
         if self.surface:
             cr.set_source_surface(self.surface, 0, 0)
-            #cr.paint_with_alpha(1.0)
             cr.paint()
         
 if __name__ == "__main__":
