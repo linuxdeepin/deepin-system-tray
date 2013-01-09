@@ -57,13 +57,13 @@ static inline struct _pixel _num_to_pixel_with_factor (guint32 value, int factor
 static inline guint32 _pixel_to_num_with_divisor (struct _pixel *pixel, int divisor);
 static inline void _pixel_plus (struct _pixel *adder_sum, const struct _pixel *adder2);
 
-PyMODINIT_FUNC initdtk_cairo_blur(void) {
+PyMODINIT_FUNC initvtk_cairo_blur(void) {
      PyObject *m;
 
      /* This is necessary step for Python binding, otherwise got sefault error */
      init_pygobject();
      
-     m = Py_InitModule("dtk_cairo_blur", cairo_blur_methods);
+     m = Py_InitModule("vtk_cairo_blur", cairo_blur_methods);
 
      if (!m) {
           return;
