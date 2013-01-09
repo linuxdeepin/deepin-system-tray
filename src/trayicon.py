@@ -35,15 +35,10 @@ class TrayIcon(TrayIconWin):
         self.save_trayicon = None
         self.trayicon_list = []
         #self.plugin_manage = PluginManage()
-        self.width, self.height = 100,-1
         self.tray_icon_to_screen_width = tray_icon_to_screen_width
-        self.align_size = align_size
         self.menu_to_icon_y_padding = menu_to_icon_y_padding
         # Init trayicon position.
         self.metry = None
-        # Init event.
-        self.connect("configure-event", self.menu_configure_event)
-        self.connect("button-press-event", self.menu_grab_window_button_press)
         # Init root scrren.
         root = self.get_root_window()
         self.screen = root.get_screen()
@@ -59,9 +54,8 @@ class TrayIcon(TrayIconWin):
         self.resize(1, 1)
         self.move_menu() 
 
-    def menu_grab_window_button_press(self, widget, event):        
-        if not ((widget.allocation.x <= event.x <= widget.allocation.width) 
-           and (widget.allocation.y <= event.y <= widget.allocation.height)):
+    def tray_icon_button_press(self, widget, event):        
+        if self.in_window_check(widget, event):
             self.hide_menu()
      
     def show_menu(self):

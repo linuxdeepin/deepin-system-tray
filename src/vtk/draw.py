@@ -21,31 +21,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-def tray_icon_expose_event(widget, event):
-    cr = widget.window.cairo_create()
-    rect = widget.allocation
-    surface = 
-    surface_cr.
-    cairo_popover(w, h)
-    # shadow.
-    surface_cr.set_source_rgba(0, 0, 0, 0.9)
-    surface_cr.fill_preserve()
-    exponential_blur(6)
-    curface_cr.clip()
-    # background.
-    # get_style_context()
-    surface_cr.reset_clip()
-    # border.
-    cairo_popover(w, h)
-    surface_cr.set_operator(cairo.OPERATOR_SOURCE)
-    surface_cr.set_line_width(1)
-    surface_cr.set_source_rgba(0, 0, 0, 0.9)
-    surface_cr.stroke()
-    # clear furface/
-    cr.set_operator(cairo.OPERATOR_SOURCE)
-    cr.set_source_rgba(0, 0, 0, 0.9)
-    cr.paint()
-    #
-    cr.set_source_surface(surface, 0, 0)
-    cr.patint()
-    return False
+

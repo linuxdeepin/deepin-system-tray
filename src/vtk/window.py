@@ -51,7 +51,7 @@ class TrayIconWin(gtk.Window):
         self.radius = 5
         self.arrow_width = ARROW_WIDTH
         self.arrow_height = ARROW_WIDTH/2 
-        self.offs = 0
+        self.offs = -10
         self.ali_size = 10
         self.alpha = 0.9
         # colors.
@@ -95,10 +95,26 @@ class TrayIconWin(gtk.Window):
 
     def init_trayicon_events(self):
         self.add_events(gtk.gdk.ALL_EVENTS_MASK)
+        self.connect("configure-event", self.menu_configure_event)
+        self.connect("button-press-event", self.tray_icon_button_press) 
         self.connect("size-allocate", self.on_size_allocate)
         self.draw.connect("expose-event", self.draw_expose_event)
         self.connect("show", self.trayicon_show_event)
         self.connect("destroy", lambda w : gtk.main_quit())
+        
+    def menu_configure_event(self, widget, event):
+        pass
+
+    def tray_icon_button_press(self, widget, event):        
+        if self.in_window_check(widget, event):
+            self.hide_all()
+            self.grab_remove()
+
+    def in_window_check(self, widget, event):
+        return (not ((widget.allocation.x <= event.x <= widget.allocation.width) 
+               and (widget.allocation.y <= event.y <= widget.allocation.height)))
+        
+        
 
     def trayicon_show_event(self, widget):
         gtk.gdk.pointer_grab(
@@ -191,5 +207,9 @@ class TrayIconWin(gtk.Window):
             cr.paint()
         
 if __name__ == "__main__":
-    TrayIconWin()
+    test = TrayIconWin()
+    test.resize(300, 300)
+    test.move(300, 300)
+    test.show_all()
+
     gtk.main()
