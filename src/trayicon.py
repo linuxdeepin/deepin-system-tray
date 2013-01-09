@@ -146,10 +146,7 @@ class TrayIcon(TrayIconWin):
         print "remove...remove..."
 
 if __name__ == "__main__":
-    '''
-    win = gtk.Window(gtk.WINDOW_TOPLEVEL)
-    win.show_all()
-    '''
-    TrayIcon()
+    test = TrayIcon()
+    test.show_all()
     gtk.main()
 

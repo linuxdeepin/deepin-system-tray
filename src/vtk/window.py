@@ -37,9 +37,7 @@ class TrayIconWin(gtk.Window):
         gtk.Window.__init__(self, gtk.WINDOW_POPUP)
         # init values.
         self.init_values()
-        #    
         self.init_trayicon_settings()
-        #
         self.init_trayicon_events()
         self.hide_all() 
 
@@ -67,16 +65,17 @@ class TrayIconWin(gtk.Window):
         self.set_app_paintable(True)
         self.set_skip_pager_hint(True)
         self.set_skip_taskbar_hint(True)
-        #self.set_position(gtk.WIN_POS_NONE)
+        self.set_position(gtk.WIN_POS_NONE)
         self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_MENU)
         self.set_opacity(self.alpha)
         #
         self.draw = gtk.EventBox()
         self.main_ali  = gtk.Alignment(0, 0, 1, 1)
-        self.main_ali.set_padding(self.ali_size + int(self.trayicon_x + self.arrow_height),
-                             int(self.ali_size + self.trayicon_x),
-                             int(self.ali_size + self.trayicon_x),
-                             int(self.ali_size + self.trayicon_x))
+        self.main_ali.set_padding(
+                self.ali_size + int(self.trayicon_x + self.arrow_height),
+                int(self.ali_size + self.trayicon_x),
+                int(self.ali_size + self.trayicon_x),
+                int(self.ali_size + self.trayicon_x))
         self.add(self.draw)
         self.draw.add(self.main_ali)
         self.socket = gtk.Socket()
@@ -84,9 +83,6 @@ class TrayIconWin(gtk.Window):
         self.socket.connect("plug-removed", self.plugs_remove_event)
         self.main_ali.add(self.socket)
         self.hide_all()
-
-    def move_trayicon(self, x, y):
-        self.move(x, y)
 
     def plugs_add_event(self, socket):
         pass 
@@ -116,7 +112,10 @@ class TrayIconWin(gtk.Window):
             None,
             None,
             gtk.gdk.CURRENT_TIME)
-        gtk.gdk.keyboard_grab(self.window, owner_events=False, time=gtk.gdk.CURRENT_TIME)
+        gtk.gdk.keyboard_grab(
+                self.window, 
+                owner_events=False, 
+                time=gtk.gdk.CURRENT_TIME)
         self.grab_add()        
 
     def draw_expose_event(self, widget, event):
@@ -154,28 +153,35 @@ class TrayIconWin(gtk.Window):
         cairo_popover(self, self.surface_cr, 
                       self.trayicon_x, self.trayicon_y, 
                       w, h,
-                      self.radius, self.arrow_width, self.arrow_height, self.offs)
+                      self.radius, 
+                      self.arrow_width, self.arrow_height, self.offs)
         gaussian_blur(self.surface, SAHOW_VALUE)
-        self.surface_cr.set_source_rgba(*alpha_color_hex_to_cairo((self.sahow_color)))
+        self.surface_cr.set_source_rgba( # set sahow color.
+                *alpha_color_hex_to_cairo((self.sahow_color)))
         self.surface_cr.fill_preserve()
         gaussian_blur(self.surface, SAHOW_VALUE)
         # border.
+        # out border.
         self.surface_cr.clip()
         cairo_popover(self, self.surface_cr, 
-                      self.trayicon_x + self.trayicon_border, self.trayicon_y + self.trayicon_border, 
+                      self.trayicon_x + self.trayicon_border, 
+                      self.trayicon_y + self.trayicon_border, 
                       w, h, 
-                      self.radius, self.arrow_width, self.arrow_height, self.offs) 
-        self.surface_cr.set_source_rgba(*alpha_color_hex_to_cairo(self.border_out_color))
+                      self.radius, 
+                      self.arrow_width, self.arrow_height, self.offs) 
+        self.surface_cr.set_source_rgba( # set out border color.
+                *alpha_color_hex_to_cairo(self.border_out_color))
         self.surface_cr.set_line_width(self.border_width)
         self.surface_cr.fill_preserve()
-        #
+        # in border.
         self.surface_cr.clip()
         cairo_popover(self, self.surface_cr, 
                       self.trayicon_x + self.trayicon_border + 1, 
                       self.trayicon_y + self.trayicon_border + 1, 
                       w, h, 
-                      self.radius, self.arrow_width, self.arrow_height, self.offs) 
-        self.surface_cr.set_source_rgba(1, 1, 1, 1.0)
+                      self.radius, 
+                      self.arrow_width, self.arrow_height, self.offs) 
+        self.surface_cr.set_source_rgba(1, 1, 1, 1.0) # set in border color.
         self.surface_cr.set_line_width(self.border_width)
         self.surface_cr.fill()
 
