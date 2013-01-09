@@ -22,136 +22,108 @@
 
 import cairo
 import gtk
+import math
 from vtk.utils import new_surface
 from vtk.utils import cairo_popover 
-from vtk.color import exponential_blue
-
+from dtk_cairo_blur import gaussian_blur
 
 class TrayIcon(gtk.Window):
     def __init__(self):
-        gtk.Window.__init__(self, gtk.WINDOW_POPUP)
-        #gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
+        #gtk.Window.__init__(self, gtk.WINDOW_POPUP)
+        gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
         # init values.
+        self.old_w = 0
+        self.old_h = 0
         self.trayicon_x = 10.5
         self.trayicon_y = 10.5
         self.radius = 5
         self.arrow_width = 20
         self.arrow_height = 10
+        self.offs = 40 #(350/2)
         #
+        self.set_modal(True)
+        self.set_decorated(False)
+        self.set_resizable(False)
+        self.set_app_paintable(True)
+        self.set_skip_pager_hint(True)
+        self.set_skip_taskbar_hint(True)
+        #self.set_position(gtk.WINDOW_POSITION_NONE)
+        self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_MENU)
         self.set_opacity(0.9)
-        self.set_size_request(350, 250)
+        self.set_size_request(350, 90)
         self.draw = gtk.EventBox()
         self.add(self.draw)
-        self.draw.connect("expose-event", self.tray_icon_expose_event)
-        #self.draw.connect("
-        self.connect("size-allocate", self.tray_icon_size_allocate)
+        self.draw.connect("expose-event", self.draw_expose_event)
+        self.connect("size-allocate", self.on_size_allocate)
         self.show_all()
-       
         self.move(500, 500)
         self.draw.add(gtk.Button("测试"))
-        
-    def tray_icon_size_allocate(self, widget, rect):
-        import math
-        x, y, w, h = rect.x, rect.y, rect.width, rect.height
-        bitmap = gtk.gdk.Pixmap(None, w, h, 1)        
-        cr = bitmap.cairo_create()
-
-        cr.set_source_rgb(0, 0, 0)
-        cr.set_operator(cairo.OPERATOR_CLEAR)
-        cr.paint()
-
-        cr.set_source_rgb(0, 0, 0)
-        cr.set_operator(cairo.OPERATOR_OVER)
-        #
-        radius = self.radius 
-        x = self.trayicon_x
-        y = self.trayicon_y
-        arrow_width = self.arrow_width
-        arrow_height = self.arrow_height 
-        w = w - 20
-        h = h - 20
-        offs = 30
-        
-        #
-        offs = (w/2)
-        #offs = 50
-        if (offs + 50) > (w + 20):
-            offs = (w + 20) - 15 - arrow_width
-        if (offs < 17):
-            offs = 17
-        # draw.
-        cr.arc (x + radius,
-                y + arrow_height + radius,
-                radius,
-                math.pi,
-                math.pi * 1.5)
-        cr.line_to(offs, y + arrow_height)
-        cr.rel_line_to(arrow_width / 2.0, -arrow_height)
-        cr.rel_line_to(arrow_width / 2.0, arrow_height)
-        cr.arc (x + w - radius,
-                y + arrow_height + radius,
-                radius,
-                math.pi * 1.5,
-                math.pi * 2.0)
-        cr.arc(x + w - radius,
-               y + h - radius,
-               radius,
-               0,
-               math.pi * 0.5)
-        cr.arc(x + radius,
-               y + h - radius,
-               radius,
-               math.pi * 0.5,
-               math.pi)
-        
-        cr.close_path()
-        cr.fill()
-        widget.shape_combine_mask(bitmap, 0, 0)
     
-    def tray_icon_expose_event(self, widget, event):
+    def draw_expose_event(self, widget, event):
         cr = widget.window.cairo_create()
         rect = widget.allocation
         x, y, w, h = rect
-        # create surface.
-        surface, surface_context = new_surface(w, h)
-        #.  
-        cairo_popover(widget, 
-                      surface_context, 
+        self.expose_event_draw(cr)
+        #
+        cairo_popover(self, cr, 
+                      self.trayicon_x + 2.5, self.trayicon_y + 2.5, 
+                      w-5, h-5, self.radius, self.arrow_width, self.arrow_height, self.offs) 
+        cr.set_source_rgba(1, 1, 1, 0.9)
+        cr.set_operator(cairo.OPERATOR_SOURCE)
+        cr.set_line_width(self.border_width)
+        cr.fill_preserve()
+        return True
+
+    def on_size_allocate(self, widget, alloc):
+        print "on_size_allocate"
+        x, y, w, h = self.allocation
+        bitmap = gtk.gdk.Pixmap(None, w, h, 1) 
+        cr = bitmap.cairo_create()
+        if (self.old_w == w and self.old_h == h):
+            return False
+        # 
+        cr.set_source_rgb(0, 0, 0)
+        cr.set_operator(cairo.OPERATOR_CLEAR)
+        cr.paint()
+        cr.set_source_rgb(0, 0, 0)
+        cr.set_operator(cairo.OPERATOR_OVER)
+        #
+        self.surface, self.surface_cr = new_surface(350, 90)
+        self.compute_shadow(w, h)
+        self.old_w = w
+        self.old_h = h
+        #
+        self.on_size_draw(cr, x, y, w, h)
+        #widget.shape_combine_mask(bitmap, 0, 0)
+
+    def compute_shadow(self, w, h):
+        print "compute_shadow..."
+        #
+        cairo_popover(self, self.surface_cr, 
                       self.trayicon_x, self.trayicon_y, 
                       w, h,
-                      self.radius, 
-                      self.arrow_width, self.arrow_height)
-        surface_context.set_source_rgba(1, 1, 1, 0.9)
-        surface_context.fill_preserve()
-        # shadow.
-        #exponential_blue(surface, surface_context, 
-        #                 6, w, h)
-        surface_context.clip()
-        # background.
-        #widget.get_style_context()#.render_background(surface_context, 0, 0, w, h)
-        surface_context.reset_clip()
-        # border.
-        cairo_popover(widget,
-                      surface_context,
-                      self.trayicon_x, self.trayicon_y,
-                      w, h,
-                      self.radius,
-                      self.arrow_width, self.arrow_height)
-        surface_context.set_operator(cairo.OPERATOR_SOURCE)
-        surface_context.set_line_width(4)
-        surface_context.set_source_rgba(0, 0, 0, 0.9)
-        surface_context.stroke()
-        # clear surface.
-        cr.set_operator(cairo.OPERATOR_SOURCE)
-        cr.set_source_rgba(1, 1, 1, 1)
-        cr.paint()
-        #
-        cr.set_source_surface(surface, 0, 0)
-        cr.paint()
-        #
-        return True
-    
+                      self.radius, self.arrow_width, self.arrow_height, self.offs)
+                    
+        self.surface_cr.set_source_rgba(0.0, 0.0, 0.0, 0.4)
+        self.surface_cr.fill_preserve()
+        gaussian_blur(self.surface, 4)
+        # outer border.
+        print "oter border..."
+        self.surface_cr.reset_clip()
+        cairo_popover(self, self.surface_cr, 
+                      self.trayicon_x, self.trayicon_y, 
+                      w, h, self.radius, self.arrow_width, self.arrow_height, self.offs) 
+        self.surface_cr.set_operator(cairo.OPERATOR_SOURCE)
+        self.surface_cr.set_source_rgba(0, 0, 1, 0.5)
+        self.surface_cr.set_line_width(self.border_width)
+        self.surface_cr.stroke()
 
+    def expose_event_draw(self, cr):
+        cr.set_source_surface(self.surface, 0, 0)
+        cr.paint()
+        
+    def on_size_draw(self, cr, x, y, w, h):
+        pass
 if __name__ == "__main__":
     TrayIcon()
     gtk.main()

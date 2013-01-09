@@ -53,17 +53,17 @@ def cairo_popover (widget,
                    trayicon_x, trayicon_y, 
                    w, h, 
                    radius,
-                   arrow_width=20, arrow_height=10):
+                   arrow_width=20, arrow_height=10, offs=0):
     cr = surface_context
     x = trayicon_x
     y = trayicon_y
     w = w - 20
     h = h - 20
-    offs = 30
+    #offs = offs
     p_x = widget.window.get_origin()[0]
     alloc = widget.get_allocation()
     #
-    offs = (w/2)
+    #offs = (w/2)
     #offs = 50
     if (offs + 50) > (w + 20):
         offs = (w + 20) - 15 - arrow_width
