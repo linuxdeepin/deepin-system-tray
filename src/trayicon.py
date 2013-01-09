@@ -54,19 +54,6 @@ class TrayIcon(TrayIconWin):
         for plug in self.plugin_manage.keywords:
             self.trayicon_list.append(self.create_tray_icon(plug))
         '''
-        #
-        self.hide_all()
-        self.plug = gtk.Plug(self.socket.get_id())
-        self.main_vbox = gtk.VBox()
-        self.main_vbox.pack_start(gtk.Button("fjdsf"), False, False)
-        self.main_vbox.pack_start(gtk.Button("fjdsf"), False, False)
-        self.main_vbox.pack_start(gtk.Button("fjdsf"), False, False)
-        self.main_vbox.pack_start(gtk.Button("fjdsf"), False, False)
-        self.main_vbox.pack_start(gtk.Button("fjdsf"), False, False)
-        self.plug.add(self.main_vbox)
-        self.plug.show_all()
-        print "socket:", self.get_id()
-        self.plug.remove(self.main_vbox)
         
     def menu_configure_event(self, widget, event):
         self.resize(1, 1)
@@ -154,7 +141,6 @@ class TrayIcon(TrayIconWin):
 
     def plugs_add_event(self, socket):
         print "add .. add ..."
-        self.show_menu()
         
     def plugs_remove_event(self, socket):
         print "remove...remove..."

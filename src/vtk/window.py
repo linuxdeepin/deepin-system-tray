@@ -41,8 +41,8 @@ class TrayIconWin(gtk.Window):
         self.init_trayicon_settings()
         #
         self.init_trayicon_events()
-        self.show_all()
-         
+        self.hide_all() 
+
     def init_values(self):
         self.surface = None
         self.old_w = 0
