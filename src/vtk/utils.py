@@ -23,6 +23,7 @@
 import gtk
 import cairo
 import math
+import os
 
 
 
@@ -90,3 +91,46 @@ def new_surface(width, height):
     surface_context = cairo.Context(surface)
     return  surface, surface_context
     
+def get_home_path():
+    return os.path.expandvars("$HOME")
+
+def get_config_path():
+    return os.path.join(get_home_path(), ".config/deepin-system-settings/tray")
+
+def get_config_file():
+    return os.path.join(get_config_path(), "config.ini")
+
+def config_path_check():
+    if os.path.exists(get_config_path()):
+        return True
+    else:
+        return False
+
+def config_file_check():
+    if os.path.exists(get_config_file()):
+        return True
+    else:
+        return False
+
+def init_config_path():
+    os.makedirs(get_config_path())
+
+def init_config_file():
+    fp = open(get_config_file(), "w")
+    fp.write("[tray]\n")
+    fp.write("PATH = /usr/share/deepin-system-settings,\n")
+    fp.close()
+
+def init_config():
+    if not config_path_check():
+        init_config_path()
+    if not config_file_check():
+        init_config_file()
+
+if __name__ == "__main__":
+    print get_home_path()
+    print get_config_path()
+    if not config_path_check():
+        init_config_path()
+    if not config_file_check():
+        init_config_file()

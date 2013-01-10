@@ -22,38 +22,73 @@
 
 import sys
 import os
-from dtk.ui.utils import get_parent_dir
-from dtk.ui.config import Config
+from vtk.utils import init_config, get_config_file, get_config_path
+from vtk.ini import Config
 
-PATH = os.path.join(get_parent_dir(__file__, 2), "modules")
-sys.path.append(PATH)
+sys.path.append(get_config_path())
 
+print "path:", sys.path
+class ModulesInfo(object):
+    def __init__(self):
+        self.id      = ""
+        self.include = ""
+        self.menu_icon = ""
+        self.main_icon = ""
+
+def save_modules_info(config, path):
+    include = config.get("main", "include")
+    if include:
+        menu_icon = config.get("main", "menu_icon")
+        main_icon = config.get("main", "icon")
+        id        = config.get("main", "id")
+        # save mofules info.   
+        modules_info           = ModulesInfo()
+        modules_info.id        = id
+        modules_info.include   = include
+        modules_info.menu_icon = os.path.join(path, menu_icon)
+        modules_info.main_icon = os.path.join(path, main_icon)
+        return modules_info
+    else:
+        return None
+
+def add_sys_path(path):
+    '''add path to sys path'''
+    sys.path.append(path)
+    
 class PluginManage(object):
     def __init__(self):
+        # init config.
+        init_config()
+        #
         self.keywords = []
-        scan_dir_list = os.listdir(PATH)
-        for path in scan_dir_list:
-            scan_dir_path = os.path.join(PATH, path)
-            if os.path.exists(scan_dir_path):
-                config_path = os.path.join(scan_dir_path, "config.ini") 
-                if os.path.exists(config_path):
-                    #print "scan_dir_path:", config_path 
-                    config = Config(config_path, "")
-                    config.load()
-                    icon_path = None
-                    # get modual icon.
-                    if config.has_option("main", "menu_icon"):
-                        icon_path = config.get("main", "menu_icon", "")
+        self.config = Config(get_config_file())
+        tray_path_list = self.config.get("tray", "PATH").split(",")
+        for tray_path in tray_path_list:
+            if tray_path != "":
+                if os.path.exists(tray_path):
+                    if os.path.isdir(tray_path):
+                        self.scan_tray_path_modules(tray_path)
 
-                    if config.has_option("trayicon", "include"):
-                        include_name = config.get("trayicon", "include", "")
-                        #print "include_name:", include_name
-                        modual = __import__(include_name, fromlist=["keywords"])
-                        class_init = modual.return_trayicon()
+    def scan_tray_path_modules(self, scan_path):
+        scan_modules_path_list = os.listdir(scan_path)
+        # add path to sys path.
+        add_sys_path(scan_path)
+        #
+        for modules_path in scan_modules_path_list:
+            modules_path_name = os.path.join(scan_path, modules_path)
+            if os.path.isdir(modules_path_name):
+                print "modules_path_name:", modules_path_name
+                modules_path_config = os.path.join(modules_path_name, "config.ini")
+                if os.path.exists(modules_path_config):
+                    modules_ini = Config(modules_path_config)
+                    modules_info = save_modules_info(modules_ini, modules_path_name)
+                    if modules_info:
+                        print "include:", modules_info.include
+                        print "menu_icon:", modules_info.menu_icon
+                        print "main_icon:", modules_info.main_icon
+                        modual = __import__("%s.%s" % (modules_info.id, modules_info.include), fromlist=["keywords"])
+                        class_init = modual.return_plugin()
                         class_run = class_init()
-                        if icon_path:
-                            class_run.icon_path = os.path.join(scan_dir_path, icon_path) 
-
                         self.keywords.append(class_run)
 
 
