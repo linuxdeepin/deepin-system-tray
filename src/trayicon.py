@@ -126,7 +126,6 @@ class TrayIcon(TrayIconWin):
         # remove child widget.
         width = 30
         # add child widgets plugs.
-        
         # get tray icon metry.
         self.metry = statusicon.get_geometry()
         self.resize(1, 1)
@@ -135,12 +134,27 @@ class TrayIcon(TrayIconWin):
 
     def plugs_add_event(self, socket):
         print "add .. add ..."
+        self.show_menu()
         
     def plugs_remove_event(self, socket):
         print "remove...remove..."
 
 if __name__ == "__main__":
     test = TrayIcon()
+    test.set_size_request(300, 300)
+    test.move(300, 300)
+    test.offst = 50
+    win = gtk.Window(gtk.WINDOW_TOPLEVEL)
+    main_vbox = gtk.VBox()
+    btn = gtk.Button("切换菜单")
+    btn2 = gtk.Button("切换菜单222")
+    btn3 = gtk.Button("切换菜单333")
+    btn4 = gtk.Button("切换菜单444")
+    main_vbox.pack_start(btn)
+    main_vbox.pack_start(btn2)
+    main_vbox.pack_start(btn3)
+    main_vbox.pack_start(btn4)
+    test.main_ali.add(main_vbox)
     test.show_all()
     gtk.main()
 

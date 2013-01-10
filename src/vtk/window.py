@@ -28,8 +28,8 @@ from utils import new_surface
 from utils import cairo_popover 
 from blur.vtk_cairo_blur import gaussian_blur
 
-SAHOW_VALUE = 3 
-ARROW_WIDTH = 20
+SAHOW_VALUE = 2 
+ARROW_WIDTH = 10
 
 class TrayIconWin(gtk.Window):
     def __init__(self):
@@ -52,17 +52,17 @@ class TrayIconWin(gtk.Window):
         self.arrow_width = ARROW_WIDTH
         self.arrow_height = ARROW_WIDTH/2 
         self.tray_pos_type = gtk.POS_BOTTOM
-        self.offs = 30 
+        self.offst = 30 
         self.ali_size = 10
-        self.alpha = 0.9
+        self.alpha = 0.95
         # colors.
-        self.sahow_color = ("#000000", 0.9)
-        self.border_out_color = ("#000000", 1.0)
+        self.sahow_color = ("#000000", 0.15)
+        self.border_out_color = ("#FF3300", 0.7)
 
     def init_trayicon_settings(self):
         self.set_colormap(gtk.gdk.Screen().get_rgba_colormap())
         self.set_modal(True)
-        #self.set_decorated(False)
+        self.set_decorated(False)
         self.set_app_paintable(True)
         self.set_skip_pager_hint(True)
         self.set_skip_taskbar_hint(True)
@@ -72,16 +72,13 @@ class TrayIconWin(gtk.Window):
         #
         self.draw = gtk.EventBox()
         self.main_ali  = gtk.Alignment(0, 0, 1, 1)
-        self.main_ali.set_padding(
-                self.ali_size + int(self.trayicon_x + self.arrow_height),
-                int(self.ali_size + self.trayicon_x),
-                int(self.ali_size + self.trayicon_x),
-                int(self.ali_size + self.trayicon_x))
+        # set main_ali padding size.
+        self.set_pos_type(self.tray_pos_type)
         self.add(self.draw)
         self.draw.add(self.main_ali)
-        self.socket = gtk.Socket()
-        self.socket.connect("plug-added", self.plugs_add_event)
-        self.socket.connect("plug-removed", self.plugs_remove_event)
+        #self.socket = gtk.Socket()
+        #self.socket.connect("plug-added", self.plugs_add_event)
+        #self.socket.connect("plug-removed", self.plugs_remove_event)
         #self.main_ali.add(self.socket)
         self.hide_all()
 
@@ -169,7 +166,7 @@ class TrayIconWin(gtk.Window):
                       self.trayicon_x, self.trayicon_y, 
                       w, h,
                       self.radius, 
-                      self.arrow_width, self.arrow_height, self.offs,
+                      self.arrow_width, self.arrow_height, self.offst,
                       pos_type=self.tray_pos_type)
         gaussian_blur(self.surface, SAHOW_VALUE)
         self.surface_cr.set_source_rgba( # set sahow color.
@@ -178,26 +175,30 @@ class TrayIconWin(gtk.Window):
         gaussian_blur(self.surface, SAHOW_VALUE)
         # border.
         # out border.
+        '''
         self.surface_cr.clip()
         cairo_popover(self, self.surface_cr, 
                       self.trayicon_x + self.trayicon_border, 
                       self.trayicon_y + self.trayicon_border, 
                       w, h, 
                       self.radius, 
-                      self.arrow_width, self.arrow_height, self.offs,
+                      self.arrow_width, self.arrow_height, self.offst,
                       pos_type=self.tray_pos_type)
         self.surface_cr.set_source_rgba( # set out border color.
                 *alpha_color_hex_to_cairo(self.border_out_color))
         self.surface_cr.set_line_width(self.border_width)
-        self.surface_cr.fill_preserve()
+        #self.surface_cr.fill_preserve()
+        self.surface_cr.stroke()
+        '''
         # in border.
         self.surface_cr.clip()
+        padding_h = 2
         cairo_popover(self, self.surface_cr, 
                       self.trayicon_x + self.trayicon_border + 1, 
                       self.trayicon_y + self.trayicon_border + 1, 
-                      w, h, 
+                      w, h + padding_h, 
                       self.radius, 
-                      self.arrow_width, self.arrow_height, self.offs,
+                      self.arrow_width, self.arrow_height, self.offst,
                       self.tray_pos_type) 
         self.surface_cr.set_source_rgba(1, 1, 1, 1.0) # set in border color.
         self.surface_cr.set_line_width(self.border_width)
@@ -208,9 +209,25 @@ class TrayIconWin(gtk.Window):
             cr.set_source_surface(self.surface, 0, 0)
             cr.paint()
         
+    def set_pos_type(self, pos_type):
+        self.tray_pos_type = pos_type
+        padding_top, padding_bottom = 0, 0
+        #
+        if pos_type == gtk.POS_TOP:
+            padding_top = self.arrow_height
+        else:
+            padding_bottom = self.arrow_height 
+        #
+        self.main_ali.set_padding(
+                self.ali_size + int(self.trayicon_x + padding_top),
+                int(self.ali_size + self.trayicon_x + padding_bottom),
+                int(self.ali_size + self.trayicon_x),
+                int(self.ali_size + self.trayicon_x))
+
 if __name__ == "__main__":
     test = TrayIconWin()
-    #test.tray_pos_type = gtk.POS_TOP
+    #test.set_pos_type(gtk.POS_TOP)
+    #test.set_pos_type(gtk.POS_BOTTOM)
     test.resize(300, 300)
     test.move(300, 300)
     test.show_all()
