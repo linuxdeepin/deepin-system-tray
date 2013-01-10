@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
+import gtk
 import cairo
 import math
 
@@ -29,28 +29,37 @@ import math
 def cairo_popover (widget, 
                    surface_context, 
                    trayicon_x, trayicon_y, 
-                   w, h, 
+                   trayicon_w, trayicon_h, 
                    radius,
-                   arrow_width, arrow_height, offs=0):
+                   arrow_width, arrow_height, offs=0, pos_type=gtk.POS_TOP):
     cr = surface_context
     x = trayicon_x
     y = trayicon_y
-    w = w - trayicon_x * 2
-    h = h - trayicon_x * 2 
+    w = trayicon_w - trayicon_x * 2
+    h = trayicon_h - trayicon_x * 2 
     #
     if (offs + 50) > (w + 20):
         offs = (w + 20) - 15 - arrow_width
     if (offs < 17):
         offs = 17
+    # set position top, bottom.
+    if pos_type == gtk.POS_BOTTOM:
+        y = y - arrow_height 
+        h -= y  
     # draw.
     cr.arc (x + radius,
             y + arrow_height + radius,
             radius,
             math.pi,
             math.pi * 1.5)
-    cr.line_to(offs, y + arrow_height)
-    cr.rel_line_to(arrow_width / 2.0, -arrow_height)
-    cr.rel_line_to(arrow_width / 2.0, arrow_height)
+
+    if pos_type == gtk.POS_TOP:
+        y_padding = y + arrow_height
+        arrow_height_padding = arrow_height 
+        cr.line_to(offs, y_padding) 
+        cr.rel_line_to(arrow_width / 2.0, -arrow_height_padding)
+        cr.rel_line_to(arrow_width / 2.0, arrow_height_padding)
+
     cr.arc (x + w - radius,
             y + arrow_height + radius,
             radius,
@@ -61,6 +70,13 @@ def cairo_popover (widget,
            radius,
            0,
            math.pi * 0.5)
+    if pos_type == gtk.POS_BOTTOM:
+        y_padding = trayicon_y + h - arrow_height 
+        arrow_height_padding = arrow_height
+        cr.line_to(offs + arrow_width, y_padding) 
+        cr.rel_line_to(-arrow_width / 2.0, arrow_height_padding)
+        cr.rel_line_to(-arrow_width / 2.0, -arrow_height_padding)
+        
     cr.arc(x + radius,
            y + h - radius,
            radius,
@@ -68,8 +84,6 @@ def cairo_popover (widget,
            math.pi)
     
     cr.close_path()
-    
-    
     
 def new_surface(width, height):
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)

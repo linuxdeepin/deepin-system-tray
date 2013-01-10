@@ -51,7 +51,8 @@ class TrayIconWin(gtk.Window):
         self.radius = 5
         self.arrow_width = ARROW_WIDTH
         self.arrow_height = ARROW_WIDTH/2 
-        self.offs = -10
+        self.tray_pos_type = gtk.POS_BOTTOM
+        self.offs = 30 
         self.ali_size = 10
         self.alpha = 0.9
         # colors.
@@ -61,7 +62,7 @@ class TrayIconWin(gtk.Window):
     def init_trayicon_settings(self):
         self.set_colormap(gtk.gdk.Screen().get_rgba_colormap())
         self.set_modal(True)
-        self.set_decorated(False)
+        #self.set_decorated(False)
         self.set_app_paintable(True)
         self.set_skip_pager_hint(True)
         self.set_skip_taskbar_hint(True)
@@ -81,7 +82,7 @@ class TrayIconWin(gtk.Window):
         self.socket = gtk.Socket()
         self.socket.connect("plug-added", self.plugs_add_event)
         self.socket.connect("plug-removed", self.plugs_remove_event)
-        self.main_ali.add(self.socket)
+        #self.main_ali.add(self.socket)
         self.hide_all()
 
     def plugs_add_event(self, socket):
@@ -114,8 +115,6 @@ class TrayIconWin(gtk.Window):
         return (not ((widget.allocation.x <= event.x <= widget.allocation.width) 
                and (widget.allocation.y <= event.y <= widget.allocation.height)))
         
-        
-
     def trayicon_show_event(self, widget):
         gtk.gdk.pointer_grab(
             self.window,
@@ -170,7 +169,8 @@ class TrayIconWin(gtk.Window):
                       self.trayicon_x, self.trayicon_y, 
                       w, h,
                       self.radius, 
-                      self.arrow_width, self.arrow_height, self.offs)
+                      self.arrow_width, self.arrow_height, self.offs,
+                      pos_type=self.tray_pos_type)
         gaussian_blur(self.surface, SAHOW_VALUE)
         self.surface_cr.set_source_rgba( # set sahow color.
                 *alpha_color_hex_to_cairo((self.sahow_color)))
@@ -184,7 +184,8 @@ class TrayIconWin(gtk.Window):
                       self.trayicon_y + self.trayicon_border, 
                       w, h, 
                       self.radius, 
-                      self.arrow_width, self.arrow_height, self.offs) 
+                      self.arrow_width, self.arrow_height, self.offs,
+                      pos_type=self.tray_pos_type)
         self.surface_cr.set_source_rgba( # set out border color.
                 *alpha_color_hex_to_cairo(self.border_out_color))
         self.surface_cr.set_line_width(self.border_width)
@@ -196,7 +197,8 @@ class TrayIconWin(gtk.Window):
                       self.trayicon_y + self.trayicon_border + 1, 
                       w, h, 
                       self.radius, 
-                      self.arrow_width, self.arrow_height, self.offs) 
+                      self.arrow_width, self.arrow_height, self.offs,
+                      self.tray_pos_type) 
         self.surface_cr.set_source_rgba(1, 1, 1, 1.0) # set in border color.
         self.surface_cr.set_line_width(self.border_width)
         self.surface_cr.fill()
@@ -208,6 +210,7 @@ class TrayIconWin(gtk.Window):
         
 if __name__ == "__main__":
     test = TrayIconWin()
+    #test.tray_pos_type = gtk.POS_TOP
     test.resize(300, 300)
     test.move(300, 300)
     test.show_all()
