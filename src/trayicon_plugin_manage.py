@@ -25,9 +25,7 @@ import os
 from vtk.utils import init_config, get_config_file, get_config_path
 from vtk.ini import Config
 
-sys.path.append(get_config_path())
 
-print "path:", sys.path
 class ModulesInfo(object):
     def __init__(self):
         self.id      = ""
@@ -77,19 +75,24 @@ class PluginManage(object):
         for modules_path in scan_modules_path_list:
             modules_path_name = os.path.join(scan_path, modules_path)
             if os.path.isdir(modules_path_name):
-                print "modules_path_name:", modules_path_name
+                #print "modules_path_name:", modules_path_name
                 modules_path_config = os.path.join(modules_path_name, "config.ini")
                 if os.path.exists(modules_path_config):
                     modules_ini = Config(modules_path_config)
                     modules_info = save_modules_info(modules_ini, modules_path_name)
                     if modules_info:
-                        print "include:", modules_info.include
-                        print "menu_icon:", modules_info.menu_icon
-                        print "main_icon:", modules_info.main_icon
-                        modual = __import__("%s.%s" % (modules_info.id, modules_info.include), fromlist=["keywords"])
-                        class_init = modual.return_plugin()
-                        class_run = class_init()
-                        self.keywords.append(class_run)
+                        try:
+                            #print "include:", modules_info.include
+                            #print "menu_icon:", modules_info.menu_icon
+                            #print "main_icon:", modules_info.main_icon
+                            modual = __import__("%s.%s" % (modules_info.id, modules_info.include), fromlist=["keywords"])
+                            class_init = modual.return_plugin()
+                            class_run = class_init()
+                            class_run.menu_icon = modules_info.menu_icon
+                            class_run.main_icon = modules_info.main_icon
+                            self.keywords.append(class_run)
+                        except Exception, e:
+                            print "tray plugin error:", e
 
 
 if __name__ == "__main__":

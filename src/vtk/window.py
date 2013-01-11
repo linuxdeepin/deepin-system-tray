@@ -45,6 +45,7 @@ class TrayIconWin(gtk.Window):
         self.surface = None
         self.old_w = 0
         self.old_h = 0
+        self.old_offset = 0
         self.trayicon_x = SAHOW_VALUE * 2  
         self.trayicon_y = SAHOW_VALUE * 2
         self.trayicon_border = 2.5
@@ -52,7 +53,7 @@ class TrayIconWin(gtk.Window):
         self.arrow_width = ARROW_WIDTH
         self.arrow_height = ARROW_WIDTH/2 
         self.tray_pos_type = gtk.POS_BOTTOM
-        self.offst = 30 
+        self.offset = 30 
         self.ali_size = 10
         self.alpha = 0.95
         # colors.
@@ -76,11 +77,16 @@ class TrayIconWin(gtk.Window):
         self.set_pos_type(self.tray_pos_type)
         self.add(self.draw)
         self.draw.add(self.main_ali)
-        #self.socket = gtk.Socket()
-        #self.socket.connect("plug-added", self.plugs_add_event)
-        #self.socket.connect("plug-removed", self.plugs_remove_event)
-        #self.main_ali.add(self.socket)
         self.hide_all()
+
+    def add_plugin(self, widget):
+        self.main_ali.add(widget)
+
+    def remove_plugin(self, widget):
+        if self.main_ali.get_children() != []:
+            self.main_ali.remove(widget)
+        else:
+            print "main_ali no widgets"
 
     def plugs_add_event(self, socket):
         pass 
@@ -152,13 +158,15 @@ class TrayIconWin(gtk.Window):
     def on_size_allocate(self, widget, alloc):
         x, y, w, h = self.allocation
         # !! no expose and blur.
-        if (self.old_w == w and self.old_h == h):
+        if ((self.old_w == w and self.old_h == h) 
+            and self.offset == self.old_offset):
             return False
         # 
         self.surface, self.surface_cr = new_surface(w, h)
         self.compute_shadow(w, h)
         self.old_w = w
         self.old_h = h
+        self.old_offset = self.offset
 
     def compute_shadow(self, w, h):
         # sahow.
@@ -166,7 +174,7 @@ class TrayIconWin(gtk.Window):
                       self.trayicon_x, self.trayicon_y, 
                       w, h,
                       self.radius, 
-                      self.arrow_width, self.arrow_height, self.offst,
+                      self.arrow_width, self.arrow_height, self.offset,
                       pos_type=self.tray_pos_type)
         gaussian_blur(self.surface, SAHOW_VALUE)
         self.surface_cr.set_source_rgba( # set sahow color.
@@ -198,7 +206,7 @@ class TrayIconWin(gtk.Window):
                       self.trayicon_y + self.trayicon_border + 1, 
                       w, h + padding_h, 
                       self.radius, 
-                      self.arrow_width, self.arrow_height, self.offst,
+                      self.arrow_width, self.arrow_height, self.offset,
                       self.tray_pos_type) 
         self.surface_cr.set_source_rgba(1, 1, 1, 1.0) # set in border color.
         self.surface_cr.set_line_width(self.border_width)
@@ -231,5 +239,4 @@ if __name__ == "__main__":
     test.resize(300, 300)
     test.move(300, 300)
     test.show_all()
-
     gtk.main()
