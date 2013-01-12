@@ -58,7 +58,7 @@ class TrayIconWin(gtk.Window):
         self.alpha = 0.95
         # colors.
         self.sahow_color = ("#000000", 0.15)
-        self.border_out_color = ("#FF3300", 0.7)
+        self.border_out_color = ("#000000", 1.0)
 
     def init_trayicon_settings(self):
         self.set_colormap(gtk.gdk.Screen().get_rgba_colormap())
@@ -183,23 +183,20 @@ class TrayIconWin(gtk.Window):
         gaussian_blur(self.surface, SAHOW_VALUE)
         # border.
         # out border.
-        '''
         self.surface_cr.clip()
         cairo_popover(self, self.surface_cr, 
-                      self.trayicon_x + self.trayicon_border, 
-                      self.trayicon_y + self.trayicon_border, 
-                      w, h, 
+                      self.trayicon_x + 3, 
+                      self.trayicon_y + 3, 
+                      w, h + 1.5, 
                       self.radius, 
-                      self.arrow_width, self.arrow_height, self.offst,
+                      self.arrow_width, self.arrow_height, self.offset,
                       pos_type=self.tray_pos_type)
         self.surface_cr.set_source_rgba( # set out border color.
                 *alpha_color_hex_to_cairo(self.border_out_color))
         self.surface_cr.set_line_width(self.border_width)
-        #self.surface_cr.fill_preserve()
-        self.surface_cr.stroke()
-        '''
+        self.surface_cr.fill()
         # in border.
-        self.surface_cr.clip()
+        self.surface_cr.reset_clip()
         padding_h = 2
         cairo_popover(self, self.surface_cr, 
                       self.trayicon_x + self.trayicon_border + 1, 
