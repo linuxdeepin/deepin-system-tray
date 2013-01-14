@@ -58,6 +58,7 @@ class PluginManage(object):
         # init config.
         init_config()
         #
+        self.key_dict = {}
         self.keywords = []
         self.config = Config(get_config_file())
         tray_path_list = self.config.get("tray", "PATH").split(",")
@@ -91,6 +92,7 @@ class PluginManage(object):
                             class_run.menu_icon = modules_info.menu_icon
                             class_run.main_icon = modules_info.main_icon
                             self.keywords.append(class_run)
+                            self.key_dict[class_run.id()] = class_run
                         except Exception, e:
                             print "tray plugin error:", e
 

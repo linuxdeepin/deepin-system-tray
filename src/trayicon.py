@@ -22,7 +22,11 @@
 
 from vtk.window import TrayIconWin
 from trayicon_plugin_manage import PluginManage
+from dms import Dms
 import gtk
+import gio
+
+FILE_TMP = "/tmp/msg.tmp"
 
 class TrayIcon(TrayIconWin):
     def __init__(self,
@@ -35,6 +39,8 @@ class TrayIcon(TrayIconWin):
         self.save_trayicon = None
         self.trayicon_list = []
         self.plugin_manage = PluginManage()
+        self.dms = Dms(FILE_TMP)
+        self.dms.connect("changed", self.dms_changed)
         self.tray_icon_to_screen_width = tray_icon_to_screen_width
         self.menu_to_icon_y_padding = menu_to_icon_y_padding
         # Init trayicon position.
@@ -104,9 +110,9 @@ class TrayIcon(TrayIconWin):
 
     def create_tray_icon(self, plug=None):
         tray_icon = gtk.StatusIcon()
-        tray_icon.set_visible(True)
+        tray_icon.set_visible(plug.run())
         tray_icon.set_from_file(plug.menu_icon)
-        plug.init_values([self])
+        plug.init_values([self, tray_icon])
         # init events.
         tray_icon.connect("activate", self.tray_icon_activate, plug)
         tray_icon.connect('popup-menu', self.tray_icon_popup_menu, plug)
@@ -145,6 +151,21 @@ class TrayIcon(TrayIconWin):
         self.resize(1, 1)
         self.set_size_request(width, height)
         self.show_menu()
+
+    def dms_changed(self, dms, argv):        
+        if self.plugin_manage.key_dict.has_key(argv[0]):
+            try:
+                plug = self.plugin_manage.key_dict[argv[0]]
+                if argv[1] == "Quit":
+                    plug.this_list[1].set_visible(False)
+                elif argv[1] == "Start":
+                    plug.this_list[1].set_visible(True)
+                
+                eval(argv[2])(eval(argv[3]))            
+            except Exception, e:
+                print "dms_changed[error]:", e
+                 
+
 
 if __name__ == "__main__":
     test = TrayIcon()
