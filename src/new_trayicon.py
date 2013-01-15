@@ -31,9 +31,10 @@ import select
 import random
 import cairo
 
+(TRAY_ICON_TEXT, TRAY_ICON_IMAGE) = range(0, 2)
 
 class NewTrayIcon(gtk.Plug):
-    def __init__(self):
+    def __init__(self, type=TRAY_ICON_IMAGE):
         gtk.Plug.__init__(self, 0)
         self.init_values()
         self.init_widgets()
@@ -46,9 +47,10 @@ class NewTrayIcon(gtk.Plug):
         # init atom.
         self.opcode_atom = self.xdisplay.intern_atom("_NET_SYSTEM_TRAY_OPCODE")
         self.visual_atom = self.xdisplay.intern_atom("_NET_SYSTEM_TRAY_VISUAL")
-        self.xembed_info_atom = self.xdisplay.intern_atom("_XEMBED_INFO")
-        self.manager_atom = self.xdisplay.intern_atom("_NET_SYSTEM_TRAY_S%d" % (self.xdisplay.get_default_screen()))   
-        self.desktop_atom = self.xdisplay.intern_atom("_NET_WM_DESKTOP")
+        atom = "_NET_SYSTEM_TRAY_S%d" % (self.xdisplay.get_default_screen())
+        self.manager_atom = self.xdisplay.intern_atom(atom) 
+        #self.desktop_atom = self.xdisplay.intern_atom("_NET_WM_DESKTOP")
+        #self.xembed_info_atom = self.xdisplay.intern_atom("_XEMBED_INFO")
         # manager.
         self.manager_win = self.xdisplay.get_selection_owner(self.manager_atom)
         #
@@ -63,7 +65,8 @@ class NewTrayIcon(gtk.Plug):
         self.tray_widget_wind = self.xdisplay.create_resource_object("window", self.plug_xid)
         #self.icon_image = gtk.Image()
         #self.icon_image.set_from_file("icon.png")
-        self.icon_image = gtk.Label("猥琐斌:12:12:12,超级无敌..")
+        #self.icon_image = gtk.Label("猥琐斌:12:12:12,超级无敌..")
+        self.icon_image = gtk.Button("fjdsklf")
         self.icon_image.show()
         self.add(self.icon_image)
         #
@@ -90,6 +93,7 @@ class NewTrayIcon(gtk.Plug):
                            data, 
                            mask):
         data = (data + [0] * (5 - len(data)))[:5]
+        # send client message.
         new_event = Xlib.protocol.event.ClientMessage(
                         window = manager_win.id,
                         client_type = type,
@@ -97,11 +101,38 @@ class NewTrayIcon(gtk.Plug):
                         type = X.ClientMessage
                         )
         manager_win.send_event(new_event, event_mask = mask)
+
+    ########################################################################
+    # @ gtk API.
+    def set_from_file(self, filename):
+        pass
+
+    def set_from_pixbuf(self, pixbuf):
+        pass
+
+    def set_has_tooltip(self, has_tooltip):
+        pass
+
+    def get_has_tooltip(self):
+        pass
+
+    def set_blinking(self, blinking):
+        pass
+
+    def get_size(self):
+        pass 
         
             
 
 if __name__ == "__main__":
-    NewTrayIcon()
+    import time
+    def time_show():
+        time_str = time.localtime(time.time())
+        new_trayicon.icon_image.set_label("%s-%s-%s" % (time_str.tm_hour, time_str.tm_min, time_str.tm_sec))
+        return True
+
+    new_trayicon = NewTrayIcon()
+    gtk.timeout_add(500, time_show)
     gtk.main()
 
 
