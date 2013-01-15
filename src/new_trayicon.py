@@ -1,145 +1,109 @@
-#!coding:utf-8
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 
+# Copyright (C) 2012 Deepin, Inc.
+#               2012 Hailong Qiu
+#
+# Author:     Hailong Qiu <356752238@qq.com>
+# Maintainer: Hailong Qiu <356752238@qq.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+from Xlib import X, display, error, Xatom, Xutil
+from Xlib.ext import shape
+import Xlib.protocol.event
 import gtk
-import struct
-from Xlib import display
+from gtk import gdk
+import gobject 
+import select
+import random
+import cairo
 
 
-class WinStruct(object):
+class NewTrayIcon(gtk.Plug):
     def __init__(self):
-        self.plug = None       # /*gtk.Plug*/
-        self.image_icon = None # /*gtk.Image*/
-        self.tray_icon = None  # /*pixbuf*/
-        self.plug_xlib = None  # /*plug get_id*/
-        self.root_gdk = None
-        self.manager_window = None # /**/
-        self.manager_window_gdk = None
+        gtk.Plug.__init__(self, 0)
+        self.init_values()
+        self.init_widgets()
+        self.start()
 
-def NEW_GET_DISPLAY():
-    xdisplay = display.Display()
-    return xdisplay
-
-class NewTrayIcon(object):
-    def __init__(self):
+    def init_values(self):
         self.xdisplay = display.Display()
-        win_struct = WinStruct()
+        self.screen = self.xdisplay.screen()
+        self.root = self.screen.root
+        # init atom.
+        self.opcode_atom = self.xdisplay.intern_atom("_NET_SYSTEM_TRAY_OPCODE")
+        self.visual_atom = self.xdisplay.intern_atom("_NET_SYSTEM_TRAY_VISUAL")
+        self.xembed_info_atom = self.xdisplay.intern_atom("_XEMBED_INFO")
+        self.manager_atom = self.xdisplay.intern_atom("_NET_SYSTEM_TRAY_S%d" % (self.xdisplay.get_default_screen()))   
+        self.desktop_atom = self.xdisplay.intern_atom("_NET_WM_DESKTOP")
+        # manager.
+        self.manager_win = self.xdisplay.get_selection_owner(self.manager_atom)
         #
-        self.atom_init()
-        self.get_manager_window()
+        self.tray_win = self.xdisplay.create_resource_object("window", self.manager_win.id)
+        self.tray_win.get_full_property(self.visual_atom, Xatom.VISUALID)
 
-    def atom_init(self):
-        temp = "_NET_SYSTEM_TRAY_S%d" % (self.xdisplay.get_default_screen())
-        self.selection_atom = self.xdisplay.intern_atom(temp)
-        temp = "_NET_SYSTEM_TRAY_OPCODE"
-        self.system_tray_opcode_atom = self.xdisplay.intern_atom(temp)
-        self.manager = self.xdisplay.intern_atom("MANAGER")
+    def init_widgets(self):
+        self.add_events(gtk.gdk.ALL_EVENTS_MASK)
+        self.set_size_request(120, 24)
+        self.show()
+        self.plug_xid = self.window.xid
+        self.tray_widget_wind = self.xdisplay.create_resource_object("window", self.plug_xid)
+        #self.icon_image = gtk.Image()
+        #self.icon_image.set_from_file("icon.png")
+        self.icon_image = gtk.Label("猥琐斌:12:12:12,超级无敌..")
+        self.icon_image.show()
+        self.add(self.icon_image)
         #
-         
-        
-    def tray_done(self, win):
-        win.root_gdk.remove_filter(manager_filter, win)
-        win.manager_window_gdk.remove_filter(manager_filter)
+        self.connect("motion-notify-event", self.trayicon_motion_notify_evnet)
+        self.connect("button-press-event", self.trayicon_button_press_event)
 
-        if win.plug:
-            win.plug.destroy()
+    def trayicon_motion_notify_evnet(self, widget, event):
+        print "trayicon_motion_notify_evnet....."
 
-    def get_manager_window(self):
-        manager_window = None
-        gtk.gdk.error_trap_push()
-        self.xdisplay.grab_server()
-        self.xdisplay.get_selection_owner(self.selection_atom)
-        self.xdisplay.ungrab_server()
+    def trayicon_button_press_event(self, widget, event):
+        print "trayicon_button_press_event......"
+
+    def start(self):
+        self.send_event_to_dock(
+                        self.tray_win,
+                        self.opcode_atom,
+                        [X.CurrentTime, 0L, self.tray_widget_wind.id, 0L, 0L],
+                        X.NoEventMask)
         self.xdisplay.flush()
-        if gtk.gdk.error_trap_pop():
-            return False
-        #
-        return manager_window
 
-    def create_tray_and_dock(self, win):
-        # 
-        if win.manager_window == None:
-            win.manager_window = self.get_manager_window()
-        if win.manager_window == None:
-            return None;
-        win.manager_window_gdk = None
-        win.manager_window_gdk = None 
-        win.manager_window_gdk.set_events
-        win.manager_window_gdk.add_filter(manager_filter, win)
-        if (win.plug):
-            win.plug.destroy()
-        # init widgets.
-        win.plug = gtk.Plug(0)
-        win.image_icon = gtk.Image()
-        win.plug.add(win.image_icon)
-        win.image_icon.show()
-        win.plug.show()
-        win.plug.realize()
-        win.plug_xlib = win.plug.get_id()
-
-        win.plug.add_events(gtk.gdk.ALL_EVENTS_MASK)
-        #
-        '''win.plug.connect("motion-notify-event",
-        win.plug.connect("button-press-event",
-        win.plug.connect("configure-event",
-        '''
-        # 
-        self.dock_window(win.manager_window, win.plug_xlib)
-
-    def update_tray_icon(self, win):
-        '''更新图标'''
-        temp = None
-        req_h, req_w = 0, 0
-        gtk.gdk.error_trap_push()
-        if gtk.gdk.error_trap_pop():
-            return False;
+    def send_event_to_dock(self,
+                           manager_win, 
+                           type, 
+                           data, 
+                           mask):
+        data = (data + [0] * (5 - len(data)))[:5]
+        new_event = Xlib.protocol.event.ClientMessage(
+                        window = manager_win.id,
+                        client_type = type,
+                        data = (32, (data)),
+                        type = X.ClientMessage
+                        )
+        manager_win.send_event(new_event, event_mask = mask)
         
-    def dock_window(self, manager_window, window):
-        # XClientMessageEvent ev;
-        ev.type = ClientMessage
-        ev.window = manager_window
-        ev.message_type = system_tray_opcode_atom
-        ev.format = 32
-        # 需要使用struct转换. 
-        ev.data.l[0] = CurrentTime
-        ev.data.l[1] = SYSTEM_TRAY_REQUEST_DOCK
-        ev.data.l[2] = window;
-        ev.data.l[3] = 0
-        ev.data.l[4] = 0
-        #
-        gtk.gdk.error_trap_push()
-        # 发送给dock event.
-        xdisplay = NEW_GET_DISPLAY()
-        xdisplay.send_event(manager_window, False, NoEventMask, ev)
-        xdisplay.sync()
-        gtk.gdk.error_trap_pop()
-
-    def tray_init(self, win):
-        win.manager_window = get_manager_window()
-
-        win.root_gdk.add_filter(self.manager_filter, win)
-
-    def manager_filter(self, xevent, event, win):
-        xdisplay = NEW_GET_DISPLAY()
-        #xdisplay. XGetWindowAttributes
-
-        if (xev.xany.type == ClientMessage
-            and xev.xclient.message_type == manager_atom
-            and xev.xclient.data.l[1] == selection_atom):
-            if True:
-                self.create_tray_and_dock(win)
-        elif xev.xany.window == win.manager_window:
-            if xev.xany.type == DestroyNotify:
-                #if ....print..
-                gtk.gdk.error_trap_push()
-                # xGetWindowAttributes
-        if gtk.gdk.error_trap_push():
-            win.manager_window_gdk.remove_filter(manager_filter)
-
-            if win.plug:
-                win.plug.destroy()
-            win.plug = None
+            
 
 if __name__ == "__main__":
     NewTrayIcon()
     gtk.main()
+
+
+
+
