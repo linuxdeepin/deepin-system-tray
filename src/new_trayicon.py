@@ -22,13 +22,21 @@ def NEW_GET_DISPLAY():
 
 class NewTrayIcon(object):
     def __init__(self):
-        self.selection_atom = None # Atom
-        self.system_tray_opcode_atom = None # Atom
+        self.xdisplay = display.Display()
         win_struct = WinStruct()
         #
+        self.atom_init()
         self.get_manager_window()
-        # selection_atom = XInternAtom(
 
+    def atom_init(self):
+        temp = "_NET_SYSTEM_TRAY_S%d" % (self.xdisplay.get_default_screen())
+        self.selection_atom = self.xdisplay.intern_atom(temp)
+        temp = "_NET_SYSTEM_TRAY_OPCODE"
+        self.system_tray_opcode_atom = self.xdisplay.intern_atom(temp)
+        self.manager = self.xdisplay.intern_atom("MANAGER")
+        #
+         
+        
     def tray_done(self, win):
         win.root_gdk.remove_filter(manager_filter, win)
         win.manager_window_gdk.remove_filter(manager_filter)
@@ -39,11 +47,10 @@ class NewTrayIcon(object):
     def get_manager_window(self):
         manager_window = None
         gtk.gdk.error_trap_push()
-        xdisplay = NEW_GET_DISPLAY()
-        xdisplay.grab_server()
-        #xdisplay.get_selection_owner(selection_atom)
-        xdisplay.ungrab_server()
-        xdisplay.flush()
+        self.xdisplay.grab_server()
+        self.xdisplay.get_selection_owner(self.selection_atom)
+        self.xdisplay.ungrab_server()
+        self.xdisplay.flush()
         if gtk.gdk.error_trap_pop():
             return False
         #
@@ -56,7 +63,7 @@ class NewTrayIcon(object):
         if win.manager_window == None:
             return None;
         win.manager_window_gdk = None
-        win.manager_window_gdk = 
+        win.manager_window_gdk = None 
         win.manager_window_gdk.set_events
         win.manager_window_gdk.add_filter(manager_filter, win)
         if (win.plug):
@@ -119,11 +126,11 @@ class NewTrayIcon(object):
         if (xev.xany.type == ClientMessage
             and xev.xclient.message_type == manager_atom
             and xev.xclient.data.l[1] == selection_atom):
-            if :
+            if True:
                 self.create_tray_and_dock(win)
         elif xev.xany.window == win.manager_window:
             if xev.xany.type == DestroyNotify:
-                if ....print..
+                #if ....print..
                 gtk.gdk.error_trap_push()
                 # xGetWindowAttributes
         if gtk.gdk.error_trap_push():
