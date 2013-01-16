@@ -28,10 +28,6 @@ import cairo
 
 
 
-STATUS_ICON_PIXBUF_TYPE = 0
-STATUS_ICON_IMAGE_FILE_TYPE = 1
-STATUS_ICON_TEXT_TYPE = 2
-
 class StatusIcon(TrayIcon):
     def __init__(self):
         TrayIcon.__init__(self)
@@ -51,7 +47,14 @@ class StatusIcon(TrayIcon):
 
     def draw_function(self, cr, x, y, w, h):
         for element_struct in self.status_icon_list:
-            w_padding = 0
+            # left line.
+            left_line_pixbuf = gtk.gdk.pixbuf_new_from_file("image/Lline.png")
+            draw_pixbuf(cr, 
+                        left_line_pixbuf, 
+                        element_struct.x, 
+                        y + h/2 - left_line_pixbuf.get_height()/2)
+            w_padding = 5
+            end_padding = element_struct.w - 5 
             for element in element_struct.element:
                 if self.pixbuf_check(element):
                     draw_pixbuf(cr, 
@@ -65,6 +68,12 @@ class StatusIcon(TrayIcon):
                               element_struct.x + w_padding, 
                               y + h/2 - get_text_size(element)[1]/2)
                     w_padding = get_text_size(element)[0] + 5
+            # right line.
+            right_line_pixbuf = gtk.gdk.pixbuf_new_from_file("image/Rline.png")
+            draw_pixbuf(cr, 
+                        left_line_pixbuf, 
+                        end_padding, 
+                        y + h/2 - left_line_pixbuf.get_height()/2)
 
     def statusicon_button_release_event(self, widget, event):
         rect = widget.allocation
@@ -74,6 +83,8 @@ class StatusIcon(TrayIcon):
 
     def statusicon_motion_notify_event(self, widget, event):
         print "statusicon_motion_notify_event...."
+        for element_struct in self.status_icon_list:
+            print element_struct
 
     def statusicon_draw_expose_event(self, widget, event):
         cr = widget.window.cairo_create()
@@ -117,9 +128,9 @@ class StatusIcon(TrayIcon):
                 elif self.str_check(element): # text type. 
                     w,h = get_text_size(element)
 
-                save_w += w + 5
+                save_w += w + 5 
                 save_h += h
-
+            
             self.status_element.element = element_list
             self.status_element.x = self.get_start_pointer()
             self.status_element.w = save_w + 5
@@ -173,9 +184,9 @@ if __name__ == "__main__":
     pixbuf = gtk.gdk.pixbuf_new_from_file("image/time_white.png")
     time_element = new_trayicon.status_icon_new([pixbuf,
                                                  "上午 12:12"])
-    pixbuf = gtk.gdk.pixbuf_new_from_file("image/sound_white.png")
-    pixbuf_element = new_trayicon.status_icon_new([pixbuf])
-    name_element = new_trayicon.status_icon_new(["我是邱海龙..."])
+   # pixbuf = gtk.gdk.pixbuf_new_from_file("image/sound_white.png")
+   # pixbuf_element = new_trayicon.status_icon_new([pixbuf])
+   # name_element = new_trayicon.status_icon_new(["我是邱海龙..."])
     
 
     gtk.main()
