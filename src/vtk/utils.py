@@ -20,8 +20,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from constant import DEFAULT_FONT, DEFAULT_FONT_SIZE
 import gtk
 import cairo
+import pangocairo
+import pango
 import math
 import os
 
@@ -95,6 +98,19 @@ def propagate_expose(widget, event):
     if hasattr(widget, "get_child") and widget.get_child() != None:
         widget.propagate_expose(widget.get_child(), event)
         
+def get_text_size(text, text_size=DEFAULT_FONT_SIZE, text_font=DEFAULT_FONT):
+    try:
+        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 0, 0)
+        cr = cairo.Context(surface)
+        context = pangocairo.CairoContext(cr)
+        layout = context.create_layout()
+        temp_font = pango.FontDescription("%s %s" % (text_font, text_size))
+        layout.set_font_description(temp_font)
+        layout.set_text(text)
+        return layout.get_pixel_size()
+    except:
+        return (0, 0)
+
 def get_home_path():
     return os.path.expandvars("$HOME")
 

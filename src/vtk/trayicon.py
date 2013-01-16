@@ -65,7 +65,6 @@ class TrayIcon(gtk.Window):
         self.set_app_paintable(True)
         self.set_skip_pager_hint(True)
         self.set_skip_taskbar_hint(True)
-        self.set_size_request(120, 24)
         self.show()
         self.plug_xid = self.window.xid
         self.tray_widget_wind = self.xdisplay.create_resource_object("window", self.plug_xid)
