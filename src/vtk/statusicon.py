@@ -25,10 +25,16 @@ from utils import propagate_expose, new_surface, get_text_size
 from draw import draw_pixbuf, draw_text
 import gtk
 import cairo
-
+import gobject
 
 
 class StatusIcon(TrayIcon):
+    __gsignals__ = {
+        "tray-motion-notify" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
+                            (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT,)),
+        "tray-button-release" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
+                            (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT,)),
+        }
     def __init__(self):
         TrayIcon.__init__(self)
         self.init_statusiocn_values()
@@ -44,17 +50,20 @@ class StatusIcon(TrayIcon):
         self.connect("expose-event", self.statusicon_draw_expose_event)
         self.connect("button-release-event", self.statusicon_button_release_event)
         self.connect("motion-notify-event", self.statusicon_motion_notify_event)
+        self.connect("leave-notify-event", self.statusicon_leave_notify_event)
 
     def draw_function(self, cr, x, y, w, h):
         for element_struct in self.status_icon_list:
-            # left line.
-            left_line_pixbuf = gtk.gdk.pixbuf_new_from_file("image/Lline.png")
-            draw_pixbuf(cr, 
-                        left_line_pixbuf, 
-                        element_struct.x, 
-                        y + h/2 - left_line_pixbuf.get_height()/2)
+            # draw left line.
+            if element_struct.motion_check:
+                left_line_pixbuf = gtk.gdk.pixbuf_new_from_file("image/Lline.png")
+                draw_pixbuf(cr, 
+                            left_line_pixbuf, 
+                            element_struct.x, 
+                            y + h/2 - left_line_pixbuf.get_height()/2)
+
             w_padding = 5
-            end_padding = element_struct.w - 5 
+            end_padding = element_struct.x + element_struct.w - 2  
             for element in element_struct.element:
                 if self.pixbuf_check(element):
                     draw_pixbuf(cr, 
@@ -68,23 +77,44 @@ class StatusIcon(TrayIcon):
                               element_struct.x + w_padding, 
                               y + h/2 - get_text_size(element)[1]/2)
                     w_padding = get_text_size(element)[0] + 5
-            # right line.
-            right_line_pixbuf = gtk.gdk.pixbuf_new_from_file("image/Rline.png")
-            draw_pixbuf(cr, 
-                        left_line_pixbuf, 
-                        end_padding, 
-                        y + h/2 - left_line_pixbuf.get_height()/2)
+            # draw right line.
+            if element_struct.motion_check:
+                right_line_pixbuf = gtk.gdk.pixbuf_new_from_file("image/Rline.png")
+                draw_pixbuf(cr, 
+                            left_line_pixbuf, 
+                            end_padding, 
+                            y + h/2 - left_line_pixbuf.get_height()/2)
 
     def statusicon_button_release_event(self, widget, event):
+        for element_struct in self.status_icon_list:
+            start_x = element_struct.x
+            end_x = start_x + element_struct.w
+            if start_x < event.x < end_x:
+                self.emit("tray-button-release", element_struct, (start_x, end_x))  
+        '''
         rect = widget.allocation
         print "position:", widget.window.get_root_origin()
         print "position:", widget.window.get_position()
         print "statusicon_button_release_event....", event.x_root, event.y_root, rect.width, rect.height
+        '''
+         
 
     def statusicon_motion_notify_event(self, widget, event):
-        print "statusicon_motion_notify_event...."
         for element_struct in self.status_icon_list:
-            print element_struct
+            start_x = element_struct.x
+            end_x = start_x + element_struct.w
+            if start_x < event.x < end_x:
+                element_struct.motion_check = True
+                self.emit("tray-motion-notify", element_struct, (start_x, end_x))  
+            else:
+                element_struct.motion_check = False
+
+        self.queue_draw()
+
+    def statusicon_leave_notify_event(self, widget, event):
+        for element_struct in self.status_icon_list:
+            element_struct.motion_check = False
+        self.queue_draw()
 
     def statusicon_draw_expose_event(self, widget, event):
         cr = widget.window.cairo_create()
@@ -156,6 +186,7 @@ class StatusIcon(TrayIcon):
 
 class StatusElement(object):
     def __init__(self):
+        self.motion_check = False
         self.id = 0
         self.x = 0 
         self.w = 0
@@ -163,9 +194,21 @@ class StatusElement(object):
         self.element = None
 
 
+gobject.type_register(StatusIcon)
 
 if __name__ == "__main__":
     from tray_time import TrayTime, TRAY_TIME_12_HOUR, TRAY_TIME_24_HOUR
+
+    def tray_motion_notify_event(trayicon, element, arry):
+        print "tray_motion_notify_event...."
+        print element
+        print arry
+
+    def tray_button_release_event(trayicon, element, arry):
+        print "tray_button_release_event..."
+        print element
+        print arry
+        
     def tray_time_send(traytime, text, type):
         time_p = None
         if type == TRAY_TIME_12_HOUR:
@@ -178,17 +221,18 @@ if __name__ == "__main__":
         new_trayicon.queue_draw()
 
     new_trayicon = StatusIcon()
+    new_trayicon.connect("tray_motion_notify", tray_motion_notify_event)
+    new_trayicon.connect("tray-button-release", tray_button_release_event)
     tray_time = TrayTime()
     new_trayicon.show_all()
     tray_time.connect("send-time", tray_time_send)
     pixbuf = gtk.gdk.pixbuf_new_from_file("image/time_white.png")
     time_element = new_trayicon.status_icon_new([pixbuf,
                                                  "上午 12:12"])
-   # pixbuf = gtk.gdk.pixbuf_new_from_file("image/sound_white.png")
-   # pixbuf_element = new_trayicon.status_icon_new([pixbuf])
-   # name_element = new_trayicon.status_icon_new(["我是邱海龙..."])
+    pixbuf = gtk.gdk.pixbuf_new_from_file("image/sound_white.png")
+    pixbuf_element = new_trayicon.status_icon_new([pixbuf])
+    name_element = new_trayicon.status_icon_new(["我是邱海龙..."])
     
-
     gtk.main()
 
 

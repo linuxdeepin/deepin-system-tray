@@ -163,3 +163,5 @@ class Config(gobject.GObject):
             for argv_key in self.section_dict[section_key]:                
                 argv_string = "%s = %s" % (argv_key, self.section_dict[section_key][argv_key])
                 fp.write(argv_string + "\n") # Save argv.                     
+
+
