@@ -20,5 +20,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from constant import DEFAULT_FONT, DEFAULT_FONT_SIZE
+from color import color_hex_to_cairo 
+import cairo
+import pango
+import pangocairo
+
+
+
+
+def draw_pixbuf(cr, pixbuf, x, y, alpha=1.0):
+    cr.set_source_pixbuf(pixbuf, x, y)
+    cr.paint_with_alpha(1.0)
+
+def draw_text(cr, text, x, y, 
+              text_size=DEFAULT_FONT_SIZE,
+              text_color="#FFFFFF",
+              text_font=DEFAULT_FONT,
+              alignment=pango.ALIGN_LEFT):
+    cr.set_source_rgb(*color_hex_to_cairo(text_color)) 
+
+    context = pangocairo.CairoContext(cr)
+    layout = context.create_layout()
+    layout.set_font_description(pango.FontDescription("%s %s" % (text_font, text_size)))
+    layout.set_text(text) 
+    cr.move_to(x, y)
+    context.update_layout(layout)
+    context.show_layout(layout)
 
 

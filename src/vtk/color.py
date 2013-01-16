@@ -25,22 +25,9 @@ import cairo
 import pango
 
 def alpha_color_hex_to_cairo((color, alpha)):
-    '''
-    Convert alpha color (color, alpha) to cairo color (r, g, b, alpha).
-    
-    @param color: Hex color.
-    @param alpha: Alpha value.
-    @return: Return cairo value (red, green, blue, alpha).
-    '''
     (r, g, b) = color_hex_to_cairo(color)
     return (r, g, b, alpha)
     
 def color_hex_to_cairo(color):
-    """ 
-    Convert a html (hex) RGB value to cairo color. 
-     
-    @param color: The color to convert. 
-    @return: A color in cairo format, (red, green, blue). 
-    """ 
     gdk_color = gtk.gdk.color_parse(color)
     return (gdk_color.red / 65535.0, gdk_color.green / 65535.0, gdk_color.blue / 65535.0)

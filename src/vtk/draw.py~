@@ -20,15 +20,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-ALPHA_PRECISION = 16
-PARAM_PRECISION = 7
+import cairo
 
-def get_system_font():
-    import gtk
-    font_widget = gtk.Button()
-    font_name = ' '.join(str(font_widget.get_pango_context().get_font_description()).split(" ")[0:-1])
-    return font_name
 
-DEFAULT_FONT = get_system_font()
-DEFAULT_FONT_SIZE = 10
 
+def draw_pixbuf(cr, pixbuf, x, y, alpha=1.0):
+    cr.set_source_pixbuf(pixbuf, x, y)
+    cr.paint_with_alpha(1.0)
+
+def draw_text(cr, text, x, y):
+    pass
