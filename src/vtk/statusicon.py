@@ -222,16 +222,10 @@ if __name__ == "__main__":
     from tray_time import TRAY_TIME_CN_TYPE, TRAY_TIME_EN_TYPE
     from window import TrayIconWin 
     
-    def test_button_press_event(widget, event):
-        widget.grab_add()
-
-    def test_button_release_event(widget, event):
+    def test_button_press_event(widget):
         print "test_button_press_event"
-        pop_win.move(int(event.x_root), 540) 
-#int(event.y_root - widget.get_size_request()[1]))
-        #pop_win.set_visible(not pop_win.get_visible())
+        pop_win.move(100, 540) 
         pop_win.show_all()
-        #widget.grab_remove()
 
     def tray_time_send(traytime, text, type, language_type):
         time_p = None
@@ -251,8 +245,8 @@ if __name__ == "__main__":
     pixbuf = gtk.gdk.pixbuf_new_from_file("image/time_white.png")
     time_tray = new_trayicon.status_icon_new(text="fdsf", pixbuf=pixbuf)
     #time_tray.set_pixbuf_file("image/sound_white.png")
-    time_tray.connect("button-press-event", test_button_press_event)
-    time_tray.connect("button-release-event", test_button_release_event)
+    #time_tray.connect("button-press-event", test_button_press_event)
+    time_tray.connect("clicked", test_button_press_event)
     #time_tray.connect("motion-notify-event
     #
     sound_tray = new_trayicon.status_icon_new()

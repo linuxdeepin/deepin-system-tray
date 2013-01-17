@@ -115,8 +115,17 @@ class TrayIconWin(gtk.Window):
             self.grab_remove()
 
     def in_window_check(self, widget, event):
+        toplevel = widget.get_toplevel()
+        window_x, window_y = toplevel.get_position()
+        x_root = event.x_root
+        y_root = event.y_root
+        if not ((x_root >= window_x and x_root < window_x + widget.allocation.width) 
+            and (y_root >= window_y and y_root < window_y + widget.allocation.height)):
+            return True
+        '''
         return (not ((widget.allocation.x <= event.x <= widget.allocation.width) 
                and (widget.allocation.y <= event.y <= widget.allocation.height)))
+        '''
         
     def trayicon_show_event(self, widget):
         gtk.gdk.pointer_grab(
