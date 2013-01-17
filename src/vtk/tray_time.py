@@ -59,6 +59,7 @@ class TrayTime(gobject.GObject):
 
     def set_hour_type(self, hour_type):
         self.__tray_time_hour_type = hour_type
+        self.get_time()
 
     def set_deepin_dde_datetime(self):
         self.set_hour_type(not self.set_date.get_boolean("is-24hour"))
