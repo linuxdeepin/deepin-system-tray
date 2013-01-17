@@ -26,10 +26,10 @@ from utils import cn_check
 import gobject
 try:
     import deepin_gsettings
-    deepin_gsettings = 1
+    deepin_gsettings_bool = 1
 except:
     print "Please install deepin linux[www.linuxdeepin.com]..."
-    deepin_gsettings = 0
+    deepin_gsettings_bool = 0
 
 
 TRAY_TIME_12_HOUR = 1
@@ -45,23 +45,23 @@ class TrayTime(gobject.GObject):
         gobject.GObject.__init__(self)
         self.__timer = Timer(1)
         self.__tray_time_hour_type = TRAY_TIME_12_HOUR
-        self.__timer.Enabled  = True 
         self.__timer.connect("Tick", self.__update_time)
         # setting 12/24 hour.    
-        if deepin_gsettings:
+        if deepin_gsettings_bool:
             self.set_date = deepin_gsettings.new("com.deepin.dde.datetime")
             self.set_date.connect("changed", self.set_date_changed)
             self.set_deepin_dde_datetime()
+        # start time.
+        self.__timer.Enabled  = True 
 
     def set_date_changed(self, key):
         self.set_deepin_dde_datetime() 
 
     def set_hour_type(self, hour_type):
-        self.__tray_time_hour = hour_type
+        self.__tray_time_hour_type = hour_type
 
     def set_deepin_dde_datetime(self):
-        if deepin_gsettings:
-            self.set_hour_type(not self.set_date.get_boolean("is-24hour"))
+        self.set_hour_type(not self.set_date.get_boolean("is-24hour"))
 
     def get_time(self):
         time_struct = time.localtime(time.time())
