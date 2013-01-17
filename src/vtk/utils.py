@@ -147,6 +147,15 @@ def init_config():
     if not config_file_check():
         init_config_file()
 
+
+def pixbuf_check(element):
+    return isinstance(element, gtk.gdk.Pixbuf)
+
+def text_check(element):
+    return isinstance(element, str)
+
+
+
 if __name__ == "__main__":
     print get_home_path()
     print get_config_path()

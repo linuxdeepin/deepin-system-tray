@@ -22,6 +22,7 @@
 
 from trayicon import TrayIcon
 from utils import propagate_expose, new_surface, get_text_size
+from utils import pixbuf_check, text_check
 from draw import draw_pixbuf, draw_text
 import gtk
 import cairo
@@ -29,93 +30,34 @@ import gobject
 
 
 class StatusIcon(TrayIcon):
-    __gsignals__ = {
-        "tray-motion-notify" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
-                            (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT,)),
-        "tray-button-release" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
-                            (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT,)),
-        }
     def __init__(self):
         TrayIcon.__init__(self)
+        self.set_size_request(-1, 16)
+        self.init_statusiocn_widgets()
         self.init_statusiocn_values()
-        self.init_statusicon()
+        self.init_statusicon_events()
+
+    def init_statusiocn_widgets(self):
+        self.__main_hbox = gtk.HBox()
+        self.add(self.__main_hbox)
     
     def init_statusiocn_values(self):
-        self.id = -1
-        self.status_icon_list = []
-        self.test_time = ""
         self.draw_function_id = self.draw_function
+        # init left line pixbuf.
+        self.left_line_pixbuf = gtk.gdk.pixbuf_new_from_file("image/Lline.png") 
+        self.left_line_w = self.left_line_pixbuf.get_width()
+        self.left_line_h = self.left_line_pixbuf.get_height()
+        # init right line pixbuf.
+        self.right_lien_pixbuf = gtk.gdk.pixbuf_new_from_file("image/Rline.png")
+        self.right_line_w = self.left_line_pixbuf.get_width()
+        self.right_lien_h = self.right_lien_pixbuf.get_height()
 
-    def init_statusicon(self):
+    def init_statusicon_events(self):
         self.connect("expose-event", self.statusicon_draw_expose_event)
-        self.connect("button-release-event", self.statusicon_button_release_event)
-        self.connect("motion-notify-event", self.statusicon_motion_notify_event)
-        self.connect("leave-notify-event", self.statusicon_leave_notify_event)
 
     def draw_function(self, cr, x, y, w, h):
-        for element_struct in self.status_icon_list:
-            # draw left line.
-            if element_struct.motion_check:
-                left_line_pixbuf = gtk.gdk.pixbuf_new_from_file("image/Lline.png")
-                draw_pixbuf(cr, 
-                            left_line_pixbuf, 
-                            element_struct.x, 
-                            y + h/2 - left_line_pixbuf.get_height()/2)
-
-            w_padding = 5
-            end_padding = element_struct.x + element_struct.w - 2  
-            for element in element_struct.element:
-                if self.pixbuf_check(element):
-                    draw_pixbuf(cr, 
-                                element, 
-                                element_struct.x + w_padding, 
-                                y + h/2 - element.get_height()/2)
-                    w_padding = element.get_width() + 5
-                elif self.str_check(element):
-                    draw_text(cr, 
-                              element, 
-                              element_struct.x + w_padding, 
-                              y + h/2 - get_text_size(element)[1]/2)
-                    w_padding = get_text_size(element)[0] + 5
-            # draw right line.
-            if element_struct.motion_check:
-                right_line_pixbuf = gtk.gdk.pixbuf_new_from_file("image/Rline.png")
-                draw_pixbuf(cr, 
-                            left_line_pixbuf, 
-                            end_padding, 
-                            y + h/2 - left_line_pixbuf.get_height()/2)
-
-    def statusicon_button_release_event(self, widget, event):
-        for element_struct in self.status_icon_list:
-            start_x = element_struct.x
-            end_x = start_x + element_struct.w
-            if start_x < event.x < end_x:
-                self.emit("tray-button-release", element_struct, (start_x, end_x))  
-        '''
-        rect = widget.allocation
-        print "position:", widget.window.get_root_origin()
-        print "position:", widget.window.get_position()
-        print "statusicon_button_release_event....", event.x_root, event.y_root, rect.width, rect.height
-        '''
+        pass
          
-
-    def statusicon_motion_notify_event(self, widget, event):
-        for element_struct in self.status_icon_list:
-            start_x = element_struct.x
-            end_x = start_x + element_struct.w
-            if start_x < event.x < end_x:
-                element_struct.motion_check = True
-                self.emit("tray-motion-notify", element_struct, (start_x, end_x))  
-            else:
-                element_struct.motion_check = False
-
-        self.queue_draw()
-
-    def statusicon_leave_notify_event(self, widget, event):
-        for element_struct in self.status_icon_list:
-            element_struct.motion_check = False
-        self.queue_draw()
-
     def statusicon_draw_expose_event(self, widget, event):
         cr = widget.window.cairo_create()
         rect = widget.allocation
@@ -140,75 +82,95 @@ class StatusIcon(TrayIcon):
     def get_tray_pointer(self):
         return self.window.get_pointer()
 
-    def get_start_pointer(self):
-        w = 0
-        for status in self.status_icon_list:
-            w += status.w 
-            self.set_size_request(w, 24)
-        return w
+    def status_icon_new(self, text="", pixbuf=None):
+        widget = Element() 
+        self.widget_init(widget, text, pixbuf)
+        self.__main_hbox.pack_start(widget)
+        self.__main_hbox.show_all()
+        #
+        print "button pixbuf:", self.get_pixbuf(widget) 
+        print "button text:", self.get_text(widget)
+        return widget
 
-    def status_icon_new(self, element_list):
-        try:
-            self.status_element = StatusElement()
-            save_w, save_h = 0, 0
-            for element in element_list:
-                if self.pixbuf_check(element): # pixbuf type.
-                    w = element.get_width()
-                    h = element.get_height()
-                elif self.str_check(element): # text type. 
-                    w,h = get_text_size(element)
+    def widget_init(self, widget, text, pixbuf):
+        widget.set_size_request(-1, 16)
+        if text_check(text):
+            self.set_text(widget, text)
+        if pixbuf_check(pixbuf):
+            self.set_pixbuf(widget, pixbuf)
+        # connect event.
+        widget.connect("expose-event", self.widget_expose_event)
 
-                save_w += w + 5 
-                save_h += h
-            
-            self.status_element.element = element_list
-            self.status_element.x = self.get_start_pointer()
-            self.status_element.w = save_w + 5
-            self.status_element.h = save_h 
-            self.id += 1
-            self.status_element.id = self.id
-            self.status_icon_list.append(self.status_element) 
-            self.resize_status_icon(self.status_element.x + self.status_element.w)
-            return self.status_element
-        except Exception, e:
-            print "add_status_icon[error]:", e
-            return None
+    def widget_expose_event(self, widget, event):
+        cr = widget.window.cairo_create()
+        rect = widget.allocation
+        x, y, w, h = rect
+        # draw left line.
+        if widget.get_state() == gtk.STATE_PRELIGHT:
+            draw_pixbuf(cr, 
+                        self.left_line_pixbuf, 
+                        x, 
+                        y + h/2 - self.left_line_h/2)
+        # draw text and pixbuf.
+        text = self.get_text(widget) 
+        text_w = 0
+        pixbuf = self.get_pixbuf(widget)
+        pixbuf_w = 0
+        if pixbuf != None:
+            pixbuf_w = pixbuf.get_width() 
+            pixbuf_h = pixbuf.get_height()
+            draw_pixbuf(cr, pixbuf, x + 5, y + h/2 - pixbuf.get_height()/2)
+        if text != "":
+            text_w, text_h = get_text_size(text)
+            draw_text(cr, text, x + pixbuf_w + 5, y + h/2 - text_h/2)
+        # draw right line.
+        if widget.get_state() == gtk.STATE_PRELIGHT:
+            draw_pixbuf(cr, 
+                        self.right_lien_pixbuf, 
+                        x + w - self.right_line_w, 
+                        y + h/2 - self.right_lien_h/2)
+        #
+        w_padding = pixbuf_w + text_w + 5 + self.left_line_w + self.right_line_w
+        widget.set_size_request(w_padding, h)
+        print widget.get_state()
+        #
+        return True
 
-    def pixbuf_check(self, element):
-        return isinstance(element, gtk.gdk.Pixbuf)
+    def get_pixbuf(self, widget):
+        image = widget.get_image()
+        if image:
+            return image.get_pixbuf()
+        else:
+            return image
 
-    def str_check(self, element):
-        return isinstance(element, str)
+    def set_pixbuf(self, widget, pixbuf):
+        image = gtk.Image()
+        image.set_from_pixbuf(pixbuf)
+        widget.set_image(image) 
 
-    def resize_status_icon(self, w):
-        self.set_size_request(w, 24)
-        
+    def get_text(self, widget):
+        return widget.get_label()
 
-class StatusElement(object):
+    def set_text(self, widget, text):
+        widget.set_label(text)
+
+
+class Element(gtk.Button):
     def __init__(self):
-        self.motion_check = False
-        self.id = 0
-        self.x = 0 
-        self.w = 0
-        self.h = 0
-        self.element = None
+        gtk.Button.__init__(self)
+
+    def set_type(self, type):
+        print "image text..."
 
 
 gobject.type_register(StatusIcon)
 
 if __name__ == "__main__":
     from tray_time import TrayTime, TRAY_TIME_12_HOUR, TRAY_TIME_24_HOUR
+    
+    def test_button_press_event(widget, event):
+        print "fjdsklfjdsklfj"
 
-    def tray_motion_notify_event(trayicon, element, arry):
-        print "tray_motion_notify_event...."
-        print element
-        print arry
-
-    def tray_button_release_event(trayicon, element, arry):
-        print "tray_button_release_event..."
-        print element
-        print arry
-        
     def tray_time_send(traytime, text, type):
         time_p = None
         if type == TRAY_TIME_12_HOUR:
@@ -216,23 +178,15 @@ if __name__ == "__main__":
         hour = text[0 + type]
         min = text[1 + type]
         show_str = "%s %s:%s" % (time_p, hour, min)
-        
-        time_element.element[1] = show_str
-        new_trayicon.queue_draw()
+        time_tray.set_label(show_str)
 
     new_trayicon = StatusIcon()
-    new_trayicon.connect("tray_motion_notify", tray_motion_notify_event)
-    new_trayicon.connect("tray-button-release", tray_button_release_event)
-    tray_time = TrayTime()
-    new_trayicon.show_all()
-    tray_time.connect("send-time", tray_time_send)
     pixbuf = gtk.gdk.pixbuf_new_from_file("image/time_white.png")
-    time_element = new_trayicon.status_icon_new([pixbuf,
-                                                 "上午 12:12"])
-    pixbuf = gtk.gdk.pixbuf_new_from_file("image/sound_white.png")
-    pixbuf_element = new_trayicon.status_icon_new([pixbuf])
-    name_element = new_trayicon.status_icon_new(["我是邱海龙..."])
-    
+    time_tray = new_trayicon.status_icon_new(text="fdsf", pixbuf=pixbuf)
+    time_tray.connect("button-press-event", test_button_press_event)
+    new_trayicon.show_all()
+    tray_time = TrayTime()
+    tray_time.connect("send-time", tray_time_send)
     gtk.main()
 
 
