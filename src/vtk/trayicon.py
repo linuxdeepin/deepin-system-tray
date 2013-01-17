@@ -40,6 +40,7 @@ class TrayIcon(gtk.Window):
         self.init_values()
         self.init_widgets()
         self.start()
+        self.start()
 
     def init_values(self):
         self.xdisplay = display.Display()
@@ -84,6 +85,7 @@ class TrayIcon(gtk.Window):
                         [X.CurrentTime, 0L, self.tray_widget_wind.id, 0L, 0L],
                         X.NoEventMask)
         self.xdisplay.flush()
+        print "start......"
 
     def send_event_to_dock(self,
                            manager_win, 

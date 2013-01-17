@@ -154,6 +154,8 @@ def pixbuf_check(element):
 def text_check(element):
     return isinstance(element, str)
 
+def cn_check():
+    return os.environ["LANGUAGE"].startswith("zh_")
 
 
 if __name__ == "__main__":

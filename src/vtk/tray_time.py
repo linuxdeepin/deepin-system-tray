@@ -22,31 +22,57 @@
 
 import time
 from timer import Timer
+from utils import cn_check
 import gobject
+try:
+    import deepin_gsettings
+    deepin_gsettings = 1
+except:
+    print "Please install deepin linux[www.linuxdeepin.com]..."
+    deepin_gsettings = 0
 
 
 TRAY_TIME_12_HOUR = 1
 TRAY_TIME_24_HOUR = 0
+TRAY_TIME_EN_TYPE = False 
+TRAY_TIME_CN_TYPE = True 
 
 class TrayTime(gobject.GObject):
     __gsignals__ = {
         "send-time" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
-                      (gobject.TYPE_PYOBJECT, gobject.TYPE_INT,)) }        
+                      (gobject.TYPE_PYOBJECT, gobject.TYPE_INT, gobject.TYPE_INT)) }        
     def __init__(self):
         gobject.GObject.__init__(self)
         self.__timer = Timer(1)
         self.__tray_time_hour_type = TRAY_TIME_12_HOUR
         self.__timer.Enabled  = True 
         self.__timer.connect("Tick", self.__update_time)
+        # setting 12/24 hour.    
+        if deepin_gsettings:
+            self.set_date = deepin_gsettings.new("com.deepin.dde.datetime")
+            self.set_date.connect("changed", self.set_date_changed)
+            self.set_deepin_dde_datetime()
+
+    def set_date_changed(self, key):
+        self.set_deepin_dde_datetime() 
 
     def set_hour_type(self, hour_type):
         self.__tray_time_hour = hour_type
+
+    def set_deepin_dde_datetime(self):
+        if deepin_gsettings:
+            self.set_hour_type(not self.set_date.get_boolean("is-24hour"))
 
     def get_time(self):
         time_struct = time.localtime(time.time())
         #
         if self.__tray_time_hour_type == TRAY_TIME_12_HOUR: 
             time_show_text = time.strftime("%P %I %M", time.localtime()).split(" ")
+            if cn_check() == TRAY_TIME_EN_TYPE:
+                if time_show_text[0] == "上午":
+                    time_show_text[0] = "AM"
+                else:
+                    time_show_text[0] = "PM"
         elif self.__tray_time_hour_type == TRAY_TIME_24_HOUR:
             time_show_text = time.strftime("%H %M", time.localtime()).split(" ")
         #
@@ -57,7 +83,7 @@ class TrayTime(gobject.GObject):
         if self.__timer.Interval == 1:
             self.__timer.Interval = 1000
         # emit event.
-        self.emit("send-time", self.get_time(), self.__tray_time_hour_type)
+        self.emit("send-time", self.get_time(), self.__tray_time_hour_type, cn_check())
         
 
 if __name__ == "__main__":
