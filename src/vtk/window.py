@@ -62,7 +62,7 @@ class TrayIconWin(gtk.Window):
 
     def init_trayicon_settings(self):
         self.set_colormap(gtk.gdk.Screen().get_rgba_colormap())
-        self.set_modal(True)
+        #self.set_modal(True)
         self.set_decorated(False)
         self.set_app_paintable(True)
         self.set_skip_pager_hint(True)

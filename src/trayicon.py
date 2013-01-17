@@ -22,6 +22,7 @@
 
 from vtk.window import TrayIconWin
 from trayicon_plugin_manage import PluginManage
+from vtk.statusicon import StatusIcon
 from dms import Dms
 import gtk
 import gio
