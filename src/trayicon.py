@@ -136,19 +136,9 @@ class TrayIcon(TrayIconWin):
         self.save_trayicon = plug
         # add child widgets plugs.
         self.add_plugin(self.save_trayicon.plugin_widget())
-        try:
-            width = plug.width
-        except:
-            width = 150
-        try:
-            height = plug.height
-        except:
-            height = -1
-        print "width:", width
         # get tray icon metry.
         self.metry = statusicon.get_geometry()
-        self.resize(1, 1)
-        self.set_size_request(width, height)
+        #self.resize(1, 1)
         self.show_menu()
 
     def dms_changed(self, dms, argv):        
@@ -168,6 +158,6 @@ class TrayIcon(TrayIconWin):
 
 if __name__ == "__main__":
     test = TrayIcon()
-    test.set_size_request(50, -1)
+    #test.set_size_request(50, -1)
     gtk.main()
 
