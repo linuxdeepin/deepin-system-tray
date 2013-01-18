@@ -112,10 +112,14 @@ class TrayIcon(TrayIconWin):
 
     def create_tray_icon(self, plug=None):
         tray_icon = self.status_icon.status_icon_new()
-        tray_icon.set_visible(plug.run())
-        plug.init_values([self, tray_icon])
-        # init events.
-        tray_icon.connect('popup-menu-event', self.tray_icon_popup_menu, plug)
+        try:
+            tray_icon.set_visible(plug.run())
+            plug.init_values([self, tray_icon])
+            # init events.
+            tray_icon.connect('popup-menu-event', self.tray_icon_popup_menu, plug)
+        except Exception, e:
+            print "create_tray_icon[error]:", e
+
         return tray_icon 
 
     def tray_icon_activate(self, statusicon, plug):
@@ -129,17 +133,28 @@ class TrayIcon(TrayIconWin):
         self.init_popup_menu(statusicon, plug)
 
     def init_popup_menu(self, statusicon, plug):
+        error_check = False
         # remove child widget.
-        if self.save_trayicon:
-            self.remove_plugin(self.save_trayicon.plugin_widget())
+        try:
+            if self.save_trayicon:
+                widget = self.save_trayicon.plugin_widget()
+                self.remove_plugin(widget)
+        except Exception, e:
+            print "init_popup_menu[error]:", e
         # save plug.
         self.save_trayicon = plug
         # add child widgets plugs.
-        self.add_plugin(self.save_trayicon.plugin_widget())
+        try:
+            widget = self.save_trayicon.plugin_widget()
+            self.add_plugin(widget)
+        except Exception, e:
+            print "init_popup_menu[error]:", e
+            error_check = True
+
         # get tray icon metry.
         self.metry = statusicon.get_geometry()
-        #self.resize(1, 1)
-        self.show_menu()
+        if not error_check:
+            self.show_menu()
 
     def dms_changed(self, dms, argv):        
         if self.plugin_manage.key_dict.has_key(argv[0]):
