@@ -112,9 +112,7 @@ class TrayIcon(TrayIconWin):
 
     def create_tray_icon(self, plug=None):
         tray_icon = self.status_icon.status_icon_new()
-        print "visi:", plug.run()
         tray_icon.set_visible(plug.run())
-        tray_icon.set_from_file(plug.menu_icon)
         plug.init_values([self, tray_icon])
         # init events.
         tray_icon.connect('popup-menu-event', self.tray_icon_popup_menu, plug)

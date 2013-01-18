@@ -138,7 +138,7 @@ def init_config_path():
 def init_config_file():
     fp = open(get_config_file(), "w")
     fp.write("[tray]\n")
-    fp.write("PATH = /usr/share/deepin-system-settings,\n")
+    fp.write("PATH = /usr/share/deepin-system-settings/modules,\n")
     fp.close()
 
 def init_config():

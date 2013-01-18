@@ -114,7 +114,6 @@ class Element(gtk.Button):
 
     def __init_element_values(self):
         self.__icon_theme = gtk.IconTheme()
-        self.__icon_theme.append_search_path("/home/long/Desktop/source/deepin-system-tray/src/image")
         #
         self.__mode_type = TRAY_IMAGE_TEXT_TYPE
         self.__blinking_check = False
@@ -122,11 +121,11 @@ class Element(gtk.Button):
         self.popup_menu = None
         self.expose_event = self.__expose_event_function 
         # init left line pixbuf.
-        self.left_line_pixbuf = self.load_icon("Lline", size=22)
+        self.left_line_pixbuf = self.load_icon("tray_left_line", size=22)
         self.left_line_w = self.left_line_pixbuf.get_width()
         self.left_line_h = self.left_line_pixbuf.get_height()
         # init right line pixbuf.
-        self.right_lien_pixbuf = self.load_icon("Rline", size=22)
+        self.right_lien_pixbuf = self.load_icon("tray_right_line", size=22)
         self.right_line_w = self.left_line_pixbuf.get_width()
         self.right_lien_h = self.right_lien_pixbuf.get_height()
 
@@ -295,10 +294,10 @@ if __name__ == "__main__":
     pop_win = TrayIconWin()
     #
     time_tray = new_trayicon.status_icon_new()
-    time_tray.set_icon_theme("time_white")
+    time_tray.set_icon_theme("tray_time_icon")
     time_tray.popup_menu = popup_menu_test_function 
     test_tray = new_trayicon.status_icon_new()
-    test_tray.set_icon_theme("sound_white")
+    test_tray.set_icon_theme("tray_sound_icon")
     new_trayicon.show_all()
     # time.
     tray_time = TrayTime()

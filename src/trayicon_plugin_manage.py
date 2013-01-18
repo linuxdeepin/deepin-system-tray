@@ -30,21 +30,18 @@ class ModulesInfo(object):
     def __init__(self):
         self.id      = ""
         self.include = ""
-        self.menu_icon = ""
-        self.main_icon = ""
+        #self.tray_icon = ""
 
 def save_modules_info(config, path):
     include = config.get("main", "include")
     if include:
-        menu_icon = config.get("main", "menu_icon")
-        main_icon = config.get("main", "icon")
+        #tray_icon = config.get("main", "tray_icon")
         id        = config.get("main", "id")
         # save mofules info.   
         modules_info           = ModulesInfo()
         modules_info.id        = id
         modules_info.include   = include
-        modules_info.menu_icon = os.path.join(path, menu_icon)
-        modules_info.main_icon = os.path.join(path, main_icon)
+        #modules_info.tray_icon = tray_icon 
         return modules_info
     else:
         return None
@@ -89,8 +86,7 @@ class PluginManage(object):
                             modual = __import__("%s.%s" % (modules_info.id, modules_info.include), fromlist=["keywords"])
                             class_init = modual.return_plugin()
                             class_run = class_init()
-                            class_run.menu_icon = modules_info.menu_icon
-                            class_run.main_icon = modules_info.main_icon
+                            #class_run.tray_icon = modules_info.tray_icon
                             self.keywords.append(class_run)
                             self.key_dict[class_run.id()] = class_run
                         except Exception, e:
