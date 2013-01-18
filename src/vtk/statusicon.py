@@ -25,6 +25,7 @@ from utils import propagate_expose, new_surface, get_text_size
 from utils import pixbuf_check, text_check
 from draw import draw_pixbuf, draw_text
 import gtk
+import atk
 import cairo
 import gobject
 
@@ -104,14 +105,18 @@ TRAY_TEXT_IMAGE_TYPE, TRAY_IMAGE_TEXT_TYPE = 0, 1
 class Element(gtk.Button):
     def __init__(self):
         gtk.Button.__init__(self)
-        self.init_element_values()
+        self.__init_element_values()
+        self.__init_element_events()
 
-    def init_element_values(self):
-        self.icon_theme = gtk.IconTheme()
-        print __file__
-        self.icon_theme.append_search_path("/home/long/Desktop/source/deepin-system-tray/src/image")
-        self.mode_type = TRAY_IMAGE_TEXT_TYPE
-        self.expose_event_handle = self.expose_event_function 
+    def __init_element_values(self):
+        self.__icon_theme = gtk.IconTheme()
+        self.__icon_theme.append_search_path("/home/long/Desktop/source/deepin-system-tray/src/image")
+        #
+        self.__mode_type = TRAY_IMAGE_TEXT_TYPE
+        self.__blinking_check = False
+        # init event connect function.
+        self.popup_menu = None
+        self.expose_event = self.__expose_event_function 
         # init left line pixbuf.
         self.left_line_pixbuf = self.load_icon("Lline", size=22)
         self.left_line_w = self.left_line_pixbuf.get_width()
@@ -120,8 +125,10 @@ class Element(gtk.Button):
         self.right_lien_pixbuf = self.load_icon("Rline", size=22)
         self.right_line_w = self.left_line_pixbuf.get_width()
         self.right_lien_h = self.right_lien_pixbuf.get_height()
-        # connect event.
-        self.connect("expose-event", self.widget_expose_event)
+
+    def __init_element_events(self):
+        self.connect("clicked", self.__widget_clicked_event)
+        self.connect("expose-event", self.__widget_expose_event)
 
     def get_pixbuf(self):
         image = self.get_image()
@@ -141,7 +148,7 @@ class Element(gtk.Button):
             self.set_pixbuf(pixbuf)
 
     def load_icon(self, name, size=16):
-        return self.icon_theme.load_icon(name, size, gtk.ICON_LOOKUP_FORCE_SIZE)
+        return self.__icon_theme.load_icon(name, size, gtk.ICON_LOOKUP_FORCE_SIZE)
 
     def set_pixbuf_file(self, file_path):
         pixbuf = gtk.gdk.pixbuf_new_from_file(file_path)
@@ -153,21 +160,41 @@ class Element(gtk.Button):
     def set_text(self, text):
         self.set_label(text)
 
-    def set_mode_type(self, mode_type):
-        self.mode_type = mode_type
+    def set_mode_type(self, mode_type): # No
+        self.__mode_type = mode_type
 
     def get_mode_type(self):
-        self.mode_type
+        return self.__mode_type
 
-    def widget_expose_event(self, widget, event):
-        return self.expose_event_handle(widget, event)
+    def get_geometry(self):
+        screen = self.get_screen() 
+        area   = atk.Rectangle()
+        origin = self.window.get_origin() 
+        area.x      = origin[0] 
+        area.y      = origin[1] 
+        area.width  = self.allocation.width
+        area.height = self.allocation.height
+        return (screen, area)
 
-    def expose_event_function(self, widget, event):
+    def set_blinking(self, blinking_check):
+        self.__blinking_check = blinking_check
+
+    def __widget_clicked_event(self, widget):
+        try:
+            if self.popup_menu:
+                self.popup_menu(widget, self.get_geometry())
+        except Exception, e:
+            print "widget_clicked_event[error]:", e
+                
+    def __widget_expose_event(self, widget, event):
+        return self.expose_event(widget, event)
+
+    def __expose_event_function(self, widget, event):
         cr = widget.window.cairo_create()
         rect = widget.allocation
         x, y, w, h = rect
         #
-        self.draw_left_line(widget, cr, x, y, w, h)
+        self.__draw_left_line(widget, cr, x, y, w, h)
         # draw text and pixbuf.
         text = widget.get_text() 
         text_w = 0
@@ -181,15 +208,15 @@ class Element(gtk.Button):
             text_w, text_h = get_text_size(text)
             draw_text(cr, text, x + pixbuf_w + self.left_line_w + 5, y + h/2 - text_h/2)
         #
-        self.draw_right_line(widget, cr, x, y, w, h)
-        self.draw_press_rectangle(widget, cr, x, y, w, h)
+        self.__draw_right_line(widget, cr, x, y, w, h)
+        self.__draw_press_rectangle(widget, cr, x, y, w, h)
         #
         w_padding = pixbuf_w + text_w + 8 + self.left_line_w + self.right_line_w
         widget.set_size_request(w_padding, h)
         #
         return True
 
-    def draw_left_line(self, widget, cr, x, y, w, h):
+    def __draw_left_line(self, widget, cr, x, y, w, h):
         # draw left line.
         if widget.get_state() in [gtk.STATE_PRELIGHT, gtk.STATE_ACTIVE]:
             draw_pixbuf(cr, 
@@ -197,7 +224,7 @@ class Element(gtk.Button):
                         x, 
                         y + h/2 - self.left_line_h/2)
 
-    def draw_right_line(self, widget, cr, x, y, w, h):
+    def __draw_right_line(self, widget, cr, x, y, w, h):
         # draw right line.
         if widget.get_state() in [gtk.STATE_PRELIGHT, gtk.STATE_ACTIVE]:
             draw_pixbuf(cr, 
@@ -205,7 +232,7 @@ class Element(gtk.Button):
                         x + w - self.right_line_w, 
                         y + h/2 - self.right_lien_h/2)
 
-    def draw_press_rectangle(self, widget, cr, x, y, w, h):
+    def __draw_press_rectangle(self, widget, cr, x, y, w, h):
         # draw rectangle.
         if widget.get_state() == gtk.STATE_ACTIVE:
             cr.set_source_rgba(1, 1, 1, 0.1)
@@ -222,9 +249,13 @@ if __name__ == "__main__":
     from tray_time import TRAY_TIME_CN_TYPE, TRAY_TIME_EN_TYPE
     from window import TrayIconWin 
     
-    def test_button_press_event(widget):
-        print "test_button_press_event"
-        pop_win.move(100, 540) 
+    def popup_menu_test_function(widget, geometry):
+        print "test_button_press_event" 
+        metry = geometry 
+        tray_icon_rect = metry[1]        
+        x = tray_icon_rect[0]
+        pop_win.move(x, 540) 
+        pop_win.offset = 80
         pop_win.show_all()
 
     def tray_time_send(traytime, text, type, language_type):
@@ -237,22 +268,18 @@ if __name__ == "__main__":
         if language_type == TRAY_TIME_EN_TYPE:
             show_str = "%s:%s %s" % (hour, min, time_p)
             
-        time_tray.set_label(show_str)
+        time_tray.set_text(show_str)
 
     new_trayicon = StatusIcon()
     pop_win = TrayIconWin()
     #
-    pixbuf = gtk.gdk.pixbuf_new_from_file("image/time_white.png")
-    time_tray = new_trayicon.status_icon_new(text="fdsf", pixbuf=pixbuf)
-    #time_tray.set_pixbuf_file("image/sound_white.png")
-    #time_tray.connect("button-press-event", test_button_press_event)
-    time_tray.connect("clicked", test_button_press_event)
-    #time_tray.connect("motion-notify-event
-    #
-    sound_tray = new_trayicon.status_icon_new()
-    sound_tray.set_icon_theme("voice_white")
-
+    time_tray = new_trayicon.status_icon_new()
+    time_tray.set_icon_theme("time_white")
+    time_tray.popup_menu = popup_menu_test_function 
+    test_tray = new_trayicon.status_icon_new()
+    test_tray.set_icon_theme("sound_white")
     new_trayicon.show_all()
+    #time_tray.set_visible(False)
     # time.
     tray_time = TrayTime()
     tray_time.connect("send-time", tray_time_send)
