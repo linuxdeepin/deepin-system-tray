@@ -86,10 +86,10 @@ class StatusIcon(TrayIcon):
             self.__main_hbox.pack_end(widget)
         else:
             self.__main_hbox.pack_start(widget)
-        self.__main_hbox.show_all()
+        self.__main_hbox.show()
         #
-        print "button pixbuf:", widget.get_pixbuf() 
-        print "button text:", widget.get_text()
+        #print "button pixbuf:", widget.get_pixbuf() 
+        #print "button text:", widget.get_text()
         return widget
 
     def widget_init(self, widget, text, pixbuf):
@@ -103,6 +103,10 @@ class StatusIcon(TrayIcon):
 TRAY_TEXT_IMAGE_TYPE, TRAY_IMAGE_TEXT_TYPE = 0, 1
 
 class Element(gtk.Button):
+    __gsignals__ = {
+        "popup-menu-event" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
+                             (gobject.TYPE_PYOBJECT,)),
+        }
     def __init__(self):
         gtk.Button.__init__(self)
         self.__init_element_values()
@@ -128,7 +132,11 @@ class Element(gtk.Button):
 
     def __init_element_events(self):
         self.connect("clicked", self.__widget_clicked_event)
+        self.connect("button-press-event", self.__widget_button_press_event)
         self.connect("expose-event", self.__widget_expose_event)
+
+    def append_search_path(self, file):
+        self.__icon_theme.append_search_path(file)
 
     def get_pixbuf(self):
         image = self.get_image()
@@ -143,9 +151,12 @@ class Element(gtk.Button):
         self.set_image(image) 
 
     def set_icon_theme(self, name):
-        pixbuf = self.load_icon(name)
-        if pixbuf:
-            self.set_pixbuf(pixbuf)
+        try:
+            pixbuf = self.load_icon(name)
+            if pixbuf:
+                self.set_pixbuf(pixbuf)
+        except Exception, e:
+            print "set_icon_theme[error]:", e
 
     def load_icon(self, name, size=16):
         return self.__icon_theme.load_icon(name, size, gtk.ICON_LOOKUP_FORCE_SIZE)
@@ -153,6 +164,9 @@ class Element(gtk.Button):
     def set_pixbuf_file(self, file_path):
         pixbuf = gtk.gdk.pixbuf_new_from_file(file_path)
         self.set_pixbuf(pixbuf)
+
+    def set_from_file(self, file_path):
+        self.set_pixbuf_file(file_path)
 
     def get_text(self):
         return self.get_label()
@@ -170,7 +184,7 @@ class Element(gtk.Button):
         screen = self.get_screen() 
         area   = atk.Rectangle()
         origin = self.window.get_origin() 
-        area.x      = origin[0] 
+        area.x      = origin[0] + self.allocation.x
         area.y      = origin[1] 
         area.width  = self.allocation.width
         area.height = self.allocation.height
@@ -180,11 +194,17 @@ class Element(gtk.Button):
         self.__blinking_check = blinking_check
 
     def __widget_clicked_event(self, widget):
+        # emit event.
+        self.emit("popup-menu-event", self.get_geometry())
         try:
             if self.popup_menu:
                 self.popup_menu(widget, self.get_geometry())
         except Exception, e:
             print "widget_clicked_event[error]:", e
+
+    def __widget_button_press_event(self, widget, event):
+        if event.button == 3:
+            self.emit("popup-menu-event", self.get_geometry())
                 
     def __widget_expose_event(self, widget, event):
         return self.expose_event(widget, event)
@@ -242,6 +262,7 @@ class Element(gtk.Button):
                          h)
             cr.fill()
 
+gobject.type_register(Element)
 gobject.type_register(StatusIcon)
 
 if __name__ == "__main__":
@@ -279,7 +300,6 @@ if __name__ == "__main__":
     test_tray = new_trayicon.status_icon_new()
     test_tray.set_icon_theme("sound_white")
     new_trayicon.show_all()
-    #time_tray.set_visible(False)
     # time.
     tray_time = TrayTime()
     tray_time.connect("send-time", tray_time_send)
