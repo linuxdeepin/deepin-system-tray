@@ -274,7 +274,7 @@ if __name__ == "__main__":
         metry = geometry 
         tray_icon_rect = metry[1]        
         x = tray_icon_rect[0]
-        pop_win.move(x, 540) 
+        pop_win.move(100, 100) 
         pop_win.offset = 80
         pop_win.show_all()
 

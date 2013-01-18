@@ -26,7 +26,8 @@ import math
 from color import alpha_color_hex_to_cairo, color_hex_to_cairo
 from utils import new_surface
 from utils import cairo_popover 
-from blur.vtk_cairo_blur import gaussian_blur
+#from blur.vtk_cairo_blur import gaussian_blur
+from dtk_cairo_blur import gaussian_blur
 
 SAHOW_VALUE = 2 
 ARROW_WIDTH = 10
