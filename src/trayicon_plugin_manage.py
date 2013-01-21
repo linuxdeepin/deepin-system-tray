@@ -88,6 +88,7 @@ class PluginManage(object):
                             class_run = class_init()
                             #class_run.tray_icon = modules_info.tray_icon
                             try:
+                                print "load plugin[id]:", class_run.id()
                                 index = class_run.insert()
                                 #print "index:", index
                                 self.keywords.insert(index, class_run)
