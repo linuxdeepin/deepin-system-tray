@@ -132,22 +132,28 @@ class TrayIcon(TrayIconWin):
                              ):
         self.init_popup_menu(statusicon, plug)
 
-    def container_remove_all(self, container):
-        container.foreach(lambda widget: container.remove(widget))
-
     def init_popup_menu(self, statusicon, plug):
         error_check = False
         # remove child widget.
-        self.container_remove_all(self.main_ali)
-        # save plug.
-        self.save_trayicon = plug
+        '''
         try:
-        # add child widgets plugs.
-            widget = self.save_trayicon.plugin_widget()
-            self.add_plugin(widget)
+            if self.save_trayicon:
+                widget = self.save_trayicon.plugin_widget()
+                self.remove_plugin(widget)
         except Exception, e:
             print "init_popup_menu[error]:", e
-            error_check = True
+        '''
+        try:
+            self.main_ali.remove(self.save_trayicon.plugin_widget())
+        except Exception, e:
+            print "error[]:",e
+        # save plug.
+        self.save_trayicon = plug
+        # add child widgets plugs.
+        widget = self.save_trayicon.plugin_widget()
+        #self.add_plugin(widget)
+        self.main_ali.add(widget)
+
         # get tray icon metry.
         self.metry = statusicon.get_geometry()
         if not error_check:

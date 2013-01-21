@@ -87,7 +87,13 @@ class PluginManage(object):
                             class_init = modual.return_plugin()
                             class_run = class_init()
                             #class_run.tray_icon = modules_info.tray_icon
-                            self.keywords.append(class_run)
+                            try:
+                                index = class_run.insert()
+                                print "index:", index
+                                self.keywords.insert(index, class_run)
+                            except:
+                                self.keywords.append(class_run)
+                            #
                             self.key_dict[class_run.id()] = class_run
                         except Exception, e:
                             print "tray plugin error:", e
