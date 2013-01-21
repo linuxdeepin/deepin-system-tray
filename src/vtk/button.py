@@ -8,17 +8,20 @@ import gtk
 class SelectButton(gtk.Button):        
     def __init__(self, 
                  text="", 
+                 ali_padding=5,
+                 font_size=8,
                  bg_color="#ebf4fd",
                  line_color="#7da2ce"):
         gtk.Button.__init__(self)
         # init values.
         self.text = text
+        self.font_size=font_size 
+        self.ali_padding = ali_padding
         self.bg_color = bg_color
         self.line_color = line_color
         self.draw_check = False
         width, height = get_text_size(self.text)
-        print "size", width, height
-        self.set_size_request(120, 30)        
+        self.set_size_request(width, height)
         # init events.
         self.add_events(gtk.gdk.ALL_EVENTS_MASK)
         self.connect("button-press-event", self.select_button_button_press_event)
@@ -36,7 +39,6 @@ class SelectButton(gtk.Button):
         rect = widget.allocation
         # 
         if widget.state == gtk.STATE_PRELIGHT:
-            print "select_button_expose_event........"
             # draw rectangle.
             with cairo_disable_antialias(cr):
                 cr.set_source_rgb(*color_hex_to_cairo(self.bg_color))
@@ -55,8 +57,8 @@ class SelectButton(gtk.Button):
                 cr.stroke()              
         # draw text.
         draw_text(cr, self.text,
-                  rect.x,
-                  rect.y + rect.height/2 - get_text_size(self.text)[1]/2,
-                  text_size=8, 
+                  rect.x + self.ali_padding,
+                  rect.y + rect.height/2 - get_text_size(self.text)[1]/2 + 2/1,
+                  text_size=self.font_size, 
                   text_color="#000000")        
         return True
