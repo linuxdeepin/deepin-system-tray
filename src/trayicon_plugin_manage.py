@@ -89,7 +89,7 @@ class PluginManage(object):
                             #class_run.tray_icon = modules_info.tray_icon
                             try:
                                 index = class_run.insert()
-                                print "index:", index
+                                #print "index:", index
                                 self.keywords.insert(index, class_run)
                             except:
                                 self.keywords.append(class_run)
