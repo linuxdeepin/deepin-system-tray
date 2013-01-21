@@ -33,6 +33,7 @@ import gobject
 class StatusIcon(TrayIcon):
     def __init__(self):
         TrayIcon.__init__(self)
+        print self.window.xid
         self.set_size_request(-1, 16)
         self.init_statusiocn_widgets()
         self.init_statusiocn_values()
