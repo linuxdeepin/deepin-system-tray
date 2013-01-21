@@ -27,8 +27,22 @@ import pangocairo
 import pango
 import math
 import os
+from contextlib import contextmanager
 
-
+@contextmanager
+def cairo_disable_antialias(cr):
+    # Save antialias.
+    antialias = cr.get_antialias()
+    
+    cr.set_antialias(cairo.ANTIALIAS_NONE)
+    try:  
+        yield  
+    except Exception, e:  
+        print 'function cairo_disable_antialias got error: %s' % e  
+        traceback.print_exc(file=sys.stdout)
+    else:  
+        # Restore antialias.
+        cr.set_antialias(antialias)
 
 def cairo_popover (widget, 
                    surface_context, 
