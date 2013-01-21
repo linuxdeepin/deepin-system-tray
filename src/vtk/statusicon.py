@@ -120,6 +120,12 @@ class Element(gtk.Button):
         # init event connect function.
         self.popup_menu = None
         self.expose_event = self.__expose_event_function 
+        # add icon paths.
+        import sys 
+        import os
+        file = os.path.abspath(sys.argv[0])
+        path = os.path.dirname(file)
+        self.append_search_path(os.path.join(path, "image"))
         # init left line pixbuf.
         self.left_line_pixbuf = self.load_icon("tray_left_line", size=22)
         self.left_line_w = self.left_line_pixbuf.get_width()
