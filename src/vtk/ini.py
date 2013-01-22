@@ -42,9 +42,6 @@ class Config(gobject.GObject):
         
         # init function.
         try:
-            if not os.path.exists(ini_path):                
-                init_config()
-                
             self.fp = open(ini_path, "r")
             self.init_config()                                            
         except Exception, e:    

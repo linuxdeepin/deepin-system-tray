@@ -169,7 +169,5 @@ class TrayIcon(TrayIconWin):
 
 
 if __name__ == "__main__":
-    test = TrayIcon()
-    #test.set_size_request(50, -1)
+    TrayIcon()
     gtk.main()
-

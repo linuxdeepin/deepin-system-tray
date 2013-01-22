@@ -28,6 +28,8 @@ import gtk
 import atk
 import cairo
 import gobject
+import sys 
+import os
 
 
 class StatusIcon(TrayIcon):
@@ -122,8 +124,6 @@ class Element(gtk.Button):
         self.popup_menu = None
         self.expose_event = self.__expose_event_function 
         # add icon paths.
-        import sys 
-        import os
         file = os.path.abspath(sys.argv[0])
         path = os.path.dirname(file)
         self.append_search_path(os.path.join(path, "image"))
@@ -270,45 +270,4 @@ class Element(gtk.Button):
 
 gobject.type_register(Element)
 gobject.type_register(StatusIcon)
-
-if __name__ == "__main__":
-    from tray_time import TrayTime, TRAY_TIME_12_HOUR, TRAY_TIME_24_HOUR
-    from tray_time import TRAY_TIME_CN_TYPE, TRAY_TIME_EN_TYPE
-    from window import TrayIconWin 
-    
-    def popup_menu_test_function(widget, geometry):
-        print "test_button_press_event" 
-        metry = geometry 
-        tray_icon_rect = metry[1]        
-        x = tray_icon_rect[0]
-        pop_win.move(100, 100) 
-        pop_win.offset = 80
-        pop_win.show_all()
-
-    def tray_time_send(traytime, text, type, language_type):
-        time_p = None
-        if type == TRAY_TIME_12_HOUR:
-            time_p = text[0]
-        hour = text[0 + type]
-        min = text[1 + type]
-        show_str = "%s %s:%s" % (time_p, hour, min)
-        if language_type == TRAY_TIME_EN_TYPE:
-            show_str = "%s:%s %s" % (hour, min, time_p)
-            
-        time_tray.set_text(show_str)
-
-    new_trayicon = StatusIcon()
-    pop_win = TrayIconWin()
-    #
-    time_tray = new_trayicon.status_icon_new()
-    time_tray.set_icon_theme("tray_time_icon")
-    time_tray.popup_menu = popup_menu_test_function 
-    test_tray = new_trayicon.status_icon_new()
-    test_tray.set_icon_theme("tray_sound_icon")
-    new_trayicon.show_all()
-    # time.
-    tray_time = TrayTime()
-    tray_time.connect("send-time", tray_time_send)
-    gtk.main()
-
 

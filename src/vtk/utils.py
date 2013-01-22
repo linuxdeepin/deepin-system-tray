@@ -27,6 +27,7 @@ import pangocairo
 import pango
 import math
 import os
+import sys
 from contextlib import contextmanager
 
 @contextmanager
