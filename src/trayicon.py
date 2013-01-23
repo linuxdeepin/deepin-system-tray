@@ -63,11 +63,11 @@ class TrayIcon(TrayIconWin):
             self.hide_menu()
      
     def show_menu(self):
-        self.move_menu()
-        self.show_all()
         # run plug show menu function.
         if self.save_trayicon:
             self.save_trayicon.show_menu()
+        self.move_menu()
+        self.show_all()
     
     def hide_menu(self):
         self.hide_all()        

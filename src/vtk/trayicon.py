@@ -36,6 +36,7 @@ import cairo
 class TrayIcon(gtk.Window):
     def __init__(self):
         gtk.Window.__init__(self)
+        self.set_wmclass("deepintrayicon", "DeepinTrayIcon")
         self.set_colormap(gtk.gdk.Screen().get_rgba_colormap())
         self.init_values()
         self.init_widgets()
