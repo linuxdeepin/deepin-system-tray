@@ -88,7 +88,7 @@ class TrayIcon(TrayIconWin):
             x = tray_icon_rect[0] + tray_icon_rect[2]/2 - self.get_size_request()[0]/2
             x -= self.set_max_show_menu(x)
             # get y.
-            y_padding_to_creen = self.allocation.height
+            y_padding_to_creen = self.get_size_request()[1]#self.allocation.height
             if self.allocation.height <= 1:
                 y_padding_to_creen = self.get_size_request()[1]
             # 
