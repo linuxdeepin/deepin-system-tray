@@ -195,9 +195,9 @@ class TrayIconWin(gtk.Window):
         # out border.
         self.surface_cr.clip()
         cairo_popover(self, self.surface_cr, 
-                      self.trayicon_x + 3, 
-                      self.trayicon_y + 3, 
-                      w, h + 1.5, 
+                      self.trayicon_x + self.trayicon_border, 
+                      self.trayicon_y + self.trayicon_border, 
+                      w, h + 1, 
                       self.radius, 
                       self.arrow_width, self.arrow_height, self.offset,
                       pos_type=self.tray_pos_type)
@@ -207,10 +207,10 @@ class TrayIconWin(gtk.Window):
         self.surface_cr.fill()
         # in border.
         self.surface_cr.reset_clip()
-        padding_h = 2
+        padding_h = 0.7 
         cairo_popover(self, self.surface_cr, 
-                      self.trayicon_x + self.trayicon_border + 1, 
-                      self.trayicon_y + self.trayicon_border + 1, 
+                      self.trayicon_x + self.trayicon_border, 
+                      self.trayicon_y + self.trayicon_border, 
                       w, h + padding_h, 
                       self.radius, 
                       self.arrow_width, self.arrow_height, self.offset,

@@ -56,11 +56,6 @@ def cairo_popover (widget,
     y = trayicon_y
     w = trayicon_w - trayicon_x * 2
     h = trayicon_h - trayicon_x * 2 
-    #
-    if (offs + 50) > (w + 20):
-        offs = (w + 20) - 15 - arrow_width
-    if (offs < 17):
-        offs = 17
     # set position top, bottom.
     if pos_type == gtk.POS_BOTTOM:
         y = y - arrow_height 
