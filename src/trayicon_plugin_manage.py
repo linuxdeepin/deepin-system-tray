@@ -87,9 +87,9 @@ class PluginManage(object):
                             #
                             self.key_dict[class_run.id()] = class_run
                         except Exception, e:
+                            print "tray plugin error:", e
                             from traceback import print_exc
                             print_exc()
-                            print "tray plugin error:", e
 
 
  
