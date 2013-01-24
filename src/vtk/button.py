@@ -58,9 +58,10 @@ class SelectButton(gtk.Button):
         # get font width/height.
         font_w, font_h = get_text_size(self.text, text_size=self.font_size)
         # draw text.
-
+        x_padding = rect.x + rect.width - font_w - self.ali_padding
+        x_padding = max(20, x_padding)
         draw_text(cr, self.text,
-                  rect.x + rect.width - font_w - self.ali_padding,
+                  x_padding,
                   rect.y + rect.height/2 - font_h/2,
                   text_size=self.font_size, 
                   text_color="#000000")        
