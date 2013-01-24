@@ -9,7 +9,7 @@ class SelectButton(gtk.Button):
     def __init__(self, 
                  text="", 
                  ali_padding=5,
-                 font_size=8,
+                 font_size=10,
                  bg_color="#ebf4fd",
                  line_color="#7da2ce"):
         gtk.Button.__init__(self)
