@@ -176,6 +176,11 @@ def app_check(bind_name):
         return False
     except:
         return True
+def clear_app_bind(bind_name):
+    try:
+        os.remove(bind_name)
+    except Exception, e:
+        print "clear_app_bind[error]:", e
 
 if __name__ == "__main__":
     print get_home_path()
