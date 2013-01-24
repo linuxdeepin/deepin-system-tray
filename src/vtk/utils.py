@@ -26,6 +26,7 @@ import cairo
 import pangocairo
 import pango
 import math
+import socket
 import os
 import sys
 from contextlib import contextmanager
@@ -167,6 +168,14 @@ def text_check(element):
 def cn_check():
     return os.environ["LANGUAGE"].startswith("zh_")
 
+
+def app_check(bind_name):
+    try:
+        app_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        app_socket.bind(bind_name)
+        return False
+    except:
+        return True
 
 if __name__ == "__main__":
     print get_home_path()

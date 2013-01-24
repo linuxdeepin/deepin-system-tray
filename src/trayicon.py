@@ -23,9 +23,11 @@
 from vtk.window import TrayIconWin
 from trayicon_plugin_manage import PluginManage
 from vtk.statusicon import StatusIcon
+from vtk.utils import app_check
 from dms import Dms
 import gtk
 import gio
+import sys
 
 FILE_TMP = "/tmp/msg.tmp"
 
@@ -36,6 +38,9 @@ class TrayIcon(TrayIconWin):
                  align_size=10
                 ):
         TrayIconWin.__init__(self)
+        #
+        if app_check("deepin-trayicon"):
+            sys.exit()
         # Init values.
         self.save_trayicon = None
         self.trayicon_list = []
