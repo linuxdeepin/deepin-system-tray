@@ -24,33 +24,28 @@ from vtk.window import TrayIconWin
 from trayicon_plugin_manage import PluginManage
 from vtk.statusicon import StatusIcon
 from vtk.utils import app_check, clear_app_bind
+from vtk.unique_service import UniqueService, is_exists
 from dms import Dms
 import gtk
-import gio
 import sys
-import signal
+import dbus
 
 FILE_TMP = "/tmp/msg.tmp"
+APP_DBUS_NAME = "com.deepin.trayicon"
+APP_OBJECT_NAME = "/com/deepin/trayicon"
 
 class TrayIcon(TrayIconWin):
     def __init__(self,
                  menu_to_icon_y_padding=0,
                  tray_icon_to_screen_width=10,
-                 align_size=10,
-                 bind_name="/tmp/deepin-trayicon"
+                 align_size=10
                 ):
         TrayIconWin.__init__(self)
         #
-        self.bind_name = bind_name
-        if app_check(self.bind_name):
+        if is_exists(APP_DBUS_NAME, APP_OBJECT_NAME): 
             sys.exit()
-        self.connect("destroy", self.quit_destroy)
-        # init app signal.
-        signal.signal(signal.SIGTSTP, self.quit_app_clear)
-        signal.signal(signal.SIGQUIT, self.quit_app_clear)
-        signal.signal(signal.SIGTERM, self.quit_app_clear)
-        signal.signal(signal.SIGINT,  self.quit_app_clear)
-        signal.signal(signal.SIGABRT, self.quit_app_clear)
+        app_bus_name = dbus.service.BusName(APP_DBUS_NAME, bus=dbus.SessionBus())
+        UniqueService(app_bus_name, APP_DBUS_NAME, APP_OBJECT_NAME)
         # Init values.
         self.save_trayicon = None
         self.trayicon_list = []
@@ -70,14 +65,8 @@ class TrayIcon(TrayIconWin):
             self.trayicon_list.append(self.create_tray_icon(plug))
 
     def quit_destroy(self, widget):
-        clear_app_bind(self.bind_name)
         gtk.main_quit()
 
-    def quit_app_clear(self, a, b):
-        print "quit_app_clear..."
-        clear_app_bind(self.bind_name)
-        sys.exit()
-        
     def menu_configure_event(self, widget, event):
         self.resize(1, 1)
         self.move_menu() 
