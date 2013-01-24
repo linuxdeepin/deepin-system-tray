@@ -8,7 +8,7 @@ import gtk
 class SelectButton(gtk.Button):        
     def __init__(self, 
                  text="", 
-                 ali_padding=5,
+                 ali_padding=0,
                  font_size=10,
                  bg_color="#ebf4fd",
                  line_color="#7da2ce"):
@@ -58,8 +58,9 @@ class SelectButton(gtk.Button):
         # get font width/height.
         font_w, font_h = get_text_size(self.text, text_size=self.font_size)
         # draw text.
+
         draw_text(cr, self.text,
-                  rect.x + self.ali_padding,
+                  rect.x + rect.width - font_w - self.ali_padding,
                   rect.y + rect.height/2 - font_h/2,
                   text_size=self.font_size, 
                   text_color="#000000")        
