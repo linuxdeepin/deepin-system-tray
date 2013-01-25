@@ -24,6 +24,7 @@ from trayicon import TrayIcon
 from utils import propagate_expose, new_surface, get_text_size
 from utils import pixbuf_check, text_check, get_run_app_path
 from draw import draw_pixbuf, draw_text
+from theme import vtk_theme
 import gtk
 import atk
 import cairo
@@ -115,7 +116,7 @@ class Element(gtk.Button):
         self.__init_element_events()
 
     def __init_element_values(self):
-        self.__icon_theme = gtk.IconTheme()
+        #self.__icon_theme = gtk.IconTheme()
         #
         self.__mode_type = TRAY_IMAGE_TEXT_TYPE
         self.__blinking_check = False
@@ -123,8 +124,8 @@ class Element(gtk.Button):
         self.popup_menu = None
         self.expose_event = self.__expose_event_function 
         # add icon paths.
-        path = get_run_app_path("image")
-        self.append_search_path(path)
+        #path = get_run_app_path("image")
+        #self.append_search_path(path)
         # init left line pixbuf.
         self.left_line_pixbuf = self.load_icon("tray_left_line", size=22)
         self.left_line_w = self.left_line_pixbuf.get_width()
@@ -163,7 +164,7 @@ class Element(gtk.Button):
             print "set_icon_theme[error]:", e
 
     def load_icon(self, name, size=16):
-        return self.__icon_theme.load_icon(name, size, gtk.ICON_LOOKUP_FORCE_SIZE)
+        return vtk_theme.get_pixbuf(name, size)
 
     def set_pixbuf_file(self, file_path):
         pixbuf = gtk.gdk.pixbuf_new_from_file(file_path)

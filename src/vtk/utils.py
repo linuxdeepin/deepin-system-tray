@@ -182,10 +182,10 @@ def clear_app_bind(bind_name):
     except Exception, e:
         print "clear_app_bind[error]:", e
 
-def get_run_app_path(path="image"):
+def get_run_app_path(add_path="image"):
     file = os.path.abspath(sys.argv[0])
     path = os.path.dirname(file)
-    return os.path.join(path, path)
+    return os.path.join(path, add_path)
 
 if __name__ == "__main__":
     print get_home_path()
