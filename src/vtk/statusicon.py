@@ -232,7 +232,7 @@ class Element(gtk.Button):
         if text != "":
             p_w = 5
             if pixbuf == None:
-                p_w = 3
+                p_w = 2
             text_w, text_h = get_text_size(text)
             draw_text(cr, text, x + pixbuf_w + self.left_line_w + p_w, y + h/2 - text_h/2)
         #
