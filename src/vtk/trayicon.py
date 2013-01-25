@@ -31,8 +31,6 @@ import select
 import random
 import cairo
 
-
-
 class TrayIcon(gtk.Window):
     def __init__(self):
         gtk.Window.__init__(self)
@@ -103,26 +101,7 @@ class TrayIcon(gtk.Window):
                         )
         manager_win.send_event(new_event, event_mask = mask)
     
-    ################################################################
-    def get_geometry(self):
-        
-        return (x, y, w, h) 
-
-        
-            
-
 if __name__ == "__main__":
-    def tray_time_send(traytime, text, type):
-        time_p = None
-        if type == TRAY_TIME_12_HOUR:
-            time_p = text[0]
-        hour = text[0 + type]
-        min = text[1 + type]
-        #show_str = "%s %s:%s" % (time_p, hour, min)
-        #new_trayicon.icon_image.set_label(show_str)
-
-    tray_time = TrayTime()
-    tray_time.connect("send-time", tray_time_send)
     new_trayicon = TrayIcon()
     gtk.main()
 

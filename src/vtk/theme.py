@@ -1,5 +1,5 @@
 
-from vtk.tray_theme import Theme
+from tray_theme import Theme
 import gtk
 
 
