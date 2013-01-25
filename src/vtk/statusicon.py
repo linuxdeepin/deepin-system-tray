@@ -22,7 +22,7 @@
 
 from trayicon import TrayIcon
 from utils import propagate_expose, new_surface, get_text_size
-from utils import pixbuf_check, text_check
+from utils import pixbuf_check, text_check, get_run_app_path
 from draw import draw_pixbuf, draw_text
 import gtk
 import atk
@@ -85,9 +85,9 @@ class StatusIcon(TrayIcon):
         widget = Element() 
         self.widget_init(widget, text, pixbuf)
         if type == gtk.POS_LEFT:
-            self.__main_hbox.pack_end(widget)
+            self.__main_hbox.pack_end(widget, True, True)
         else:
-            self.__main_hbox.pack_start(widget)
+            self.__main_hbox.pack_start(widget, True, True)
         self.__main_hbox.show()
         #
         #print "button pixbuf:", widget.get_pixbuf() 
@@ -123,9 +123,8 @@ class Element(gtk.Button):
         self.popup_menu = None
         self.expose_event = self.__expose_event_function 
         # add icon paths.
-        file = os.path.abspath(sys.argv[0])
-        path = os.path.dirname(file)
-        self.append_search_path(os.path.join(path, "image"))
+        path = get_run_app_path("image")
+        self.append_search_path(path)
         # init left line pixbuf.
         self.left_line_pixbuf = self.load_icon("tray_left_line", size=22)
         self.left_line_w = self.left_line_pixbuf.get_width()
@@ -228,13 +227,22 @@ class Element(gtk.Button):
         if pixbuf != None:
             pixbuf_w = pixbuf.get_width() 
             pixbuf_h = pixbuf.get_height()
-            draw_pixbuf(cr, pixbuf, x + 5, y + h/2 - pixbuf.get_height()/2)
+            pixbuf_x_padding = x + 5
+            if text == "":
+                pixbuf_x_padding = x + w/2 - pixbuf_w/2 
+            draw_pixbuf(cr, 
+                        pixbuf, 
+                        pixbuf_x_padding, 
+                        y + h/2 - pixbuf.get_height()/2)
         if text != "":
-            p_w = 5
-            if pixbuf == None:
-                p_w = 2
             text_w, text_h = get_text_size(text)
-            draw_text(cr, text, x + pixbuf_w + self.left_line_w + p_w, y + h/2 - text_h/2)
+            text_x_padding = x + pixbuf_w + self.left_line_w + 5, 
+            if pixbuf == None:
+                text_x_padding = x + w/2 - text_w/2
+            draw_text(cr, 
+                      text, 
+                      text_x_padding,
+                      y + h/2 - text_h/2)
         #
         self.__draw_right_line(widget, cr, x, y, w, h)
         self.__draw_press_rectangle(widget, cr, x, y, w, h)
