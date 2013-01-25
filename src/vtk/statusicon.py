@@ -230,8 +230,11 @@ class Element(gtk.Button):
             pixbuf_h = pixbuf.get_height()
             draw_pixbuf(cr, pixbuf, x + 5, y + h/2 - pixbuf.get_height()/2)
         if text != "":
+            p_w = 5
+            if pixbuf == None:
+                p_w = 3
             text_w, text_h = get_text_size(text)
-            draw_text(cr, text, x + pixbuf_w + self.left_line_w + 5, y + h/2 - text_h/2)
+            draw_text(cr, text, x + pixbuf_w + self.left_line_w + p_w, y + h/2 - text_h/2)
         #
         self.__draw_right_line(widget, cr, x, y, w, h)
         self.__draw_press_rectangle(widget, cr, x, y, w, h)
