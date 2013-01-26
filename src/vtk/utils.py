@@ -187,6 +187,43 @@ def get_run_app_path(add_path="image"):
     path = os.path.dirname(file)
     return os.path.join(path, add_path)
 
+
+def cairo_popover_rectangle(widget, 
+                   surface_context, 
+                   trayicon_x, trayicon_y, 
+                   trayicon_w, trayicon_h, 
+                   radius):
+    cr = surface_context
+    x = trayicon_x
+    y = trayicon_y
+    w = trayicon_w - (trayicon_x * 2)
+    h = trayicon_h - (trayicon_x * 2)
+    # draw.
+    cr.arc (x + radius,
+            y + radius,
+            radius,
+            math.pi,
+            math.pi * 1.5)
+
+    cr.arc (x + w - radius,
+            y + radius,
+            radius,
+            math.pi * 1.5,
+            math.pi * 2.0)
+    cr.arc(x + w - radius,
+           y + h - radius,
+           radius,
+           0,
+           math.pi * 0.5)
+        
+    cr.arc(x + radius,
+           y + h - radius,
+           radius,
+           math.pi * 0.5,
+           math.pi)
+    
+    cr.close_path()
+
 if __name__ == "__main__":
     print get_home_path()
     print get_config_path()

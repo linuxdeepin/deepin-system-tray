@@ -24,8 +24,8 @@ import cairo
 import gtk
 import math
 from color import alpha_color_hex_to_cairo, color_hex_to_cairo
-from utils import new_surface
-from utils import cairo_popover 
+from utils import new_surface, propagate_expose
+from utils import cairo_popover, cairo_popover_rectangle 
 #from blur.vtk_cairo_blur import gaussian_blur
 from dtk_cairo_blur import gaussian_blur
 
@@ -123,10 +123,6 @@ class TrayIconWin(gtk.Window):
         if not ((x_root >= window_x and x_root < window_x + widget.allocation.width) 
             and (y_root >= window_y and y_root < window_y + widget.allocation.height)):
             return True
-        '''
-        return (not ((widget.allocation.x <= event.x <= widget.allocation.width) 
-               and (widget.allocation.y <= event.y <= widget.allocation.height)))
-        '''
         
     def trayicon_show_event(self, widget):
         gtk.gdk.pointer_grab(
@@ -159,10 +155,7 @@ class TrayIconWin(gtk.Window):
         x, y, w, h = rect
         self.expose_event_draw(cr)
         #
-        try:
-            widget.propagate_expose(widget.get_child(), event)
-        except:
-            pass
+        propagate_expose(widget, event)
         return True
 
     def on_size_allocate(self, widget, alloc):
@@ -239,8 +232,126 @@ class TrayIconWin(gtk.Window):
                 int(self.ali_size + self.trayicon_x),
                 int(self.ali_size + self.trayicon_x))
 
+#######################################################################
+
+class Window(gtk.Window):
+    def __init__(self):
+        gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
+        self.init_values()
+        self.init_settings()
+        self.init_widgets()
+        self.init_events()
+
+    def init_values(self):
+        self.surface = None
+        self.old_w = 0
+        self.old_h = 0
+        self.old_offset = 0
+        self.trayicon_x = SAHOW_VALUE * 2  
+        self.trayicon_y = SAHOW_VALUE * 2
+        self.trayicon_border = 3
+        self.radius = 5 
+        self.ali_left = 8 
+        self.ali_right = 8
+        self.ali_top  = 8
+        self.ali_bottom = 7
+        # colors.
+        self.sahow_color = ("#000000", 0.3)
+        self.border_out_color = ("#000000", 1.0)
+
+    def init_settings(self):
+        self.set_colormap(gtk.gdk.Screen().get_rgba_colormap())
+        self.set_decorated(False)
+        self.set_app_paintable(True)
+        #
+        
+    def init_widgets(self):
+        self.__draw = gtk.EventBox()
+        self.main_vbox = gtk.VBox()
+        self.main_ali  = gtk.Alignment(1, 1, 1, 1)
+        # set main_ali padding size.
+        self.main_ali.set_padding(self.ali_top,
+                                  self.ali_bottom,
+                                  self.ali_left,
+                                  self.ali_right)
+        self.main_ali.add(self.main_vbox)
+        self.__draw.add(self.main_ali)
+        self.add(self.__draw)
+
+    def init_events(self):
+        self.add_events(gtk.gdk.ALL_EVENTS_MASK)
+        self.connect("size-allocate", self.__on_size_allocate)
+        self.__draw.connect("expose-event", self.__draw_expose_event)
+        self.connect("destroy", lambda w : gtk.main_quit())
+
+    def __draw_expose_event(self, widget, event):
+        cr = widget.window.cairo_create()
+        rect = widget.allocation
+        #
+        cr.rectangle(*rect)
+        cr.set_source_rgba(1, 1, 1, 0.0)
+        cr.set_operator(cairo.OPERATOR_SOURCE)
+        cr.paint()
+
+        cr = widget.window.cairo_create()
+        x, y, w, h = rect
+        self.__expose_event_draw(cr)
+        propagate_expose(widget, event)    
+        return True
+
+    def __on_size_allocate(self, widget, alloc):
+        x, y, w, h = self.allocation
+        # !! no expose and blur.
+        if ((self.old_w == w and self.old_h == h)):
+            return False
+        # 
+        self.surface, self.surface_cr = new_surface(w, h)
+        self.__compute_shadow(w, h)
+        self.old_w = w
+        self.old_h = h
+
+    def __compute_shadow(self, w, h):
+        # sahow.
+        cairo_popover_rectangle(self, self.surface_cr, 
+                      self.trayicon_x, self.trayicon_y, 
+                      w, h,
+                      self.radius)
+        self.surface_cr.set_source_rgba( # set sahow color.
+                *alpha_color_hex_to_cairo((self.sahow_color)))
+        self.surface_cr.fill_preserve()
+        gaussian_blur(self.surface, SAHOW_VALUE)
+        # border.
+        # out border.
+        self.surface_cr.clip()
+        cairo_popover_rectangle(self, self.surface_cr, 
+                      self.trayicon_x + self.trayicon_border, 
+                      self.trayicon_y + self.trayicon_border, 
+                      w, h + 1, 
+                      self.radius) 
+        self.surface_cr.set_source_rgba( # set out border color.
+                *alpha_color_hex_to_cairo(self.border_out_color))
+        self.surface_cr.set_line_width(self.border_width)
+        self.surface_cr.fill()
+        # in border.
+        self.surface_cr.reset_clip()
+        cairo_popover_rectangle(self, self.surface_cr, 
+                      self.trayicon_x + self.trayicon_border + 1, 
+                      self.trayicon_y + self.trayicon_border + 1, 
+                      w, h + 1, 
+                      self.radius) 
+        self.surface_cr.set_source_rgba(1, 1, 1, 1.0) # set in border color.
+        self.surface_cr.set_line_width(self.border_width)
+        self.surface_cr.fill()
+
+    def __expose_event_draw(self, cr):
+        if self.surface:
+            cr.set_source_surface(self.surface, 0, 0)
+            cr.paint()
+
+        
 if __name__ == "__main__":
-    test = TrayIconWin()
+    #test = TrayIconWin()
+    test = Window()
     #test.set_pos_type(gtk.POS_TOP)
     #test.set_pos_type(gtk.POS_BOTTOM)
     test.resize(300, 300)
