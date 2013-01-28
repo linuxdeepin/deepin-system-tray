@@ -366,6 +366,9 @@ class Window(gtk.Window):
                 *alpha_color_hex_to_cairo(self.border_out_color))
         self.surface_cr.set_line_width(self.border_width)
         self.surface_cr.fill()
+        self.draw_in_border(w, h)
+
+    def draw_in_border(self, w, h):
         # in border.
         self.surface_cr.reset_clip()
         cairo_popover_rectangle(self, self.surface_cr, 
