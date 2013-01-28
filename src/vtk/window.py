@@ -277,14 +277,12 @@ class Window(gtk.Window):
         
     def __init_widgets(self):
         self.__draw = gtk.EventBox()
-        self.main_vbox = gtk.VBox()
         self.main_ali  = gtk.Alignment(1, 1, 1, 1)
         # set main_ali padding size.
         self.main_ali.set_padding(self.ali_top,
                                   self.ali_bottom,
                                   self.ali_left,
                                   self.ali_right)
-        self.main_ali.add(self.main_vbox)
         self.__draw.add(self.main_ali)
         self.add(self.__draw)
 
@@ -394,6 +392,9 @@ class Window(gtk.Window):
     def set_draw_win_type(self, type=DRAW_WIN_TYPE_FG):
         self.draw_win_type = type
         self.queue_draw()
+
+    def add_widget(self, widget):
+        self.main_ali.add(widget)
 
 
 if __name__ == "__main__":
