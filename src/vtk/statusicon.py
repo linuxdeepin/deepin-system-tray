@@ -105,6 +105,17 @@ class StatusIcon(TrayIcon):
 
 TRAY_TEXT_IMAGE_TYPE, TRAY_IMAGE_TEXT_TYPE = 0, 1
 
+
+'''
+@ get_pixbuf : return pixbuf
+@ set_pixbuf : 设置pixbuf
+@ set_icon_theme : 设置主题图表，只需要传入名字
+@ set_from_file : 设置图片途径
+@ set_text  : 设置文本
+@ get_geometry : return x, y, w, h
+@ expose_event(widget, event) : 链接重绘制函数
+'''
+
 class Element(gtk.Button):
     __gsignals__ = {
         "popup-menu-event" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
