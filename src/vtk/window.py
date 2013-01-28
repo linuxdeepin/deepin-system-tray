@@ -241,12 +241,12 @@ DRAW_WIN_TYPE_FG = "fg"
 class Window(gtk.Window):
     def __init__(self):
         gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
-        self.init_values()
-        self.init_settings()
-        self.init_widgets()
-        self.init_events()
+        self.__init_values()
+        self.__init_settings()
+        self.__init_widgets()
+        self.__init_events()
 
-    def init_values(self):
+    def __init_values(self):
         self.surface = None
         self.old_w = 0
         self.old_h = 0
@@ -269,13 +269,13 @@ class Window(gtk.Window):
         self.sahow_color = ("#000000", 0.3)
         self.border_out_color = ("#000000", 1.0)
 
-    def init_settings(self):
+    def __init_settings(self):
         self.set_colormap(gtk.gdk.Screen().get_rgba_colormap())
         self.set_decorated(False)
         self.set_app_paintable(True)
         #
         
-    def init_widgets(self):
+    def __init_widgets(self):
         self.__draw = gtk.EventBox()
         self.main_vbox = gtk.VBox()
         self.main_ali  = gtk.Alignment(1, 1, 1, 1)
@@ -288,7 +288,7 @@ class Window(gtk.Window):
         self.__draw.add(self.main_ali)
         self.add(self.__draw)
 
-    def init_events(self):
+    def __init_events(self):
         self.add_events(gtk.gdk.ALL_EVENTS_MASK)
         self.connect("size-allocate", self.__on_size_allocate)
         self.__draw.connect("expose-event", self.__draw_expose_event)
