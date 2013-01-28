@@ -234,6 +234,10 @@ class TrayIconWin(gtk.Window):
 
 #######################################################################
 
+
+DRAW_WIN_TYPE_BG = "bg"
+DRAW_WIN_TYPE_FG = "fg"
+
 class Window(gtk.Window):
     def __init__(self):
         gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
@@ -256,7 +260,8 @@ class Window(gtk.Window):
         self.ali_top  = 8
         self.ali_bottom = 7
         # pixbuf.
-        self.bg_pixbuf = gtk.gdk.pixbuf_new_from_file("test.jpg")
+        self.draw_win_type = DRAW_WIN_TYPE_FG
+        self.bg_pixbuf = None
         self.bg_alpha = 1.0
         self.bg_x, self.bg_y = 0,0
         self.fg_alpha = 0.8
@@ -300,10 +305,15 @@ class Window(gtk.Window):
 
         cr = widget.window.cairo_create()
         x, y, w, h = rect
-        # draw background.
-        self.draw_background(cr, rect)
-        
+        # draw bg type background.
+        if self.draw_win_type == DRAW_WIN_TYPE_BG:
+            self.draw_background(cr, rect)
+        #
         self.__expose_event_draw(cr)
+        # draw fg type background.
+        if self.draw_win_type == DRAW_WIN_TYPE_FG:
+            self.draw_background(cr, rect)
+        #
         propagate_expose(widget, event)    
         return True
 
@@ -316,8 +326,13 @@ class Window(gtk.Window):
                       w, h + 1, 
                       self.radius) 
         cr.clip()
-        cr.set_source_pixbuf(self.bg_pixbuf, self.bg_x, self.bg_y)
-        cr.paint_with_alpha(self.bg_alpha)
+        if self.bg_pixbuf:
+            cr.set_source_pixbuf(self.bg_pixbuf, self.bg_x, self.bg_y)
+            cr.paint_with_alpha(self.bg_alpha)
+        else:
+            cr.set_source_rgb(1, 1, 1)
+            cr.rectangle(x, y, w, h)
+            cr.fill()
         cr.restore()
 
     def __on_size_allocate(self, widget, alloc):
@@ -369,13 +384,25 @@ class Window(gtk.Window):
             cr.set_source_surface(self.surface, 0, 0)
             cr.paint_with_alpha(self.fg_alpha)
 
-        
+    def set_bg_pixbuf(self, pixbuf, x=0, y=0, alpha=1.0):
+        self.bg_pixbuf = pixbuf
+        self.bg_x = x
+        self.bg_y = y
+        self.bg_alpha = alpha
+        self.queue_draw()
+
+    def set_draw_win_type(self, type=DRAW_WIN_TYPE_FG):
+        self.draw_win_type = type
+        self.queue_draw()
+
+
 if __name__ == "__main__":
     #test = TrayIconWin()
     test = Window()
     #test.set_pos_type(gtk.POS_TOP)
     #test.set_pos_type(gtk.POS_BOTTOM)
-    test.resize(300, 300)
+    test.set_bg_pixbuf(gtk.gdk.pixbuf_new_from_file("test.jpg"))
+    test.resize(500, 500)
     test.move(300, 300)
     test.show_all()
     gtk.main()
