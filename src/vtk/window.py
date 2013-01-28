@@ -255,6 +255,11 @@ class Window(gtk.Window):
         self.ali_right = 8
         self.ali_top  = 8
         self.ali_bottom = 7
+        # pixbuf.
+        self.bg_pixbuf = gtk.gdk.pixbuf_new_from_file("test.jpg")
+        self.bg_alpha = 1.0
+        self.bg_x, self.bg_y = 0,0
+        self.fg_alpha = 0.8
         # colors.
         self.sahow_color = ("#000000", 0.3)
         self.border_out_color = ("#000000", 1.0)
@@ -295,9 +300,25 @@ class Window(gtk.Window):
 
         cr = widget.window.cairo_create()
         x, y, w, h = rect
+        # draw background.
+        self.draw_background(cr, rect)
+        
         self.__expose_event_draw(cr)
         propagate_expose(widget, event)    
         return True
+
+    def draw_background(self, cr, rect):
+        x, y, w, h = rect
+        cr.save()
+        cairo_popover_rectangle(self, cr, 
+                      self.trayicon_x + self.trayicon_border + 1, 
+                      self.trayicon_y + self.trayicon_border + 1, 
+                      w, h + 1, 
+                      self.radius) 
+        cr.clip()
+        cr.set_source_pixbuf(self.bg_pixbuf, self.bg_x, self.bg_y)
+        cr.paint_with_alpha(self.bg_alpha)
+        cr.restore()
 
     def __on_size_allocate(self, widget, alloc):
         x, y, w, h = self.allocation
@@ -346,7 +367,7 @@ class Window(gtk.Window):
     def __expose_event_draw(self, cr):
         if self.surface:
             cr.set_source_surface(self.surface, 0, 0)
-            cr.paint()
+            cr.paint_with_alpha(self.fg_alpha)
 
         
 if __name__ == "__main__":
