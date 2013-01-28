@@ -224,6 +224,16 @@ def cairo_popover_rectangle(widget,
     
     cr.close_path()
 
+def cn_check():
+    return os.environ["LANGUAGE"].startswith("zh_")
+
+def pixbuf_check(element):
+    return isinstance(element, gtk.gdk.Pixbuf)
+
+def text_check(element):
+    return isinstance(element, str)
+
+
 if __name__ == "__main__":
     print get_home_path()
     print get_config_path()
