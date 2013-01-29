@@ -239,8 +239,8 @@ DRAW_WIN_TYPE_BG = "bg"
 DRAW_WIN_TYPE_FG = "fg"
 
 class Window(gtk.Window):
-    def __init__(self):
-        gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
+    def __init__(self, type=gtk.WINDOW_TOPLEVEL):
+        gtk.Window.__init__(self, type)
         self.__init_values()
         self.__init_settings()
         self.__init_widgets()
