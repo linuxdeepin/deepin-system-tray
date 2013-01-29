@@ -234,6 +234,15 @@ def text_check(element):
     return isinstance(element, str)
 
 
+def in_window_check(widget, event):
+    toplevel = widget.get_toplevel()
+    window_x, window_y = toplevel.get_position()
+    x_root = event.x_root
+    y_root = event.y_root
+    if not ((x_root >= window_x and x_root < window_x + widget.allocation.width) 
+        and (y_root >= window_y and y_root < window_y + widget.allocation.height)):
+        return True
+
 if __name__ == "__main__":
     print get_home_path()
     print get_config_path()
