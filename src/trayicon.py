@@ -25,7 +25,7 @@ from trayicon_plugin_manage import PluginManage
 from vtk.statusicon import StatusIcon
 from vtk.utils import app_check, clear_app_bind
 from vtk.unique_service import UniqueService, is_exists
-from dms import Dms
+#from dms import Dms
 import gtk
 import sys
 import dbus
@@ -51,8 +51,8 @@ class TrayIcon(TrayIconWin):
         self.trayicon_list = []
         self.status_icon = StatusIcon()
         self.plugin_manage = PluginManage()
-        self.dms = Dms(FILE_TMP)
-        self.dms.connect("changed", self.dms_changed)
+        #self.dms = Dms(FILE_TMP)
+        #self.dms.connect("changed", self.dms_changed)
         self.tray_icon_to_screen_width = tray_icon_to_screen_width
         self.menu_to_icon_y_padding = menu_to_icon_y_padding
         # Init trayicon position.
@@ -165,7 +165,7 @@ class TrayIcon(TrayIconWin):
         self.metry = statusicon.get_geometry()
         if not error_check:
             self.show_menu()
-
+    '''
     def dms_changed(self, dms, argv):        
         if self.plugin_manage.key_dict.has_key(argv[0]):
             try:
@@ -178,6 +178,7 @@ class TrayIcon(TrayIconWin):
                 eval(argv[2])(eval(argv[3]))            
             except Exception, e:
                 print "dms_changed[error]:", e
+    '''
                  
 
 
