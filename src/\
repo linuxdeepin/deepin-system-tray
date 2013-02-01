@@ -50,6 +50,9 @@ class StatusIcon(TrayIcon):
 
     def init_statusicon_events(self):
         self.connect("expose-event", self.statusicon_draw_expose_event)
+        self.connect("configure-event", self.statusicon_configure_event)
+
+    def statusicon_configure_evenet(self, widget, event):
 
     def draw_function(self, cr, x, y, w, h):
         pass
@@ -86,9 +89,9 @@ class StatusIcon(TrayIcon):
         widget = Element() 
         self.widget_init(widget, text, pixbuf)
         if type == gtk.POS_LEFT:
-            self.__main_hbox.pack_end(widget, False, False)
+            self.__main_hbox.pack_end(widget, True, True)
         else:
-            self.__main_hbox.pack_start(widget, False, False)
+            self.__main_hbox.pack_start(widget, True, True)
         self.__main_hbox.show()
         #
         #print "button pixbuf:", widget.get_pixbuf() 
