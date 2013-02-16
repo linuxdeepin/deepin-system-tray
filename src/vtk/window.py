@@ -247,6 +247,7 @@ class Window(gtk.Window):
         self.__init_events()
 
     def __init_values(self):
+        self.draw_rectangle_bool = True
         self.surface = None
         self.old_w = 0
         self.old_h = 0
@@ -355,18 +356,19 @@ class Window(gtk.Window):
         self.surface_cr.fill_preserve()
         gaussian_blur(self.surface, SAHOW_VALUE)
         # border.
-        # out border.
-        self.surface_cr.clip()
-        cairo_popover_rectangle(self, self.surface_cr, 
-                      self.trayicon_x + self.trayicon_border, 
-                      self.trayicon_y + self.trayicon_border, 
-                      w, h + 1, 
-                      self.radius) 
-        self.surface_cr.set_source_rgba( # set out border color.
-                *alpha_color_hex_to_cairo(self.border_out_color))
-        self.surface_cr.set_line_width(self.border_width)
-        self.surface_cr.fill()
-        self.draw_in_border(w, h)
+        if self.draw_rectangle_bool:
+            # out border.
+            self.surface_cr.clip()
+            cairo_popover_rectangle(self, self.surface_cr, 
+                          self.trayicon_x + self.trayicon_border, 
+                          self.trayicon_y + self.trayicon_border, 
+                          w, h + 1, 
+                          self.radius) 
+            self.surface_cr.set_source_rgba( # set out border color.
+                    *alpha_color_hex_to_cairo(self.border_out_color))
+            self.surface_cr.set_line_width(self.border_width)
+            self.surface_cr.fill()
+            self.draw_in_border(w, h)
 
     def draw_in_border(self, w, h):
         # in border.
@@ -405,7 +407,7 @@ if __name__ == "__main__":
     test = Window()
     #test.set_pos_type(gtk.POS_TOP)
     #test.set_pos_type(gtk.POS_BOTTOM)
-    test.set_bg_pixbuf(gtk.gdk.pixbuf_new_from_file("test.png"))
+    #test.set_bg_pixbuf(gtk.gdk.pixbuf_new_from_file("test.png"))
     test.resize(372, 168)
     test.move(300, 300)
     test.show_all()
