@@ -37,13 +37,17 @@ def draw_text(cr, text, x, y,
               text_size=DEFAULT_FONT_SIZE,
               text_color="#FFFFFF",
               text_font=DEFAULT_FONT,
-              alignment=pango.ALIGN_LEFT):
+              alignment=pango.ALIGN_LEFT,
+              pango_list=None):
     cr.set_source_rgb(*color_hex_to_cairo(text_color)) 
 
     context = pangocairo.CairoContext(cr)
     layout = context.create_layout()
     layout.set_font_description(pango.FontDescription("%s %s" % (text_font, text_size)))
     layout.set_text(text) 
+    # add pango list attributes.
+    if pango_list:
+        layout.set_attributes(pango_list)
     cr.move_to(x, y)
     context.update_layout(layout)
     context.show_layout(layout)

@@ -86,9 +86,9 @@ class StatusIcon(TrayIcon):
         widget = Element() 
         self.widget_init(widget, text, pixbuf)
         if type == gtk.POS_LEFT:
-            self.__main_hbox.pack_end(widget, True, True)
+            self.__main_hbox.pack_end(widget, False, False)
         else:
-            self.__main_hbox.pack_start(widget, True, True)
+            self.__main_hbox.pack_start(widget, False, False)
         self.__main_hbox.show()
         #
         #print "button pixbuf:", widget.get_pixbuf() 
