@@ -52,4 +52,32 @@ def draw_text(cr, text, x, y,
     context.update_layout(layout)
     context.show_layout(layout)
 
+def draw_tray_text(cr, text, x, y, w, h, 
+                  text_size=DEFAULT_FONT_SIZE,
+                  text_color="#000000",
+                  text_font=DEFAULT_FONT):
+    context = pangocairo.CairoContext(cr)
+    layout = context.create_layout()
+    layout.set_font_description(pango.FontDescription("%s %s" % (text_font, text_size)))
+   
+    cr.set_source_rgb(*color_hex_to_cairo(text_color)) 
+    layout.set_text(text)
 
+    cr.move_to(x, y)
+    cr.save()       
+    cr.layout_path(layout)
+    cr.set_line_width(1)   
+    cr.stroke_preserve()
+    cr.stroke()               
+    cr.restore()
+    cr.set_source_rgb(1, 1, 1)
+    cr.set_operator(cairo.OPERATOR_OVER)               
+    #
+
+    cr.save()
+    cr.rectangle(x, y, w, h)
+    cr.clip()       
+    #
+    cr.move_to(x, y)       
+    context.show_layout(layout)
+        

@@ -23,7 +23,7 @@
 from trayicon import TrayIcon
 from utils import propagate_expose, new_surface, get_text_size
 from utils import pixbuf_check, text_check, get_run_app_path
-from draw import draw_pixbuf, draw_text
+from draw import draw_pixbuf, draw_tray_text
 from theme import vtk_theme
 import gtk
 import atk
@@ -251,10 +251,10 @@ class Element(gtk.Button):
             text_x_padding = x + pixbuf_w + self.left_line_w + 5, 
             if pixbuf == None:
                 text_x_padding = x + w/2 - text_w/2
-            draw_text(cr, 
+            draw_tray_text(cr, 
                       text, 
                       text_x_padding,
-                      y + h/2 - text_h/2)
+                      y + h/2 - text_h/2, w, 16)
         #
         self.__draw_right_line(widget, cr, x, y, w, h)
         self.__draw_press_rectangle(widget, cr, x, y, w, h)
