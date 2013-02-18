@@ -75,7 +75,7 @@ class PluginManage(object):
                     modules_info = save_modules_info(modules_ini, modules_path_name)
                     if modules_info:
                         try:
-                            add_sys_path(scan_path + modules_info.id + "/src")
+                            add_sys_path(scan_path + "/" + modules_info.id + "/src")
                             modual = __import__("%s.%s" % (modules_info.id, modules_info.include), fromlist=["keywords"])
                             class_init = modual.return_plugin()
 
