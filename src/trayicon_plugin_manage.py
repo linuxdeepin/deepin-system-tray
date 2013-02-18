@@ -63,6 +63,8 @@ class PluginManage(object):
 
     def scan_tray_path_modules(self, scan_path):
         scan_modules_path_list = os.listdir(scan_path)
+        for i in range(0, len(scan_modules_path_list)):
+            self.keywords.append(None)
         # add path to sys path.
         add_sys_path(scan_path)
         #
@@ -83,7 +85,11 @@ class PluginManage(object):
                             try:
                                 print "load plugin[id]:", class_run.id()
                                 index = class_run.insert()
-                                self.keywords.insert(index, class_run)
+                                #self.keywords.insert(index, class_run)
+                                if self.keywords[index] == None:
+                                    self.keywords[index] = class_run
+                                else:
+                                    self.keywords.append(class_run)
                             except:
                                 self.keywords.append(class_run)
                             #

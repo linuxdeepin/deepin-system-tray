@@ -62,7 +62,8 @@ class TrayIcon(TrayIconWin):
         self.screen = root.get_screen()
         # create trayicon.
         for plug in self.plugin_manage.keywords:
-            self.trayicon_list.append(self.create_tray_icon(plug))
+            if plug != None:
+                self.trayicon_list.append(self.create_tray_icon(plug))
 
     def quit_destroy(self, widget):
         gtk.main_quit()
