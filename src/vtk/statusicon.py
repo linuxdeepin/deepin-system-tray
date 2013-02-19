@@ -254,7 +254,7 @@ class Element(gtk.Button):
             draw_tray_text(cr, 
                       text, 
                       text_x_padding,
-                      y + h/2 - text_h/2, w, 16)
+                      y + h/2 - text_h/2)
         #
         self.__draw_right_line(widget, cr, x, y, w, h)
         self.__draw_press_rectangle(widget, cr, x, y, w, h)

@@ -52,32 +52,39 @@ def draw_text(cr, text, x, y,
     context.update_layout(layout)
     context.show_layout(layout)
 
-def draw_tray_text(cr, text, x, y, w, h, 
+def draw_tray_text(cr, text, x, y, 
+                  out_text_color="#000000",
+                  in_text_color="#FFFFFF",
+                  line_width=3,
+                  text_font=DEFAULT_FONT,
                   text_size=DEFAULT_FONT_SIZE,
-                  text_color="#000000",
-                  text_font=DEFAULT_FONT):
+                  ):
+    line_width = line_width
+    cr_alpha = 0.5
+    # set out text color.
+    r, g, b = color_hex_to_cairo(out_text_color)
     context = pangocairo.CairoContext(cr)
     layout = context.create_layout()
     layout.set_font_description(pango.FontDescription("%s %s" % (text_font, text_size)))
-   
-    cr.set_source_rgb(*color_hex_to_cairo(text_color)) 
+    # set text.
     layout.set_text(text)
-
+    #
     cr.move_to(x, y)
     cr.save()       
     cr.layout_path(layout)
-    cr.set_line_width(1)   
+    cr.set_line_width(line_width)
+    cr.set_source_rgba(r, g, b, cr_alpha)
     cr.stroke_preserve()
-    cr.stroke()               
+    cr.fill()
     cr.restore()
-    cr.set_source_rgb(1, 1, 1)
-    cr.set_operator(cairo.OPERATOR_OVER)               
-    #
 
     cr.save()
-    cr.rectangle(x, y, w, h)
-    cr.clip()       
-    #
+    cr.new_path()
+
+    r, g, b = color_hex_to_cairo(in_text_color) 
+    cr.set_source_rgb(r, g, b)
+    cr.set_operator(cairo.OPERATOR_OVER)
+
     cr.move_to(x, y)       
     context.show_layout(layout)
         
