@@ -25,6 +25,7 @@ from utils import propagate_expose, new_surface, get_text_size
 from utils import pixbuf_check, text_check, get_run_app_path
 from draw import draw_pixbuf, draw_tray_text
 from theme import vtk_theme
+from timer import Timer
 import gtk
 import atk
 import cairo
@@ -131,6 +132,11 @@ class Element(gtk.Button):
         #
         self.__mode_type = TRAY_IMAGE_TEXT_TYPE
         self.__blinking_check = False
+        self.__rotate_check = False
+        self.rotate_angle = 0
+        # init timer.
+        self.timer = Timer(200)
+        self.timer.connect("Tick", self.timer_tick)
         # init event connect function.
         self.popup_menu = None
         self.expose_event = self.__expose_event_function 
@@ -145,6 +151,10 @@ class Element(gtk.Button):
         self.right_lien_pixbuf = self.load_icon("tray_right_line", size=22)
         self.right_line_w = self.left_line_pixbuf.get_width()
         self.right_lien_h = self.right_lien_pixbuf.get_height()
+
+    def timer_tick(self, tick):
+        self.rotate_angle += 90
+        self.queue_draw()
 
     def __init_element_events(self):
         self.connect("clicked", self.__widget_clicked_event)
@@ -206,8 +216,14 @@ class Element(gtk.Button):
         area.height = self.allocation.height
         return (screen, area)
 
-    def set_blinking(self, blinking_check):
+    def set_blinking(self, blinking_check): # 闪烁
         self.__blinking_check = blinking_check
+
+    def set_rotate(self, rotate_check, interval=None): # 旋转
+        if interval:
+            self.timer.Interval = interval 
+        self.__rotate_check = rotate_check
+        self.timer.Enabled = rotate_check
 
     def __widget_clicked_event(self, widget):
         # emit event.
@@ -242,6 +258,10 @@ class Element(gtk.Button):
             pixbuf_x_padding = x + 5
             if text == "":
                 pixbuf_x_padding = x + w/2 - pixbuf_w/2 
+            # 旋转 rotate.
+            if self.__rotate_check:
+                pixbuf = pixbuf.rotate_simple(self.rotate_angle)
+            # draw pixbuf.
             draw_pixbuf(cr, 
                         pixbuf, 
                         pixbuf_x_padding, 
