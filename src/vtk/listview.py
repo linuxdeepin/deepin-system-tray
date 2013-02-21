@@ -24,19 +24,34 @@
 
 import gtk
 
-class ListView(gtk.Button):
+# view state.
+VIEW_LARGEICON =  0
+VIEW_SMALLICON =  1
+VIEW_LIST      =  2 
+VIEW_DETAILS   =  3
+VIEW_TILE      =  4 
+# header text alignemnt.
+
+
+class ListView(gtk.DrawingArea):
     def __init__(self):
-        gtk.Button.__init__(self)
+        gtk.DrawingArea.__init__(self)
+        self.__init_values()
+        self.__init_events()
 
+    def __init_values(self):
+        self.test_h = 0
         self.__expose_check = True
-        self.select_items = [] # 
-        self.columns = [] # add ColumnHeader
-        self.items = [] # add ListViewItem
+        self.__view_state   = VIEW_DETAILS
+        self.select_items   = [] # 
+        self.columns        = [] # add ColumnHeader
+        self.items          = [] # add ListViewItem
 
-        self.connect("expose-event", self.list_view_expose_event)
+    def __init_events(self):
+        self.connect("expose-event", self.__list_view_expose_event)
 
-    def view(self): # view { LargeIcon, Smallcon, List, Details, Tile }
-        pass
+    def view(self, state): # view { LargeIcon, SmallIcon, List, Details, Tile }
+        self.__view_state = state
 
     def ensure_visible(self):
         pass
@@ -49,13 +64,47 @@ class ListView(gtk.Button):
         self.queue_draw()
 
     def clear(self):
-        pass
+        self.columns = []
+        self.items   = []
 
-    def list_view_expose_event(self, expose, event):
+    def test_expose(self):
+        self.test_h += 30
+        if self.__expose_check:
+            self.queue_draw()
+
+    def __list_view_expose_event(self, widget, event):
         cr = widget.window.cairo_create()
         rect = widget.allocation
+        # 
+        e = self.__save_draw_listviewitem_event_args(widget, event, cr, rect)
         #
+        cr.rectangle(rect.x, rect.y, 100, self.test_h)
+        cr.fill()
+        #
+        self.on_draw_column_header(e)
+        self.on_draw_item(e)
+        self.on_draw_subitem(e)
+        print "epxo check:", self.__expose_check
         return self.__expose_check
+
+    def __save_draw_listviewitem_event_args(self, widget, event, cr, rect):
+        e = DrawListViewItemEventArgs()
+        e.widget = widget
+        e.event  = event
+        e.cr     = cr
+        e.rect   = rect
+        e.select_items = self.select_items
+        return e
+
+    def on_draw_column_header(self, e):
+        print "on_draw_column_header:", e
+
+    def on_draw_item(self, e):
+        print "on_draw_item:", e
+
+    def on_draw_subitem(self, e):
+        print "on_draw_subitem:", e
+
 
 class ColumnHeader(object):
     def __init__(self):
@@ -68,14 +117,26 @@ class ListViewItem(object):
         self.sub_items = []
 
     def clear(self):
-        pass
+        self.sub_items = []
 
 class SubItem(object):
     def __init__(self, text=""):
         self.text = text
 
 
+class DrawListViewItemEventArgs(object):
+    def __init__(self):
+        self.cr     = None
+        self.rect   = None
+        self.event  = None
+        self.widget = None
+        self.select_items = None
+
+
 if __name__ == "__main__":
+    win = gtk.Window(gtk.WINDOW_TOPLEVEL)
+    win.set_size_request(300, 300)
+
     list_view1 = ListView()
     # column header.
     column_header1 = ColumnHeader()
@@ -117,11 +178,19 @@ if __name__ == "__main__":
         for i in range(0, len(item.sub_items)):
             print "item:", item.sub_items[i].text
 
-'''
-可以进行重载的函数，任意画自己想要的东西.
-OnDrawSubItem :
-OnDrawItem :
-OnDrawColumnHeader : 
-'''
+    def test_btn_clicked(widget):
+        list_view1.test_expose()
+
+    list_view1.start_update()
+    #list_view1.end_update()
+    test_vbox = gtk.VBox()
+    test_btn = gtk.Button("click")
+    test_btn.connect("clicked", test_btn_clicked)
+    test_vbox.pack_start(list_view1, True, True)
+    test_vbox.pack_start(test_btn, False, False)
+    win.add(test_vbox)
+    win.show_all()
+    gtk.main()
+
 
 
