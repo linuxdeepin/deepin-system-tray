@@ -154,7 +154,7 @@ class Element(gtk.Button):
         self.right_lien_h = self.right_lien_pixbuf.get_height()
 
     def timer_tick(self, tick):
-        self.rotate_angle += 90
+        self.rotate_angle += 45
         self.queue_draw()
 
     def __init_element_events(self):
@@ -261,12 +261,14 @@ class Element(gtk.Button):
                 pixbuf_x_padding = x + w/2 - pixbuf_w/2 
             # 旋转 rotate.
             if self.__rotate_check:
-                pixbuf = pixbuf.rotate_simple(self.rotate_angle)
+                self.__draw_rotate(cr, rect, pixbuf)
+                #pixbuf = pixbuf.rotate_simple(self.rotate_angle)
+            else:
             # draw pixbuf.
-            draw_pixbuf(cr, 
-                        pixbuf, 
-                        pixbuf_x_padding, 
-                        y + h/2 - pixbuf.get_height()/2)
+                draw_pixbuf(cr, 
+                            pixbuf, 
+                            pixbuf_x_padding, 
+                            y + h/2 - pixbuf.get_height()/2)
         if text != "":
             text_w, text_h = get_text_size(text)
             text_x_padding = x + pixbuf_w + self.left_line_w + 5, 
@@ -284,6 +286,17 @@ class Element(gtk.Button):
         widget.set_size_request(w_padding, 16)
         #
         return True
+
+    def __draw_rotate(self, cr, rect, pixbuf):
+        from dtk.ui.utils import cairo_state
+        from math import radians
+        with cairo_state(cr):
+            cr.translate(rect.x + rect.width/2 , rect.y + rect.height/2)
+            cr.rotate(radians(self.rotate_angle))
+            cr.translate(-rect.width/2, -rect.height/2)
+            x_padding =  rect.width/2 - pixbuf.get_width()/2
+            y_padding = rect.height/2 - pixbuf.get_height()/2
+            draw_pixbuf(cr, pixbuf, x_padding, y_padding)
 
     def __draw_left_line(self, widget, cr, x, y, w, h):
         # draw left line.
