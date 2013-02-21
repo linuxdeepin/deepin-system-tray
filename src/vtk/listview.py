@@ -22,6 +22,7 @@
 
 
 
+from draw import draw_text
 import gtk
 
 # view state.
@@ -42,6 +43,7 @@ class ListView(gtk.DrawingArea):
     def __init_values(self):
         self.test_h = 0
         self.__expose_check = True
+        self.__grid_lines   = False
         self.__view_state   = VIEW_DETAILS
         self.select_items   = [] # 
         self.columns        = [] # add ColumnHeader
@@ -53,6 +55,25 @@ class ListView(gtk.DrawingArea):
     def view(self, state): # view { LargeIcon, SmallIcon, List, Details, Tile }
         self.__view_state = state
 
+    def grid_lines(self, check):
+        self.__grid_lines = check
+
+    def columns_add(self, column):
+        self.columns.append(column)
+        self.__list_view_queue_draw()
+
+    def columns_addrange(self, columns_list):
+        self.columns.extend(columns_list)
+        self.__list_view_queue_draw()
+
+    def items_add(self, item):
+        self.items.append(item)
+        self.__list_view_queue_draw()
+
+    def items_addrange(self, items_list):
+        self.items.extend(items_list)
+        self.__list_view_queue_draw()
+
     def ensure_visible(self):
         pass
 
@@ -61,14 +82,13 @@ class ListView(gtk.DrawingArea):
 
     def end_update(self):
         self.__expose_check = True
-        self.queue_draw()
+        self.__list_view_queue_draw()
 
     def clear(self):
         self.columns = []
         self.items   = []
 
-    def test_expose(self):
-        self.test_h += 30
+    def __list_view_queue_draw(self):
         if self.__expose_check:
             self.queue_draw()
 
@@ -78,8 +98,9 @@ class ListView(gtk.DrawingArea):
         # 
         e = self.__save_draw_listviewitem_event_args(widget, event, cr, rect)
         #
-        cr.rectangle(rect.x, rect.y, 100, self.test_h)
-        cr.fill()
+        for i in range(0, int(rect.height/20) + 1):
+            cr.rectangle(rect.x, rect.y + i * 20, rect.width, 20)
+            cr.stroke()
         #
         self.on_draw_column_header(e)
         self.on_draw_item(e)
@@ -98,6 +119,19 @@ class ListView(gtk.DrawingArea):
 
     def on_draw_column_header(self, e):
         print "on_draw_column_header:", e
+        text_width = 0
+        for column in self.columns:
+            draw_text(e.cr, 
+                      column.text, 
+                      e.rect.x + text_width, e.rect.y, 
+                      text_color="#000000")
+
+            text_width += column.width
+            e.cr.rectangle(e.rect.x + text_width,
+                         e.rect.y,
+                         1,
+                         e.rect.height)
+            e.cr.fill()
 
     def on_draw_item(self, e):
         print "on_draw_item:", e
@@ -110,7 +144,7 @@ class ColumnHeader(object):
     def __init__(self):
         self.text = ""
         self.text_align = "left"
-        self.width = 0
+        self.width = 30 
 
 class ListViewItem(object):
     def __init__(self):
@@ -148,6 +182,7 @@ if __name__ == "__main__":
     # list view item.
     listview_item1 = ListViewItem()
     listview_item2 = ListViewItem()
+    listview_item3 = ListViewItem()
 
     listview_item1.sub_items.append(SubItem("学生"))
     listview_item1.sub_items.append(SubItem("高中"))
@@ -157,12 +192,17 @@ if __name__ == "__main__":
     listview_item2.sub_items.append(SubItem("初三"))
     listview_item2.sub_items.append(SubItem("19"))
 
-    list_view1.columns.extend([column_header1, column_header2])
-    list_view1.columns.append(column_header3)
-    list_view1.items.extend([listview_item1, listview_item2])
+    listview_item3.sub_items.append(SubItem("惊吓"))
+    listview_item3.sub_items.append(SubItem("初二"))
+    listview_item3.sub_items.append(SubItem("29"))
+
+    # append ...
+    list_view1.columns_addrange([column_header1, column_header2])
+    list_view1.columns_add(column_header3)
+    list_view1.items_addrange([listview_item1, listview_item2])
+    list_view1.items_add(listview_item3)
 
     #print list_view1.items[0].sub_items[0].text
-
     for i in range(0, 10):
         lvi = ListViewItem()
         lvi.sub_items.append(SubItem("欧燕 item" + str(i)))
@@ -179,10 +219,17 @@ if __name__ == "__main__":
             print "item:", item.sub_items[i].text
 
     def test_btn_clicked(widget):
-        list_view1.test_expose()
+        '''
+        column_header = ColumnHeader()
+        column_header.text = "性别"
+        list_view1.columns_add(column_header)
+        '''
+        list_view1.columns[0].width += 10
+        list_view1.queue_draw()
 
-    list_view1.start_update()
+    #list_view1.start_update()
     #list_view1.end_update()
+    list_view1.grid_lines(True)
     test_vbox = gtk.VBox()
     test_btn = gtk.Button("click")
     test_btn.connect("clicked", test_btn_clicked)
