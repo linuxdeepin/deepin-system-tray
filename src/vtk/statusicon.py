@@ -136,6 +136,7 @@ class Element(gtk.Button):
         self.rotate_angle = 0
         # init timer.
         self.timer = Timer(200)
+        self.timer.Enabled = False
         self.timer.connect("Tick", self.timer_tick)
         # init event connect function.
         self.popup_menu = None
