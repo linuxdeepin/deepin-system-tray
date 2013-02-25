@@ -29,6 +29,8 @@ import math
 import socket
 import os
 import sys
+import os
+import stat
 from contextlib import contextmanager
 
 @contextmanager
@@ -242,6 +244,26 @@ def in_window_check(widget, event):
     if not ((x_root >= window_x and x_root < window_x + widget.allocation.width) 
         and (y_root >= window_y and y_root < window_y + widget.allocation.height)):
         return True
+
+def is_usb_device(dev_path):
+    try:
+        stat_buf = os.lstat(dev_path)
+    except Exception, e:
+        print "[error]is_usb_device:", e
+	return False
+
+    if stat_buf == None:
+	return False
+    
+    if stat.S_ISBLK(stat_buf.st_mode):
+        major_num = os.major(stat_buf.st_rdev)
+        minor_num = os.minor(stat_buf.st_rdev)
+        link_path = "/sys/dev/block/%d:%d" % (major_num, minor_num)
+        if os.access(link_path, os.F_OK) >= 0:
+            link_string = os.readlink(link_path)
+            if link_string.find("usb") != -1:
+                return True
+    return False
 
 if __name__ == "__main__":
     print get_home_path()
