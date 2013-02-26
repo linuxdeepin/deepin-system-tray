@@ -250,10 +250,10 @@ def is_usb_device(dev_path):
         stat_buf = os.lstat(dev_path)
     except Exception, e:
         print "[error]is_usb_device:", e
-	return False
+        return False
 
     if stat_buf == None:
-	return False
+        return False
     
     if stat.S_ISBLK(stat_buf.st_mode):
         major_num = os.major(stat_buf.st_rdev)
