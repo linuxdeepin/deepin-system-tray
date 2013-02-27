@@ -250,6 +250,7 @@ class Element(gtk.Button):
         self.__draw_left_line(widget, cr, x, y, w, h)
         # draw text and pixbuf.
         text = widget.get_text() 
+        text_size = 9
         text_w = 0
         pixbuf = widget.get_pixbuf()
         pixbuf_w = 0
@@ -270,14 +271,15 @@ class Element(gtk.Button):
                             pixbuf_x_padding, 
                             y + h/2 - pixbuf.get_height()/2)
         if text != "":
-            text_w, text_h = get_text_size(text)
+            text_w, text_h = get_text_size(text, text_size=text_size)
             text_x_padding = x + pixbuf_w + self.left_line_w + 5, 
             if pixbuf == None:
                 text_x_padding = x + w/2 - text_w/2
             draw_tray_text(cr, 
                       text, 
                       text_x_padding,
-                      y + h/2 - text_h/2)
+                      y + h/2 - text_h/2,
+                      text_size=text_size)
         #
         self.__draw_right_line(widget, cr, x, y, w, h)
         self.__draw_press_rectangle(widget, cr, x, y, w, h)
