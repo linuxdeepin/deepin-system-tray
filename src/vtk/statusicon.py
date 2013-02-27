@@ -283,7 +283,7 @@ class Element(gtk.Button):
         self.__draw_press_rectangle(widget, cr, x, y, w, h)
         #
         w_padding = pixbuf_w + text_w + 8 + self.left_line_w + self.right_line_w
-        widget.set_size_request(w_padding, 16)
+        widget.set_size_request(w_padding - 2, 16)
         #
         return True
 
