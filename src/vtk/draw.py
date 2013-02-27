@@ -55,12 +55,12 @@ def draw_text(cr, text, x, y,
 def draw_tray_text(cr, text, x, y, 
                   out_text_color="#000000",
                   in_text_color="#FFFFFF",
-                  line_width=3,
+                  line_width=2,
                   text_font=DEFAULT_FONT,
                   text_size=DEFAULT_FONT_SIZE,
                   ):
     line_width = line_width
-    cr_alpha = 0.3
+    cr_alpha = 0.35
     # set out text color.
     r, g, b = color_hex_to_cairo(out_text_color)
     context = pangocairo.CairoContext(cr)
