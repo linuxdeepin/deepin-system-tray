@@ -32,6 +32,7 @@ import sys
 import os
 import stat
 from contextlib import contextmanager
+import traceback
 
 @contextmanager
 def cairo_disable_antialias(cr):

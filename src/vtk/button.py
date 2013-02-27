@@ -1,8 +1,8 @@
 # call trayicon vtk api.
-from dtk.ui.utils import cairo_disable_antialias
-from vtk.draw import draw_text
-from vtk.utils import get_text_size, cairo_disable_antialias
-from vtk.color import color_hex_to_cairo
+from utils import cairo_disable_antialias
+from draw import draw_text
+from utils import get_text_size, cairo_disable_antialias
+from color import color_hex_to_cairo
 import gtk
 
 class SelectButton(gtk.Button):        
