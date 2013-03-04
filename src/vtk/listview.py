@@ -49,6 +49,7 @@ class ListView(gtk.Button):
         self.__drag_columns_check = False
         self.__drag_columns_index = 0
         self.__drag_columns_start_x = 0
+        self.__item_padding_height = 20
         self.select_items   = [] # 
         self.columns        = [] # add ColumnHeader
         self.items          = [] # add ListViewItem
@@ -98,20 +99,23 @@ class ListView(gtk.Button):
 
     def __list_view_queue_draw(self):
         if self.__expose_check:
-            self.queue_draw()
+            # 重绘可见的区域.
+            rect = self.allocation
+            self.queue_draw_area(rect.x, rect.y, rect.width, rect.height)
 
     def __list_view_button_press_event(self, widget, event):
         event_width = 0
         event_x = int(event.x)
         for column in self.columns:
             event_width += column.width
-            if event_width <= event_x <= event_width + 2:
-                self.__drag_columns_check = True
-                self.__drag_columns_start_x = event_x
+            if event_width <= event_x <= event_width + 2: # 按下的在这个区域内.
+                self.__drag_columns_check = True # 保存可拖动标志位.
+                self.__drag_columns_start_x = event_x # 保存这次的 event.x
                 break
-            self.__drag_columns_index = self.__drag_columns_index + 1
+            self.__drag_columns_index = self.__drag_columns_index + 1 # columns的索引值.
 
     def __list_view_button_release_event(self, widget, event):
+        # 重置拖动ColumnHeader的参数.
         self.__drag_columns_check = False
         self.__drag_columns_index = 0
         self.__drag_columns_start_x = 0
@@ -120,10 +124,9 @@ class ListView(gtk.Button):
         if self.__drag_columns_check:
             event_x = int(event.x)
             drag_move_width = event_x - self.__drag_columns_start_x
-            self.__drag_columns_start_x = event_x
+            self.__drag_columns_start_x = event_x # 保存这次的 event.x
             self.columns[self.__drag_columns_index].width += int(drag_move_width)
-            rect = widget.allocation
-            self.queue_draw_area(rect.x, rect.y, rect.width, rect.height)
+            self.__list_view_queue_draw()
 
     def __list_view_expose_event(self, widget, event):
         cr = widget.window.cairo_create()
@@ -131,13 +134,16 @@ class ListView(gtk.Button):
         # 
         e = self.__save_draw_listviewitem_event_args(widget, event, cr, rect)
         #
-        for i in range(0, int(rect.height/20) + 1):
-            cr.rectangle(rect.x, rect.y + i * 20, rect.width, 20)
+        for i in range(0, int(rect.height/self.__item_padding_height) + 1):
+            cr.rectangle(rect.x, 
+                         rect.y + i * self.__item_padding_height, 
+                         rect.width, 
+                         self.__item_padding_height)
             cr.stroke()
         #
-        self.on_draw_column_header(e)
+        self.on_draw_column_header(e) # 画列头columns.
         self.on_draw_item(e)
-        self.on_draw_subitem(e)
+        self.on_draw_subitem(e) # 画子列.
         return self.__expose_check
 
     def __save_draw_listviewitem_event_args(self, widget, event, cr, rect):
@@ -174,14 +180,15 @@ class ListView(gtk.Button):
         text_height = 0
         for item in self.items:
             text_width  = 0
-            text_height += 20
+            text_height += self.__item_padding_height
             for sub, column in map(lambda x, y:(x,y), item.sub_items, self.columns):
-                draw_text(e.cr, 
-                          sub.text, 
-                          e.rect.x + text_width, 
-                          e.rect.y + text_height, 
-                          text_color="#000000")
-                text_width += column.width
+                if sub:
+                    draw_text(e.cr, 
+                              sub.text, 
+                              e.rect.x + text_width, 
+                              e.rect.y + text_height, 
+                              text_color="#000000")
+                    text_width += column.width
 
 class ColumnHeader(object):
     def __init__(self):
@@ -262,11 +269,10 @@ if __name__ == "__main__":
             print "item:", item.sub_items[i].text
 
     def test_btn_clicked(widget):
-        '''
         column_header = ColumnHeader()
         column_header.text = "性别"
         list_view1.columns_add(column_header)
-        '''
+
         list_view1.columns[0].width += 10
         list_view1.queue_draw()
 
