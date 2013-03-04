@@ -50,6 +50,9 @@ class ListView(gtk.Button):
         self.__drag_columns_index = 0
         self.__drag_columns_start_x = 0
         self.__item_padding_height = 20
+        # 重绘连接事件.
+        self.on_draw_column_header = self.__on_draw_column_header
+        self.on_draw_subitem       = self.__on_draw_subitem
         self.select_items   = [] # 
         self.columns        = [] # add ColumnHeader
         self.items          = [] # add ListViewItem
@@ -140,10 +143,33 @@ class ListView(gtk.Button):
                          rect.width, 
                          self.__item_padding_height)
             cr.stroke()
-        #
-        self.on_draw_column_header(e) # 画列头columns.
+        # 画.
+        text_width = 0
+        for column in self.columns:
+            print "column:", column.text
+            e.text = column.text
+            e.x    = rect.x + text_width
+            e.y    = rect.y
+            e.width = column.width
+            e.height = self.__item_padding_height
+            self.on_draw_column_header(e) # 画列头columns.
+            text_width += column.width
         self.on_draw_item(e)
-        self.on_draw_subitem(e) # 画子列.
+        # 画子.
+        text_height = 0
+        for item in self.items:
+            text_width  = 0
+            text_height += self.__item_padding_height
+            for sub, column in map(lambda x, y:(x,y), item.sub_items, self.columns):
+                e.text = sub.text
+                e.x    = rect.x + text_width 
+                e.y    = rect.y + text_height
+                e.width  = column.width
+                e.height = self.__item_padding_height
+                e.sub_item_index = int(text_height / self.__item_padding_height)
+                self.on_draw_subitem(e) # 画子列.
+                text_width += column.width
+        #
         return self.__expose_check
 
     def __save_draw_listviewitem_event_args(self, widget, event, cr, rect):
@@ -155,40 +181,16 @@ class ListView(gtk.Button):
         e.select_items = self.select_items
         return e
 
-    def on_draw_column_header(self, e):
-        print "on_draw_column_header:", e
-        text_width = 0
-        for column in self.columns:
-            print "column:", column.text
-            draw_text(e.cr, 
-                      column.text, 
-                      e.rect.x + text_width, e.rect.y, 
-                      text_color="#000000")
-
-            text_width += column.width
-            e.cr.rectangle(e.rect.x + text_width,
-                         e.rect.y,
-                         1,
-                         e.rect.height)
-            e.cr.fill()
+    def __on_draw_column_header(self, e):
+        draw_text(e.cr, e.text, e.x , e.y, text_color="#000000")
+        e.cr.rectangle(e.rect.x + e.x + e.width, e.y, 1, e.rect.height)
+        e.cr.fill()
 
     def on_draw_item(self, e):
         print "on_draw_item:", e
 
-    def on_draw_subitem(self, e):
-        print "on_draw_subitem:", e
-        text_height = 0
-        for item in self.items:
-            text_width  = 0
-            text_height += self.__item_padding_height
-            for sub, column in map(lambda x, y:(x,y), item.sub_items, self.columns):
-                if sub:
-                    draw_text(e.cr, 
-                              sub.text, 
-                              e.rect.x + text_width, 
-                              e.rect.y + text_height, 
-                              text_color="#000000")
-                    text_width += column.width
+    def __on_draw_subitem(self, e):
+        draw_text(e.cr, e.text, e.x,e.y, text_color="#000000")
 
 class ColumnHeader(object):
     def __init__(self):
@@ -211,17 +213,28 @@ class SubItem(object):
 class DrawListViewItemEventArgs(object):
     def __init__(self):
         self.cr     = None
+        self.text   = ""
+        self.x      = 0
+        self.y      = 0
         self.rect   = None
         self.event  = None
         self.widget = None
         self.select_items = None
-
+        self.sub_item_index = 0
+        
 
 if __name__ == "__main__":
+    def test_on_subitem(e):
+        if e.sub_item_index in [1, 3, 5, 7]:
+            draw_text(e.cr, e.text, e.x,e.y, text_color="#0000FF")
+        else:
+            draw_text(e.cr, e.text, e.x,e.y, text_color="#000000")
+
     win = gtk.Window(gtk.WINDOW_TOPLEVEL)
     win.set_size_request(300, 300)
 
     list_view1 = ListView()
+    list_view1.on_draw_subitem = test_on_subitem
     # column header.
     column_header1 = ColumnHeader()
     column_header2 = ColumnHeader()
