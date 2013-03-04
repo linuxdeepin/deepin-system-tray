@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2012 Deepin, Inc.
-#               2012 Hailong Qiu
+# Copyright (C) 2013 Deepin, Inc.
+#               2013 Hailong Qiu
 #
 # Author:     Hailong Qiu <356752238@qq.com>
 # Maintainer: Hailong Qiu <356752238@qq.com>
@@ -34,9 +34,10 @@ VIEW_TILE      =  4
 # header text alignemnt.
 
 
-class ListView(gtk.DrawingArea):
+#class ListView(gtk.DrawingArea):
+class ListView(gtk.Button):
     def __init__(self):
-        gtk.DrawingArea.__init__(self)
+        gtk.Button.__init__(self)
         self.__init_values()
         self.__init_events()
 
@@ -45,11 +46,18 @@ class ListView(gtk.DrawingArea):
         self.__expose_check = True
         self.__grid_lines   = False
         self.__view_state   = VIEW_DETAILS
+        self.__drag_columns_check = False
+        self.__drag_columns_index = 0
+        self.__drag_columns_start_x = 0
         self.select_items   = [] # 
         self.columns        = [] # add ColumnHeader
         self.items          = [] # add ListViewItem
 
     def __init_events(self):
+        self.add_events(gtk.gdk.ALL_EVENTS_MASK)
+        self.connect("button-press-event", self.__list_view_button_press_event)
+        self.connect("button-release-event", self.__list_view_button_release_event)
+        self.connect("motion-notify-event", self.__list_view_motion_notify_event)
         self.connect("expose-event", self.__list_view_expose_event)
 
     def view(self, state): # view { LargeIcon, SmallIcon, List, Details, Tile }
@@ -92,6 +100,31 @@ class ListView(gtk.DrawingArea):
         if self.__expose_check:
             self.queue_draw()
 
+    def __list_view_button_press_event(self, widget, event):
+        event_width = 0
+        event_x = int(event.x)
+        for column in self.columns:
+            event_width += column.width
+            if event_width <= event_x <= event_width + 2:
+                self.__drag_columns_check = True
+                self.__drag_columns_start_x = event_x
+                break
+            self.__drag_columns_index = self.__drag_columns_index + 1
+
+    def __list_view_button_release_event(self, widget, event):
+        self.__drag_columns_check = False
+        self.__drag_columns_index = 0
+        self.__drag_columns_start_x = 0
+
+    def __list_view_motion_notify_event(self, widget, event):
+        if self.__drag_columns_check:
+            event_x = int(event.x)
+            drag_move_width = event_x - self.__drag_columns_start_x
+            self.__drag_columns_start_x = event_x
+            self.columns[self.__drag_columns_index].width += int(drag_move_width)
+            rect = widget.allocation
+            self.queue_draw_area(rect.x, rect.y, rect.width, rect.height)
+
     def __list_view_expose_event(self, widget, event):
         cr = widget.window.cairo_create()
         rect = widget.allocation
@@ -105,7 +138,6 @@ class ListView(gtk.DrawingArea):
         self.on_draw_column_header(e)
         self.on_draw_item(e)
         self.on_draw_subitem(e)
-        print "epxo check:", self.__expose_check
         return self.__expose_check
 
     def __save_draw_listviewitem_event_args(self, widget, event, cr, rect):
@@ -121,6 +153,7 @@ class ListView(gtk.DrawingArea):
         print "on_draw_column_header:", e
         text_width = 0
         for column in self.columns:
+            print "column:", column.text
             draw_text(e.cr, 
                       column.text, 
                       e.rect.x + text_width, e.rect.y, 
@@ -138,7 +171,17 @@ class ListView(gtk.DrawingArea):
 
     def on_draw_subitem(self, e):
         print "on_draw_subitem:", e
-
+        text_height = 0
+        for item in self.items:
+            text_width  = 0
+            text_height += 20
+            for sub, column in map(lambda x, y:(x,y), item.sub_items, self.columns):
+                draw_text(e.cr, 
+                          sub.text, 
+                          e.rect.x + text_width, 
+                          e.rect.y + text_height, 
+                          text_color="#000000")
+                text_width += column.width
 
 class ColumnHeader(object):
     def __init__(self):
