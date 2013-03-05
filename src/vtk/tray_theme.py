@@ -23,12 +23,17 @@
 
 import gtk
 import os
+import sys
 from utils import get_run_app_path
+
+LOAD_IMAGE_PATH = os.path.join(os.path.dirname(sys.argv[0]), "image")
+print "load_image_path:", LOAD_IMAGE_PATH
 
 
 class Theme(object):
     def __init__(self):
         self.__icon_theme = gtk.IconTheme()
+        self.name = ThemeName()
         #
         path = get_run_app_path("image")
         self.append_search_path(path)
@@ -59,3 +64,36 @@ class Theme(object):
                                            size, 
                                            gtk.ICON_LOOKUP_FORCE_SIZE)
          
+
+class ThemeName(object):
+    def __init__(self):
+        self.load_path = LOAD_IMAGE_PATH
+
+    def get_pixbuf(self, path):
+        new_path = os.path.join(self.load_path, path)
+        abs_path = os.path.abspath(new_path)
+        if os.path.exists(abs_path):
+            return gtk.gdk.pixbuf_new_from_file(abs_path)
+        else:
+            return None
+
+    def get_path(self, path):
+        new_path = os.path.join(self.load_path, path)
+        abs_path = os.path.abspath(new_path)
+        if os.path.exists(abs_path):
+            return abs_path
+        else:
+            return None 
+    
+    def get_image(self, path):
+        new_path = os.path.join(self.load_path, path)
+        abs_path = os.path.join(new_path)
+        if os.path.exists(abs_path):
+            return  gtk.image_new_from_file(abs_path)
+        else:
+            return None
+
+
+if __name__ == "__main__":
+    theme = Theme()
+    print theme.name.get_path("power/power_icon.png")

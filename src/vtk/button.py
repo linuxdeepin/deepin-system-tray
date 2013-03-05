@@ -19,6 +19,7 @@ class SelectButton(gtk.Button):
         self.ali_padding = ali_padding
         self.bg_color = bg_color
         self.line_color = line_color
+        self.text_color = "#000000"
         self.draw_check = False
         width, height = get_text_size(self.text, font_size)
         self.set_size_request(width, height)
@@ -64,7 +65,7 @@ class SelectButton(gtk.Button):
                   x_padding,
                   rect.y + rect.height/2 - font_h/2,
                   text_size=self.font_size, 
-                  text_color="#000000")        
+                  text_color=self.text_color)        
         # set size.
         if font_h > rect.height:
             widget.set_size_request(rect.width, font_h)

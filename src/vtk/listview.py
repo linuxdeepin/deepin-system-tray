@@ -161,7 +161,11 @@ class ListView(gtk.Button):
             text_width  = 0
             text_height += self.__item_padding_height
             for sub, column in map(lambda x, y:(x,y), item.sub_items, self.columns):
-                e.text = sub.text
+                if sub:
+                    e.text = sub.text
+                else:
+                    item.sub_items.append(SubItem(""))
+                    e.text = ""
                 e.x    = rect.x + text_width 
                 e.y    = rect.y + text_height
                 e.width  = column.width
@@ -287,6 +291,8 @@ if __name__ == "__main__":
         list_view1.columns_add(column_header)
 
         list_view1.columns[0].width += 10
+        list_view1.items[0].sub_items[0].text = "可爱的LD"
+        list_view1.items[1].sub_items[2].text = "深度Linux"
         list_view1.queue_draw()
 
     #list_view1.start_update()
