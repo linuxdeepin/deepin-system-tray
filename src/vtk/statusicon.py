@@ -21,6 +21,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from trayicon import TrayIcon
+from window import ToolTip
 from utils import propagate_expose, new_surface, get_text_size
 from utils import pixbuf_check, text_check, get_run_app_path
 from draw import draw_pixbuf, draw_tray_text
@@ -128,6 +129,7 @@ class Element(gtk.Button):
         self.__init_element_events()
 
     def __init_element_values(self):
+        self.tool_tip = ToolTip()
         #self.__icon_theme = gtk.IconTheme()
         #
         self.__mode_type = TRAY_IMAGE_TEXT_TYPE
@@ -161,6 +163,8 @@ class Element(gtk.Button):
         self.connect("clicked", self.__widget_clicked_event)
         self.connect("button-press-event", self.__widget_button_press_event)
         self.connect("expose-event", self.__widget_expose_event)
+        self.connect("enter-notify-event", self.__widget_enter_notify_event)
+        self.connect("leave-notify-event", self.__widget_leave_notify_event)
 
     def append_search_path(self, file):
         self.__icon_theme.append_search_path(file)
@@ -225,6 +229,9 @@ class Element(gtk.Button):
             self.timer.Interval = interval 
         self.__rotate_check = rotate_check
         self.timer.Enabled = rotate_check
+
+    def set_tooltip_text(self, text):
+        self.tool_tip.set_text(text)
 
     def __widget_clicked_event(self, widget):
         # emit event.
@@ -325,6 +332,33 @@ class Element(gtk.Button):
                          w - self.left_line_w * 2, 
                          h)
             cr.fill()
+
+    def __widget_enter_notify_event(self, widget, event):
+        if self.tool_tip.draw_btn.get_label() != "":
+            metry =  self.get_geometry()
+            screen = metry[0]
+            rect   = metry[1]
+            screen_w = screen.get_width() 
+            screen_h = screen.get_height()
+            x_padding = rect[0] + rect[2]/2 - self.tool_tip.get_size_request()[0]/2 
+            x_padding -= self.__set_max_show_menu(x_padding)
+            y_padding_to_creen = self.tool_tip.get_size_request()[1]
+            x = x_padding
+            y = rect[1] - self.tool_tip.get_size_request()[1]
+            self.tool_tip.show_all()
+            self.tool_tip.move(x, y)
+
+    def __set_max_show_menu(self, x):        
+        screen_w = self.get_screen().get_width()        
+        screen_rect_width = x + self.tool_tip.get_size_request()[0]
+        if (screen_rect_width) > screen_w:
+            return screen_rect_width - screen_w
+        else:
+            return 0
+
+
+    def __widget_leave_notify_event(self, widget, event):
+        self.tool_tip.hide_all()
 
 gobject.type_register(Element)
 gobject.type_register(StatusIcon)

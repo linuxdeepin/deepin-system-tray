@@ -23,8 +23,9 @@
 import cairo
 import gtk
 import math
+from draw  import draw_text
 from color import alpha_color_hex_to_cairo, color_hex_to_cairo
-from utils import new_surface, propagate_expose
+from utils import new_surface, propagate_expose, get_text_size
 from utils import cairo_popover, cairo_popover_rectangle 
 #from blur.vtk_cairo_blur import gaussian_blur
 from dtk_cairo_blur import gaussian_blur
@@ -260,6 +261,7 @@ class Window(gtk.Window):
         self.ali_right = 8
         self.ali_top  = 8
         self.ali_bottom = 7
+        self.sahow_check = True
         # pixbuf.
         self.draw_win_type = DRAW_WIN_TYPE_FG
         self.bg_pixbuf = None
@@ -267,6 +269,7 @@ class Window(gtk.Window):
         self.bg_x, self.bg_y = 0,0
         self.fg_alpha = 0.8
         # colors.
+        self.base_color = "#FFFFFF"
         self.sahow_color = ("#000000", 0.3)
         self.border_out_color = ("#000000", 1.0)
 
@@ -308,7 +311,8 @@ class Window(gtk.Window):
         if self.draw_win_type == DRAW_WIN_TYPE_BG:
             self.draw_background(cr, rect)
         #
-        self.__expose_event_draw(cr)
+        if self.sahow_check:
+            self.__expose_event_draw(cr)
         # draw fg type background.
         if self.draw_win_type == DRAW_WIN_TYPE_FG:
             self.draw_background(cr, rect)
@@ -329,7 +333,7 @@ class Window(gtk.Window):
             cr.set_source_pixbuf(self.bg_pixbuf, self.bg_x, self.bg_y)
             cr.paint_with_alpha(self.bg_alpha)
         else:
-            cr.set_source_rgb(1, 1, 1)
+            cr.set_source_rgb(*color_hex_to_cairo(self.base_color))
             cr.rectangle(x, y, w, h)
             cr.fill()
         cr.restore()
@@ -401,14 +405,62 @@ class Window(gtk.Window):
     def add_widget(self, widget):
         self.main_ali.add(widget)
 
+class ToolTip(Window):
+    def __init__(self):
+        Window.__init__(self, gtk.WINDOW_POPUP)
+        self.base_color = "#000000"
+        self.sahow_check = False # 设置外发光.
+        self.text_size = 11
+        self.radius = 3 # 设置圆角.
+        self.set_opacity(0.7) # 设置透明值.
+        self.draw_btn = gtk.Button("")
+        self.draw_btn.connect("expose-event", self.__draw_btn_expose_event)
+        self.add_widget(self.draw_btn)
+
+    def set_text(self, text):
+        self.draw_btn.set_label(text)
+        rect = self.draw_btn.allocation
+        self.draw_btn.queue_draw_area(rect.x, rect.y, rect.width, rect.height)
+        size = get_text_size(text, text_size=self.text_size)
+        width_padding = 10
+        height_padding = 15
+        self.set_size_request(size[0] + width_padding + 15, size[1] + height_padding + 10)
+
+    def __draw_btn_expose_event(self, widget, event):
+        cr = widget.window.cairo_create()
+        rect = widget.allocation
+        # draw background.
+        b_x_padding, b_y_padding, b_w_padding, b_h_padding = 2, 2, 4, 4
+        cr.set_source_rgb(0, 0, 0)
+        cr.rectangle(rect.x + b_x_padding, 
+                     rect.y + b_y_padding, 
+                     rect.width - b_w_padding, 
+                     rect.height - b_h_padding)
+        cr.fill()
+        # draw text.
+        text_color = "#FFFFFF"
+        text = widget.get_label()
+        size = get_text_size(text, text_size=self.text_size)
+        x_padding = 5
+        draw_text(cr, text, 
+                  rect.x + x_padding,
+                  rect.y + rect.height/2 - size[1]/2, text_color=text_color, text_size=self.text_size)
+        width_padding = 10
+        height_padding = 15
+        widget.set_size_request(size[0] + width_padding, size[1] + height_padding) 
+        self.set_size_request(size[0] + width_padding + 15, size[1] + height_padding + 10)
+        return True
+
 
 if __name__ == "__main__":
     #test = TrayIconWin()
-    test = Window()
+    test = ToolTip()
     #test.set_pos_type(gtk.POS_TOP)
     #test.set_pos_type(gtk.POS_BOTTOM)
     #test.set_bg_pixbuf(gtk.gdk.pixbuf_new_from_file("test.png"))
-    test.resize(372, 168)
-    test.move(300, 300)
+    test.set_text("Linux Deepin 12.12 alpha")
+    test.resize(180, 50)
     test.show_all()
+    test.move(100, 700)
+    test.set_text("Linux Deepin 12.12 alpha...........")
     gtk.main()
