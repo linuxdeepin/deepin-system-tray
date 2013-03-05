@@ -424,7 +424,7 @@ class ToolTip(Window):
         size = get_text_size(text, text_size=self.text_size)
         width_padding = 10
         height_padding = 15
-        self.set_size_request(size[0] + width_padding + 20, size[1] + height_padding + 10)
+        self.set_size_request(size[0] + width_padding + 17, size[1] + height_padding + 10)
 
     def __draw_btn_expose_event(self, widget, event):
         cr = widget.window.cairo_create()
@@ -448,7 +448,7 @@ class ToolTip(Window):
         width_padding = 10
         height_padding = 15
         widget.set_size_request(size[0] + width_padding, size[1] + height_padding) 
-        self.set_size_request(size[0] + width_padding + 20, size[1] + height_padding + 10)
+        self.set_size_request(size[0] + width_padding + 17, size[1] + height_padding + 10)
         return True
 
 

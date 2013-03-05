@@ -356,7 +356,6 @@ class Element(gtk.Button):
         else:
             return 0
 
-
     def __widget_leave_notify_event(self, widget, event):
         self.tool_tip.hide_all()
 
