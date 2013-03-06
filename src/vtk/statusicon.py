@@ -115,14 +115,7 @@ class StatusIcon(TrayIcon):
             widget.set_pixbuf(pixbuf)
 
     def widget_realize_event(self, widget, allocation):
-        width = 0
-        for child in self.__main_hbox.get_children():
-            if child.get_visible():
-                width += child.get_size_request()[0]
-        #print "widget_realize...width:", width
-        self.set_size_request(-1, self.height)
-        if width != -1:
-            self.resize(width, self.height)
+        self.statusicon_modify_size()
 
     def widget_hide_modify_statusicon_size(self, widget):
         self.statusicon_modify_size()
@@ -132,7 +125,8 @@ class StatusIcon(TrayIcon):
         for child in self.__main_hbox.get_children():
             if child.get_visible():
                 width += child.allocation.width
-        self.resize(width, 16)
+        self.set_geometry_hints(None, width, self.height, width, self.height, -1, -1, -1, -1, -1, -1)
+
 
 TRAY_TEXT_IMAGE_TYPE, TRAY_IMAGE_TEXT_TYPE = 0, 1
 
