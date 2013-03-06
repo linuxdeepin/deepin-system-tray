@@ -42,6 +42,9 @@ class TrayIcon(TrayIconWin):
                 ):
         TrayIconWin.__init__(self)
         #
+        if len(sys.argv) >= 2:
+            if sys.argv[1] == "debug":
+                self.debug = True
         if is_exists(APP_DBUS_NAME, APP_OBJECT_NAME): 
             sys.exit()
         app_bus_name = dbus.service.BusName(APP_DBUS_NAME, bus=dbus.SessionBus())

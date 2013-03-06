@@ -58,6 +58,7 @@ class TrayIconWin(gtk.Window):
         self.offset = 30 
         self.ali_size = 10
         self.alpha = 0.95
+        self.debug = False
         # colors.
         self.sahow_color = ("#000000", 0.15)
         self.border_out_color = ("#000000", 1.0)
@@ -92,12 +93,13 @@ class TrayIconWin(gtk.Window):
         w = int(self.ali_size + self.trayicon_x)
         h = int(self.ali_size + self.trayicon_x)
         #############################################
-        cr.set_source_rgb(1, 0, 0)
-        cr.rectangle(rect.x, rect.y, rect.width, rect.height)
-        cr.stroke()
-        cr.set_source_rgb(0, 0, 1)
-        cr.rectangle(rect.x + x, rect.y + h, rect.width - h - x, rect.height - w - y)
-        cr.stroke()
+        if self.debug:
+            cr.set_source_rgb(1, 0, 0)
+            cr.rectangle(rect.x, rect.y, rect.width, rect.height)
+            cr.stroke()
+            cr.set_source_rgb(0, 0, 1)
+            cr.rectangle(rect.x + x, rect.y + h, rect.width - h - x, rect.height - w - y)
+            cr.stroke()
 
 
     def add_plugin(self, widget):
