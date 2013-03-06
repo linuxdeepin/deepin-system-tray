@@ -38,7 +38,8 @@ import os
 class StatusIcon(TrayIcon):
     def __init__(self):
         TrayIcon.__init__(self)
-        self.set_size_request(-1, 16)
+        self.height = 16
+        #self.set_size_request(-1, self.height)
         self.init_statusiocn_widgets()
         self.init_statusiocn_values()
         self.init_statusicon_events()
@@ -98,12 +99,32 @@ class StatusIcon(TrayIcon):
         return widget
 
     def widget_init(self, widget, text, pixbuf):
-        widget.set_size_request(-1, 16)
+        widget.connect("hide", self.widget_hide_modify_statusicon_size)
+        widget.connect("size-allocate", self.widget_realize_event)
+        widget.set_size_request(-1, self.height)
         if text_check(text):
             widget.set_text(text)
         if pixbuf_check(pixbuf):
             widget.set_pixbuf(pixbuf)
 
+    def widget_realize_event(self, widget, allocation):
+        width = 0
+        for child in self.__main_hbox.get_children():
+            if child.get_visible():
+                width += child.get_size_request()[0]
+        print "widget_realize...width:", width
+        self.set_size_request(-1, self.height)
+        self.resize(width, self.height)
+
+    def widget_hide_modify_statusicon_size(self, widget):
+        self.statusicon_modify_size()
+
+    def statusicon_modify_size(self):
+        width = 0
+        for child in self.__main_hbox.get_children():
+            if child.get_visible():
+                width += child.allocation.width
+        self.resize(width, 16)
 
 TRAY_TEXT_IMAGE_TYPE, TRAY_IMAGE_TEXT_TYPE = 0, 1
 
