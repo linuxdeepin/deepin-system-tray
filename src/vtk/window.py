@@ -75,11 +75,30 @@ class TrayIconWin(gtk.Window):
         #
         self.draw = gtk.EventBox()
         self.main_ali  = gtk.Alignment(0, 0, 1, 1)
+        self.main_ali.connect_after("expose-event", self.main_ali_expose_event)
         # set main_ali padding size.
         self.set_pos_type(self.tray_pos_type)
         self.add(self.draw)
         self.draw.add(self.main_ali)
         self.hide_all()
+
+    def main_ali_expose_event(self, widget, event):
+        cr = widget.window.cairo_create()
+        rect = widget.allocation
+        padding_top    = 0
+        padding_bottom = self.arrow_height 
+        x = self.ali_size + int(self.trayicon_x + padding_top)
+        y = int(self.ali_size + self.trayicon_x + padding_bottom)
+        w = int(self.ali_size + self.trayicon_x)
+        h = int(self.ali_size + self.trayicon_x)
+        #############################################
+        cr.set_source_rgb(1, 0, 0)
+        cr.rectangle(rect.x, rect.y, rect.width, rect.height)
+        cr.stroke()
+        cr.set_source_rgb(0, 0, 1)
+        cr.rectangle(rect.x + x, rect.y + h, rect.width - h - x, rect.height - w - y)
+        cr.stroke()
+
 
     def add_plugin(self, widget):
         self.main_ali.add(widget)
