@@ -45,7 +45,7 @@ class TrayIcon(gtk.Window):
         self.set_colormap(gtk.gdk.Screen().get_rgba_colormap())
         self.init_values()
         self.init_widgets()
-        if self.debug:
+        if not self.debug:
             self.start()
             self.start()
 
