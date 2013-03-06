@@ -39,6 +39,10 @@ class StatusIcon(TrayIcon):
     def __init__(self):
         TrayIcon.__init__(self)
         self.height = 16
+        self.debug = False
+        if len(sys.argv) >= 2:
+            if sys.argv[1] == "debug":
+                self.debug = True
         #self.set_size_request(-1, self.height)
         self.init_statusiocn_widgets()
         self.init_statusiocn_values()
@@ -63,7 +67,10 @@ class StatusIcon(TrayIcon):
         x, y, w, h = rect
         #
         cr.rectangle(*rect)
-        cr.set_source_rgba(1, 1, 1, 0.0)
+        if self.debug:
+            cr.set_source_rgba(0, 0, 1, 1.0)
+        else:
+            cr.set_source_rgba(1, 1, 1, 0.0)
         cr.set_operator(cairo.OPERATOR_SOURCE)
         cr.paint()
         #
@@ -112,9 +119,10 @@ class StatusIcon(TrayIcon):
         for child in self.__main_hbox.get_children():
             if child.get_visible():
                 width += child.get_size_request()[0]
-        print "widget_realize...width:", width
+        #print "widget_realize...width:", width
         self.set_size_request(-1, self.height)
-        self.resize(width, self.height)
+        if width != -1:
+            self.resize(width, self.height)
 
     def widget_hide_modify_statusicon_size(self, widget):
         self.statusicon_modify_size()

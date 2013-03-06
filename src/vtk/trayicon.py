@@ -25,6 +25,7 @@ from Xlib import X, display, error, Xatom, Xutil
 from Xlib.ext import shape
 import Xlib.protocol.event
 import gtk
+import sys
 from gtk import gdk
 import gobject 
 import select
@@ -33,13 +34,20 @@ import cairo
 
 class TrayIcon(gtk.Window):
     def __init__(self):
-        gtk.Window.__init__(self)
+        self.debug = False
+        if len(sys.argv) >= 2:
+            if sys.argv[1] == "debug":
+                self.debug = True
+                gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
+        else:
+            gtk.Window.__init__(self)
         self.set_wmclass("deepintrayicon", "DeepinTrayIcon")
         self.set_colormap(gtk.gdk.Screen().get_rgba_colormap())
         self.init_values()
         self.init_widgets()
-        self.start()
-        self.start()
+        if self.debug:
+            self.start()
+            self.start()
 
     def init_values(self):
         self.xdisplay = display.Display()
@@ -61,10 +69,11 @@ class TrayIcon(gtk.Window):
     def init_widgets(self):
         # setting tray window.
         self.add_events(gtk.gdk.ALL_EVENTS_MASK)
-        self.set_decorated(False)
-        self.set_app_paintable(True)
-        self.set_skip_pager_hint(True)
-        self.set_skip_taskbar_hint(True)
+        if not self.debug:
+            self.set_decorated(False)
+            self.set_app_paintable(True)
+            self.set_skip_pager_hint(True)
+            self.set_skip_taskbar_hint(True)
         self.show()
         self.plug_xid = self.window.xid
         self.tray_widget_wind = self.xdisplay.create_resource_object("window", self.plug_xid)
@@ -72,10 +81,10 @@ class TrayIcon(gtk.Window):
         self.show_all()
 
     def trayicon_motion_notify_evnet(self, widget, event):
-        print "trayicon_motion_notify_evnet....."
+        pass
 
     def trayicon_button_release_event(self, widget, event):
-        print "trayicon_button_press_event......"
+        pass
 
     def start(self):
         self.send_event_to_dock(
