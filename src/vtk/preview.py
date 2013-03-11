@@ -60,6 +60,7 @@ class PreViewWin(gtk.Window):
         #
         self.draw = gtk.EventBox()
         self.main_ali  = gtk.Alignment(1, 1, 1, 1)
+        self.main_ali.set_padding(2, self.arrow_height + 20, 2, 2)
         self.add(self.draw)
         self.draw.add(self.main_ali)
         self.hide_all()
@@ -154,10 +155,13 @@ if __name__ == "__main__":
     timer.connect("Tick", timer_tick_event)
     #timer.Enabled = True
     prev_win = PreViewWin()
+    screen = gtk.DrawingArea()
+    prev_win.main_ali.add(screen)
     prev_win.set_size_request(124, 89)
     prev_win.move(500, 500)
     prev_win.show_all()
-    prev_win.set_offset(120)
+    print "screen id:", screen.window.xid
+    prev_win.set_offset(80)
     gtk.main()
 
 
