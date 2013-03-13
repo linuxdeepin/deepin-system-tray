@@ -168,10 +168,6 @@ def pixbuf_check(element):
 def text_check(element):
     return isinstance(element, str)
 
-def cn_check():
-    return os.environ["LANGUAGE"].startswith("zh_")
-
-
 def app_check(bind_name):
     try:
         app_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
