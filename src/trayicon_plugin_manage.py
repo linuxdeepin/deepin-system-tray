@@ -98,7 +98,8 @@ class PluginManage(object):
                         except Exception, e:
                             print_msg("tray plugin error:%s"%(e))
                             from traceback import print_exc
-                            print_exc()
+                            error_msg = print_exc()
+                            print_msg(error_msg)
 
 
  
