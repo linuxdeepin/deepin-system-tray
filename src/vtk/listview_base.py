@@ -24,6 +24,15 @@ import gtk
 
 # 视图.
 LARGEICON, DETAILS, SMALLICON, LIST, TITLE = range(0, 5)
+'''
+largeicon =>> 每个项为一个最大化图标, 下面是一个标签.
+smallicon =>> 每个项为一个小图标, 右边带一个标签.
+list      =>> 每个项都显示一个小图标, 右边带一个标签, 各项排列在列中,没有列标头.
+Details   =>> 包含列标头, 每列都可以显示一个图标和标签.
+tile      =>> 
+'''
+# 字体对齐方式.
+LEFT, RIGHT, MID = range(0, 3)
 
 def type_check(type_name, type_str):
     return type(type_name).__name__ == type_str
@@ -39,15 +48,26 @@ class ListViewBase(gtk.Button):
         self.__expose_check = True # 防止大量数据加载的闪烁问题.
         self.columns = Columns() # 保存 ColumnHeader
         self.items   = Items()   # 保存 ListViewItem
+        self.__view = DETAILS    # 设置视图, 默认为 Details.
+        self.__grid_lines = False # Details视图, 显示网格线.
+        self.__multi_select = False # 是否可以选择多个项.
+        self.__alignment = None #各项对齐方式.
         # 初始化数据更新事件.
         self.columns.connect("update-data", self.__columns_update_data_event)
         self.items.connect("update-data", self.__items_update_data_event)
 
     def __columns_update_data_event(self, columns):
-        print "columns_update_data_event:", columns
+        #print "columns_update_data_event:", columns
+        self.on_queue_draw_area()
 
     def __items_update_data_event(self, items):
-        print "items_update_date_event:", items
+        #print "items_update_date_event:", items
+        self.on_queue_draw_area()
+
+    def clear(self):
+        self.columns = []
+        self.items = []
+        self.on_queue_draw_area()
 
     def start_update(self):
         self.__expose_check = True
@@ -62,6 +82,63 @@ class ListViewBase(gtk.Button):
         if self.__expose_check:
             rect = self.allocation
             self.queue_draw_area(*rect)
+
+    ###################################
+    ## grid_lines : 设置是否显示网格线.
+    @property
+    def grid_lines(self):
+        return self.__grid_lines
+
+    @grid_lines.setter
+    def grid_lines(self, check):
+        self.__grid_lines = check
+        self.on_queue_draw_area()
+
+    @grid_lines.getter
+    def grid_lines(self):
+        return self.__grid_lines
+
+    @grid_lines.deleter
+    def grid_lines(self):
+        del self.__grid_lines
+
+    ###################################
+    ## multi_select : 是否可以选择多个项.
+    @property
+    def multi_select(self):
+        return self.__multi_select
+
+    @multi_select.setter
+    def multi_select(self, check):
+        self.__multi_select = check
+        self.on_queue_draw_area()
+        
+    @multi_select.getter
+    def multi_select(self):
+        return self.__multi_select
+
+    @multi_select.deleter
+    def multi_select(self):
+        del self.__multi_select
+
+    ###################################
+    ## view : 设置视图. 五种.
+    @property
+    def view(self):
+        return self.__view
+
+    @view.setter
+    def view(self, view_name):
+        self.__view = view_name
+        self.on_queue_draw_area()
+
+    @view.getter
+    def view(self):
+        return self.__view
+
+    @view.deleter
+    def view(self):
+        del self.__view
 
 class Columns(list):
     def __init__(self):
@@ -116,8 +193,9 @@ class ColumnHeader(object):
 
     def __init_values(self):
         self.__text = ""  # 保存文本.
-        self.text_align = None # 文本对齐方式.
-        self.__width = 0 # ColumnHeader 宽度.
+        self.__width = 50 # ColumnHeader 宽度.
+        self.__text_color = "#000000"
+        self.text_align = MID # 文本对齐方式.
         self.image_key = None # 图片key.
         self.image_index = None # 图片索引.
         self.__function_point = None
@@ -147,6 +225,39 @@ class ColumnHeader(object):
     def text(self):
         del self.__text
 
+    @property
+    def width(self):
+        return self.__width
+
+    @width.setter
+    def width(self, width):
+        self.__width = width
+        self.emit()
+
+    @width.getter
+    def width(self):
+        return self.__width
+
+    @width.deleter
+    def width(self):
+        del self.__width
+
+    @property
+    def text_color(self):
+        return self.__text_color
+
+    @text_color.setter
+    def text_color(self, text_color):
+        self.__text_color = text_color
+        self.emit()
+
+    @text_color.getter
+    def text_color(self):
+        return self.__text_color
+
+    @text_color.deleter
+    def text_color(self):
+        del self.__text_color
 
 class Items(list):
     def __init__(self):
@@ -198,6 +309,21 @@ class Items(list):
                 # 发送信号.
                 self.emit()
 
+    def add_insert(self, index, text_items):
+        if self.__type_check(text_items, "list"):
+            emit_check = False # 初始化发送信号的标志位.
+            for item in text_items:
+                if self.__type_check(item, "list"):
+                    if not emit_check: # 设置发送信号的标志位.
+                        emit_check = True # 设置发送信号的标志位为真.
+                    #
+                    listview_item = ListViewItem(item)
+                    listview_item.connect("update-data", self.__listview_item_update_data_event)
+                    self.insert(index, listview_item)
+
+            if emit_check: # 判断是否发送信号.
+                # 发送信号.
+                self.emit()
     def __listview_item_update_data_event(self, listview_item):
         self.emit()
 
@@ -259,6 +385,8 @@ class SubItem(object):
 
     def __init_values(self):
         self.__text = ""
+        self.__text_color = "#000000"
+        self.__text_align = MID
         self.__function_point = None
 
     def connect(self, event_name, function_point):
@@ -286,7 +414,22 @@ class SubItem(object):
     def text(self):
         del self.__text
 
+    @property
+    def text_color(self):
+        return self.__text_color
 
+    @text_color.setter
+    def text_color(self, text_color):
+        self.__text_color = text_color
+        self.emit()
+
+    @text_color.getter
+    def text_color(self):
+        return self.__text_color
+
+    @text_color.deleter
+    def text_color(self):
+        del self.__text_color
 
 '''
 columns[列表] <= ColumnHeader
