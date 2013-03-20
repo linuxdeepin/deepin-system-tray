@@ -27,6 +27,7 @@ from utils import pixbuf_check, text_check, get_run_app_path
 from draw import draw_pixbuf, draw_tray_text
 from theme import vtk_theme
 from timer import Timer
+from constant import print_msg
 import gtk
 import atk
 import cairo
@@ -210,7 +211,7 @@ class Element(gtk.Button):
             if pixbuf:
                 self.set_pixbuf(pixbuf)
         except Exception, e:
-            print "set_icon_theme[error]:", e
+            print_msg("set_icon_theme[error]:%s"%(e))
 
     def load_icon(self, name, size=16):
         return vtk_theme.get_pixbuf(name, size)
@@ -263,7 +264,7 @@ class Element(gtk.Button):
             if self.popup_menu:
                 self.popup_menu(widget, self.get_geometry())
         except Exception, e:
-            print "widget_clicked_event[error]:", e
+            print_msg("widget_clicked_event[error]:%s"%(e))
 
     def __widget_button_press_event(self, widget, event):
         if event.button == 3:

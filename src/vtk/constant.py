@@ -32,3 +32,14 @@ def get_system_font():
 DEFAULT_FONT = get_system_font()
 DEFAULT_FONT_SIZE = 10
 
+import os
+import time
+os.system("touch /tmp/trayicon.log")
+fp = open("/tmp/trayicon.log", "w")
+
+def print_msg(msg):
+    fp.write("===============================================\n")
+    fp.write("%s\n"%(time.ctime()))
+    fp.write(msg)
+    print "msg:", msg
+    fp.write("\n===============================================\n")

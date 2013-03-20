@@ -20,6 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from constant import print_msg
 import sys
 from Xlib import X, display, error, Xatom, Xutil
 from Xlib.ext import shape
@@ -93,7 +94,7 @@ class TrayIcon(gtk.Window):
                         [X.CurrentTime, 0L, self.tray_widget_wind.id, 0L, 0L],
                         X.NoEventMask)
         self.xdisplay.flush()
-        print "start......"
+        print_msg("start......")
 
     def send_event_to_dock(self,
                            manager_win, 

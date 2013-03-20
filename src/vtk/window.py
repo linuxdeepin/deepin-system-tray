@@ -23,6 +23,7 @@
 import cairo
 import gtk
 import math
+from constant import print_msg
 from draw  import draw_text
 from color import alpha_color_hex_to_cairo, color_hex_to_cairo
 from utils import new_surface, propagate_expose, get_text_size
@@ -109,7 +110,7 @@ class TrayIconWin(gtk.Window):
         if self.main_ali.get_children() != []:
             self.main_ali.remove(widget)
         else:
-            print "main_ali no widgets"
+            print_msg("main_ali no widgets")
 
     def plugs_add_event(self, socket):
         pass 

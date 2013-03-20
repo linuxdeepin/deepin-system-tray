@@ -25,6 +25,7 @@ from trayicon_plugin_manage import PluginManage
 from vtk.statusicon import StatusIcon
 from vtk.utils import app_check, clear_app_bind
 from vtk.unique_service import UniqueService, is_exists
+from vtk.constant import print_msg
 #from dms import Dms
 import gtk
 import sys
@@ -41,6 +42,7 @@ class TrayIcon(TrayIconWin):
                  align_size=10
                 ):
         TrayIconWin.__init__(self)
+        print_msg("trayicon start run....")
         #
         if len(sys.argv) >= 2:
             if sys.argv[1] == "debug":
@@ -135,7 +137,7 @@ class TrayIcon(TrayIconWin):
             # init events.
             tray_icon.connect('popup-menu-event', self.tray_icon_popup_menu, plug)
         except Exception, e:
-            print "create_tray_icon[error]:", e
+            print_msg("create_tray_icon[error]:%s"%(e))
 
         return tray_icon 
 
@@ -163,26 +165,12 @@ class TrayIcon(TrayIconWin):
             widget = self.save_trayicon.plugin_widget()
             self.add_plugin(widget)
         except Exception, e:
-            print "init_popup_menu[error]:", e
+            print_msg("init_popup_menu[error]:%s"%(e))
             error_check = True
         # get tray icon metry.
         self.metry = statusicon.get_geometry()
         if not error_check:
             self.show_menu()
-    '''
-    def dms_changed(self, dms, argv):        
-        if self.plugin_manage.key_dict.has_key(argv[0]):
-            try:
-                plug = self.plugin_manage.key_dict[argv[0]]
-                if argv[1] == "Quit":
-                    plug.this_list[1].set_visible(False)
-                elif argv[1] == "Start":
-                    plug.this_list[1].set_visible(True)
-                
-                eval(argv[2])(eval(argv[3]))            
-            except Exception, e:
-                print "dms_changed[error]:", e
-    '''
                  
 
 
