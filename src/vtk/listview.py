@@ -22,290 +22,269 @@
 
 
 
-from draw import draw_text
+from draw import draw_text, draw_pixbuf
+from utils import get_text_size
 import gtk
 
-# view state.
-VIEW_LARGEICON =  0
-VIEW_SMALLICON =  1
-VIEW_LIST      =  2 
-VIEW_DETAILS   =  3
-VIEW_TILE      =  4 
-# header text alignemnt.
-
-
-#class ListView(gtk.DrawingArea):
 class ListView(gtk.Button):
     def __init__(self):
         gtk.Button.__init__(self)
+        # 初始化变量.
         self.__init_values()
-        self.__init_events()
 
     def __init_values(self):
-        self.test_h = 0
-        self.__expose_check = True
-        self.__grid_lines   = False
-        self.__view_state   = VIEW_DETAILS
-        self.__drag_columns_check = False
-        self.__drag_columns_index = 0
-        self.__drag_columns_start_x = 0
-        self.__item_padding_height = 20
-        # 重绘连接事件.
-        self.on_draw_column_header = self.__on_draw_column_header
-        self.on_draw_subitem       = self.__on_draw_subitem
-        self.select_items   = [] # 
-        self.columns        = [] # add ColumnHeader
-        self.items          = [] # add ListViewItem
+        self.__expose_check = True # 防止大量数据加载的闪烁问题.
+        self.columns = Columns() # 保存 ColumnHeader
+        self.items   = Items()   # 保存 ListViewItem
+        # 初始化数据更新事件.
+        self.columns.connect("update-data", self.__columns_update_data_event)
+        self.items.connect("update-data", self.__items_update_data_event)
 
-    def __init_events(self):
-        self.add_events(gtk.gdk.ALL_EVENTS_MASK)
-        self.connect("button-press-event", self.__list_view_button_press_event)
-        self.connect("button-release-event", self.__list_view_button_release_event)
-        self.connect("motion-notify-event", self.__list_view_motion_notify_event)
-        self.connect("expose-event", self.__list_view_expose_event)
+    def __columns_update_data_event(self, columns):
+        print "columns_update_data_event:", columns
 
-    def view(self, state): # view { LargeIcon, SmallIcon, List, Details, Tile }
-        self.__view_state = state
-
-    def grid_lines(self, check):
-        self.__grid_lines = check
-
-    def columns_add(self, column):
-        self.columns.append(column)
-        self.__list_view_queue_draw()
-
-    def columns_addrange(self, columns_list):
-        self.columns.extend(columns_list)
-        self.__list_view_queue_draw()
-
-    def items_add(self, item):
-        self.items.append(item)
-        self.__list_view_queue_draw()
-
-    def items_addrange(self, items_list):
-        self.items.extend(items_list)
-        self.__list_view_queue_draw()
-
-    def ensure_visible(self):
-        pass
+    def __items_update_data_event(self, items):
+        print "items_update_date_event:", items
 
     def start_update(self):
-        self.__expose_check = False
+        self.__expose_check = True
+        self.on_queue_draw_area()
 
     def end_update(self):
-        self.__expose_check = True
-        self.__list_view_queue_draw()
+        self.__expose_check = False
+        self.on_queue_draw_area()
 
-    def clear(self):
-        self.columns = []
-        self.items   = []
-
-    def __list_view_queue_draw(self):
+    def on_queue_draw_area(self):
+        # 重绘区域.
         if self.__expose_check:
-            # 重绘可见的区域.
-            rect = self.allocation
-            self.queue_draw_area(rect.x, rect.y, rect.width, rect.height)
+            rect = widget.allocation
+            self.queue_darw_area(*rect)
 
-    def __list_view_button_press_event(self, widget, event):
-        event_width = 0
-        event_x = int(event.x)
-        for column in self.columns:
-            event_width += column.width
-            if event_width <= event_x <= event_width + 2: # 按下的在这个区域内.
-                self.__drag_columns_check = True # 保存可拖动标志位.
-                self.__drag_columns_start_x = event_x # 保存这次的 event.x
-                break
-            self.__drag_columns_index = self.__drag_columns_index + 1 # columns的索引值.
+class Columns(list):
+    def __init__(self):
+        list.__init__(self)
+        self.__init_values()
 
-    def __list_view_button_release_event(self, widget, event):
-        # 重置拖动ColumnHeader的参数.
-        self.__drag_columns_check = False
-        self.__drag_columns_index = 0
-        self.__drag_columns_start_x = 0
+    def __init_values(self):
+        self.__function_point = None # 函数指针.
 
-    def __list_view_motion_notify_event(self, widget, event):
-        if self.__drag_columns_check:
-            event_x = int(event.x)
-            drag_move_width = event_x - self.__drag_columns_start_x
-            self.__drag_columns_start_x = event_x # 保存这次的 event.x
-            self.columns[self.__drag_columns_index].width += int(drag_move_width)
-            self.__list_view_queue_draw()
+    def connect(self, event_name, function_point):
+        if event_name == "update-data":
+            self.__function_point = function_point
 
-    def __list_view_expose_event(self, widget, event):
-        cr = widget.window.cairo_create()
-        rect = widget.allocation
-        # 
-        e = self.__save_draw_listviewitem_event_args(widget, event, cr, rect)
-        #
-        for i in range(0, int(rect.height/self.__item_padding_height) + 1):
-            cr.rectangle(rect.x, 
-                         rect.y + i * self.__item_padding_height, 
-                         rect.width, 
-                         self.__item_padding_height)
-            cr.stroke()
-        # 画.
-        text_width = 0
-        for column in self.columns:
-            print "column:", column.text
-            e.text = column.text
-            e.x    = rect.x + text_width
-            e.y    = rect.y
-            e.width = column.width
-            e.height = self.__item_padding_height
-            self.on_draw_column_header(e) # 画列头columns.
-            text_width += column.width
-        self.on_draw_item(e)
-        # 画子.
-        text_height = 0
-        for item in self.items:
-            text_width  = 0
-            text_height += self.__item_padding_height
-            for sub, column in map(lambda x, y:(x,y), item.sub_items, self.columns):
-                if sub:
-                    e.text = sub.text
-                else:
-                    item.sub_items.append(SubItem(""))
-                    e.text = ""
-                e.x    = rect.x + text_width 
-                e.y    = rect.y + text_height
-                e.width  = column.width
-                e.height = self.__item_padding_height
-                e.sub_item_index = int(text_height / self.__item_padding_height)
-                self.on_draw_subitem(e) # 画子列.
-                text_width += column.width
-        #
-        return self.__expose_check
+    def emit(self):
+        if self.__function_point:
+            self.__function_point(self)
 
-    def __save_draw_listviewitem_event_args(self, widget, event, cr, rect):
-        e = DrawListViewItemEventArgs()
-        e.widget = widget
-        e.event  = event
-        e.cr     = cr
-        e.rect   = rect
-        e.select_items = self.select_items
-        return e
+    def add(self, text):
+        if type(text).__name__ == "str":
+            header = ColumnHeader(text)
+            header.connect("update-data", self.header_update_data_event)
+            self.append(header)
+            header.text = text
 
-    def __on_draw_column_header(self, e):
-        draw_text(e.cr, e.text, e.x , e.y, text_color="#000000")
-        e.cr.rectangle(e.rect.x + e.x + e.width, e.y, 1, e.rect.height)
-        e.cr.fill()
+    def add_range(self, header_list):
+        pass
+        
 
-    def on_draw_item(self, e):
-        print "on_draw_item:", e
-
-    def __on_draw_subitem(self, e):
-        draw_text(e.cr, e.text, e.x,e.y, text_color="#000000")
+    def header_update_data_event(self, column_header):
+        self.emit()
 
 class ColumnHeader(object):
-    def __init__(self):
-        self.text = ""
-        self.text_align = "left"
-        self.width = 30 
-
-class ListViewItem(object):
-    def __init__(self):
-        self.sub_items = []
-
-    def clear(self):
-        self.sub_items = []
-
-class SubItem(object):
     def __init__(self, text=""):
+        self.__init_values()
         self.text = text
 
 
-class DrawListViewItemEventArgs(object):
+    def __init_values(self):
+        self.__text = ""  # 保存文本.
+        self.text_align = None # 文本对齐方式.
+        self.__width = 0 # ColumnHeader 宽度.
+        self.image_key = None # 图片key.
+        self.image_index = None # 图片索引.
+        self.__function_point = None
+
+    def __type_check(self, type_name, type_str):
+        return type(type_name).__name__ == type_str
+
+    def connect(self, event_name, function_point):
+        if event_name == "update-data":
+            self.__function_point = function_point
+
+    def emit(self):
+        if self.__function_point:
+            self.__function_point(self)
+
+    @property
+    def text(self):
+        return self.__text
+
+    @text.setter
+    def text(self, text):
+        self.__text = text
+        self.emit()
+
+    @text.getter
+    def text(self):
+        return self.__text
+
+    @text.deleter
+    def text(self):
+        del self.__text
+
+
+class Items(list):
     def __init__(self):
-        self.cr     = None
-        self.text   = ""
-        self.x      = 0
-        self.y      = 0
-        self.rect   = None
-        self.event  = None
-        self.widget = None
-        self.select_items = None
-        self.sub_item_index = 0
-        
+        list.__init__(self)
+        # 初始化变量.
+        self.__init_values()
+
+    def __init_values(self):
+        self.__function_point = None
+
+    def __type_check(self, type_name, type_str):
+        return type(type_name).__name__ == type_str
+
+    def connect(self, event_name, function_point): 
+        if event_name == "update-data":
+            self.__function_point = function_point
+
+    def emit(self):
+        # 回调函数.
+        if self.__function_point:
+            self.__function_point(self)
+
+    def add(self, text):
+        if self.__type_check(text, "str"): # 判断是否为 ListViewItem 类型.
+            listview_item = ListViewItem()
+            listview_item.sub_items.add(text)
+            listview_item.connect("update-data", self.__listview_item_update_data_event)
+            self.append(listview_item)
+            # 发送信号.
+            self.emit()
+
+    def add_range(self, text_items):
+        if self.__type_check(text_items, "list"):
+            emit_check = False # 初始化发送信号的标志位.
+            for item in text_items:
+                if self.__type_check(item, "list"):
+                    if not emit_check: # 设置发送信号的标志位.
+                        emit_check = True # 设置发送信号的标志位为真.
+                    #
+                    listview_item = ListViewItem(item)
+                    listview_item.connect("update-data", self.__listview_item_update_data_event)
+                    self.append(listview_item)
+
+            if emit_check: # 判断是否发送信号.
+                # 发送信号.
+                self.emit()
+
+    def __listview_item_update_data_event(self, listview_item):
+        self.emit()
+
+class ListViewItem(object):
+    def __init__(self, item):
+        self.__init_values()
+        self.sub_items.add_range(item)
+
+    def __init_values(self):
+        self.sub_items = SubItems()
+        self.sub_items.connect("update-data", self.__sub_items_update_data_event)
+
+    def __sub_items_update_data_event(self, sub_items):
+        self.emit()
+
+    def connect(self, event_name, function_point):
+        if event_name == "update-data":
+            self.__function_point = function_point
+
+    def emit(self):
+        if self.__function_point:
+            self.__function_point(self)
+
+class SubItems(list):
+    def __init__(self):
+        list.__init__(self)
+        self.__init_values()
+
+    def __init_values(self):
+        self.__function_point = None
+
+    def connect(self, event_name, function_point):
+        if event_name == "update-data":
+            self.__function_point = function_point
+
+    def emit(self):
+        if self.__function_point:
+            self.__function_point(self)
+
+    def add(self, text):
+        sub_item = SubItem(text)
+        sub_item.connect("update-data", self.__sub_item_update_data_event)
+        self.append(sub_item)
+
+    def add_range(self, items_text):
+        for text in items_text:
+            sub_item = SubItem(text)
+            sub_item.connect("update-data", self.__sub_item_update_data_event)
+            self.append(sub_item)
+
+    def __sub_item_update_data_event(self, sub_item):
+        self.emit()
+    
+
+class SubItem(object):
+    def __init__(self, text=""):
+        self.__init_values()
+        self.__text = text
+
+    def __init_values(self):
+        self.__text = ""
+        self.__function_point = None
+
+    def connect(self, event_name, function_point):
+        if event_name == "update-data":
+            self.__function_point = function_point
+
+    def emit(self):
+        if self.__function_point:
+            self.__function_point(self)
+
+    @property
+    def text(self):
+        self.__text
+
+    @text.setter
+    def text(self, text):
+        self.__text = text
+        self.emit()
+
+    @text.getter
+    def text(self):
+        return self.__text
+
+    @text.deleter
+    def text(self):
+        del self.__text
+
+
+
+'''
+columns[列表] <= ColumnHeader
+items[列表]   <= ListViewItem
+ColumnHeader---{属性:text, width...}
+ListViewItem[列表] <= SubItem---{属性:text...}
+'''
 
 if __name__ == "__main__":
-    def test_on_subitem(e):
-        if e.sub_item_index in [1, 3, 5, 7]:
-            draw_text(e.cr, e.text, e.x,e.y, text_color="#0000FF")
-        else:
-            draw_text(e.cr, e.text, e.x,e.y, text_color="#000000")
+    listview1 = ListView()
+    listview1.columns.add("姓名")
+    listview1.columns.add_range(["性别", "班级"])
+    listview1.items.add_range([["齐海龙", "男"], 
+                              ["明天把", "看啊"]])
+    #listview1.columns[0].text = "真的姓名"
+    print listview1.items[0].sub_items[0].text
 
-    win = gtk.Window(gtk.WINDOW_TOPLEVEL)
-    win.set_size_request(300, 300)
-
-    list_view1 = ListView()
-    list_view1.on_draw_subitem = test_on_subitem
-    # column header.
-    column_header1 = ColumnHeader()
-    column_header2 = ColumnHeader()
-    column_header3 = ColumnHeader()
-    column_header1.text = "姓名"
-    column_header2.text = "班级"
-    column_header3.text = "座位"
-    # list view item.
-    listview_item1 = ListViewItem()
-    listview_item2 = ListViewItem()
-    listview_item3 = ListViewItem()
-
-    listview_item1.sub_items.append(SubItem("学生"))
-    listview_item1.sub_items.append(SubItem("高中"))
-    listview_item1.sub_items.append(SubItem("42"))
-    
-    listview_item2.sub_items.append(SubItem("精灵"))
-    listview_item2.sub_items.append(SubItem("初三"))
-    listview_item2.sub_items.append(SubItem("19"))
-
-    listview_item3.sub_items.append(SubItem("惊吓"))
-    listview_item3.sub_items.append(SubItem("初二"))
-    listview_item3.sub_items.append(SubItem("29"))
-
-    # append ...
-    list_view1.columns_addrange([column_header1, column_header2])
-    list_view1.columns_add(column_header3)
-    list_view1.items_addrange([listview_item1, listview_item2])
-    list_view1.items_add(listview_item3)
-
-    #print list_view1.items[0].sub_items[0].text
-    for i in range(0, 10):
-        lvi = ListViewItem()
-        lvi.sub_items.append(SubItem("欧燕 item" + str(i)))
-        lvi.sub_items.append(SubItem("高" + str(i)))
-        lvi.sub_items.append(SubItem("1" + str(i)))
-        list_view1.items.append(lvi)
-
-    for header in list_view1.columns:
-        print header.text
-
-    for item in list_view1.items:
-        print item
-        for i in range(0, len(item.sub_items)):
-            print "item:", item.sub_items[i].text
-
-    def test_btn_clicked(widget):
-        column_header = ColumnHeader()
-        column_header.text = "性别"
-        list_view1.columns_add(column_header)
-
-        list_view1.columns[0].width += 10
-        list_view1.items[0].sub_items[0].text = "可爱的LD"
-        list_view1.items[1].sub_items[2].text = "深度Linux"
-        list_view1.queue_draw()
-
-    #list_view1.start_update()
-    #list_view1.end_update()
-    list_view1.grid_lines(True)
-    test_vbox = gtk.VBox()
-    test_btn = gtk.Button("click")
-    test_btn.connect("clicked", test_btn_clicked)
-    test_vbox.pack_start(list_view1, True, True)
-    test_vbox.pack_start(test_btn, False, False)
-    win.add(test_vbox)
-    win.show_all()
-    gtk.main()
 
 
 
