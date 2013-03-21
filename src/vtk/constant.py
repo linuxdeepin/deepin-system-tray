@@ -32,8 +32,8 @@ def get_system_font():
 DEFAULT_FONT = get_system_font()
 DEFAULT_FONT_SIZE = 10
 
-import os
 import time
+from traceback import print_exc
 
 LOG_FILE = "/tmp/trayicon.log"
 create_fp = open(LOG_FILE, "w")
@@ -44,6 +44,7 @@ def print_msg(msg):
     fp.write("===============================================\n")
     fp.write("%s\n"%(time.ctime()))
     fp.write(msg)
+    print_exc(file=fp)
     print "msg:", msg
     fp.write("\n===============================================\n")
     fp.close()
