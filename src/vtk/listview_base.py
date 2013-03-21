@@ -69,12 +69,12 @@ class ListViewBase(gtk.Button):
         self.items = []
         self.on_queue_draw_area()
 
-    def start_update(self):
-        self.__expose_check = True
+    def begin_update(self):
+        self.__expose_check = False
         self.on_queue_draw_area()
 
     def end_update(self):
-        self.__expose_check = False
+        self.__expose_check = True
         self.on_queue_draw_area()
 
     def on_queue_draw_area(self):

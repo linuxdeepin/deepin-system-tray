@@ -262,6 +262,15 @@ def is_usb_device(dev_path):
                 return True
     return False
 
+def get_match_parent(widget, match_types):
+    parent = widget.get_parent()
+    if parent == None:
+        return None
+    elif type(parent).__name__ in match_types:
+        return parent
+    else:
+        return get_match_parent(parent, match_types)
+
 if __name__ == "__main__":
     print get_home_path()
     print get_config_path()

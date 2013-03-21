@@ -23,7 +23,7 @@
 
 
 from draw import draw_text, draw_pixbuf
-from utils import get_text_size
+from utils import get_text_size, get_match_parent
 from listview_base import type_check
 from listview_base import ListViewBase
 from listview_base import LARGEICON, DETAILS, SMALLICON, LIST, TITLE
@@ -87,16 +87,30 @@ class ListView(ListViewBase):
         #print "__listview_leave_notify_event...."
         pass
 
+    def __get_offset_coordinate(self, widget):
+        rect = widget.allocation
+        viewport = get_match_parent(widget, ["Viewport"])
+        if viewport:
+            coordinate = widget.translate_coordinates(viewport, rect.x, rect.y)
+            if len(coordinate) == 2:
+                (offset_x, offset_y) = coordinate
+                return (-offset_x, -offset_y, viewport)
+            else:
+                return (0, 0, viewport)
+        else:
+            return (0, 0, viewport)
+        
+
     def __listview_expose_event(self, widget, event):
         cr = widget.window.cairo_create()
         rect = widget.allocation
         #
         if self.view == DETAILS: # 带标题头的视图, 比如详细信息.
-            self.__draw_view_details(cr, rect)
+            self.__draw_view_details(cr, rect, widget)
         #
         return True
 
-    def __draw_view_details(self, cr, rect):
+    def __draw_view_details(self, cr, rect, widget):
         temp_column_w = 0
         for column in self.columns: # 标题头.
             # 保存属性.
@@ -115,7 +129,10 @@ class ListView(ListViewBase):
         # 
         temp_item_h  = self.__columns_padding_height
         temp_index   = 0
-        for item in self.items: #每行元素.
+        # 优化listview.
+        start_index  = 0
+        end_index    = start_index + rect.width / self.__columns_padding_height
+        for item in self.items[start_index:end_index]: #每行元素.
             temp_item_w = 0
             # 行中的列元素.
             for column, sub_item in map(lambda s, c:(s, c), 
@@ -263,11 +280,14 @@ if __name__ == "__main__":
 
     def test_btn_clicked(widget):
         #listview1.items.clear()
-        listview1.columns[3].width += 5
+        #listview1.columns[3].width += 5
         #listview1.items.add_range([["微软", "男", "程序员", "美国"]])
         #listview1.items[0].sub_items.add("fdjkf")
         #listview1.items[0].sub_items[0].text = "我爱你,精灵..."
-        listview1.items.add_insert(0, [["微软", "男", "程序员", "美国"]])
+        listview1.begin_update()
+        for i in range(0, 10000):
+            listview1.items.add_insert(0, [["微软", "男", "程序员", "美国"]])
+        listview1.end_update()
 
     def listview1_test_on_draw_column_heade(e):
         print "listview1_test_on_draw_column_heade.... 重绘标题头"
@@ -278,6 +298,7 @@ if __name__ == "__main__":
     win = gtk.Window(gtk.WINDOW_TOPLEVEL)
     win.set_size_request(500, 500)
     listview1 = ListView()
+    listview1.set_size_request(500, 1500)
     # 重载函数.
     #listview1.on_draw_column_heade =  listview1_test_on_draw_column_heade
     #listview1.on_draw_sub_item     =  listview1_test_on_draw_sub_item
@@ -292,10 +313,12 @@ if __name__ == "__main__":
     listview1.items.add_range([["求伯灿", "男", "程序员", "中国"], 
                               ["linus", "男", "内核开发", "荷兰"]])
     #
+    scroll_win = gtk.ScrolledWindow()
+    scroll_win.add_with_viewport(listview1)
     vbox = gtk.VBox()
     test_btn = gtk.Button("test")
     test_btn.connect("clicked",  test_btn_clicked)
-    vbox.pack_start(listview1, True, True) 
+    vbox.pack_start(scroll_win, True, True) 
     vbox.pack_start(test_btn, False, False)
     win.add(vbox)
     win.show_all()
