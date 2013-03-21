@@ -271,6 +271,20 @@ def get_match_parent(widget, match_types):
     else:
         return get_match_parent(parent, match_types)
 
+
+def get_offset_coordinate(widget):
+    rect = widget.allocation
+    viewport = get_match_parent(widget, ["Viewport"])
+    if viewport:
+        coordinate = widget.translate_coordinates(viewport, rect.x, rect.y)
+        if len(coordinate) == 2:
+            (offset_x, offset_y) = coordinate
+            return (-offset_x, -offset_y, viewport)
+        else:
+            return (0, 0, viewport)
+    else:
+        return (0, 0, viewport)
+
 if __name__ == "__main__":
     print get_home_path()
     print get_config_path()

@@ -20,6 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from utils import get_match_parent, get_offset_coordinate
 import gtk
 import pango
 
@@ -82,8 +83,21 @@ class ListViewBase(gtk.Button):
     def on_queue_draw_area(self):
         # 重绘区域.
         if self.__expose_check:
+            scroll_win = get_match_parent(self, "ScrolledWindow")
+            offset_x, offset_y , viewport = get_offset_coordinate(self)
             rect = self.allocation
-            self.queue_draw_area(*rect)
+            if scroll_win:
+                rect = scroll_win.allocation
+                x      = rect.x + offset_x
+                y      = rect.y + offset_y
+                w      = rect.width
+                h      = rect.height
+            else:
+                x      = rect.x + offset_x
+                y      = rect.y + offset_y
+                w      = rect.width
+                h      = rect.height
+            self.queue_draw_area(x, y, w, h)
 
     ###################################
     ## grid_lines : 设置是否显示网格线.

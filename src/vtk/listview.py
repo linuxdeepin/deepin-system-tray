@@ -23,7 +23,7 @@
 
 
 from draw import draw_text, draw_pixbuf
-from utils import get_text_size, get_match_parent
+from utils import get_text_size, get_match_parent, get_offset_coordinate
 from listview_base import type_check
 from listview_base import ListViewBase
 from listview_base import LARGEICON, DETAILS, SMALLICON, LIST, TITLE
@@ -34,7 +34,8 @@ import gtk
 
 '''
 !!再也不用写item了.那是一件幸福的事情.
-DrawItem 事件可以针对每个 ListView 项发生。当 View 属性设置为 View = Details 时，
+DrawItem 事件可以针对每个 ListView 项发生。
+当 View 属性设置为 View = Details 时，
 还会发生 DrawSubItem 和 DrawColumnHeader 事件。
 在这种情况下，可以处理 DrawItem 事件以绘制所有项共有的元素（如背景），
 并处理 DrawSubItem 事件以便为各个子项（例如文本值）绘制元素。
@@ -119,33 +120,24 @@ class ListView(ListViewBase):
         #print "__listview_leave_notify_event...."
         pass
 
-    def __get_offset_coordinate(self, widget):
-        rect = widget.allocation
-        viewport = get_match_parent(widget, ["Viewport"])
-        if viewport:
-            coordinate = widget.translate_coordinates(viewport, rect.x, rect.y)
-            if len(coordinate) == 2:
-                (offset_x, offset_y) = coordinate
-                return (-offset_x, -offset_y, viewport)
-            else:
-                return (0, 0, viewport)
-        else:
-            return (0, 0, viewport)
-        
-
     def __listview_expose_event(self, widget, event):
+        #print "__listview_expose_event.."
         cr = widget.window.cairo_create()
         rect = widget.allocation
         #
         if self.view == DETAILS: # 带标题头的视图, 比如详细信息.
             self.__draw_view_details(cr, rect, widget)
+        #elif self.view == 
         #
+        # 设置窗体的高度和宽度.
+        self.__set_listview_size()
         return True
 
     def __draw_view_details(self, cr, rect, widget):
+        #self.on_draw_item(e)
         temp_column_w = 0
-        offset_x, offset_y, viewport = self.__get_offset_coordinate(widget)
-        for column in self.columns: # 标题头.
+        offset_x, offset_y, viewport = get_offset_coordinate(widget)
+        for column in self.columns: # 绘制标题头.
             # 保存属性.
             e = ColumnHeaderEventArgs()
             e.cr     = cr
@@ -154,7 +146,7 @@ class ListView(ListViewBase):
             e.x = rect.x + temp_column_w
             e.y = offset_y + rect.y
             e.w = column.width
-            e.h = self.__columns_padding_height
+            e.h = self.__columns_padding_height + 1
             e.text_color = column.text_color
             #
             temp_column_w += column.width
@@ -163,8 +155,13 @@ class ListView(ListViewBase):
         temp_item_h  = self.__columns_padding_height
         temp_index   = 0
         # 优化listview.
+        # 获取滚动窗口.
+        scroll_win = get_match_parent(self, "ScrolledWindow")
+        scroll_rect_h = rect.height
+        if scroll_win: # 如果没有滚动窗口,直接获取listview的高度.
+            scroll_rect_h = scroll_win.allocation.height
         start_index  = max(int(offset_y / self.__items_padding_height), 0)
-        end_index    = start_index + rect.width / self.__items_padding_height
+        end_index    = start_index + scroll_rect_h / self.__items_padding_height
         for item in self.items[start_index:end_index]: #每行元素.
             temp_item_w = 0
             # 行中的列元素.
@@ -175,6 +172,8 @@ class ListView(ListViewBase):
                     # 保存subitem的所有信息.
                     e = SubItemEventArgs()
                     e.cr = cr
+                    e.sub_item = sub_item
+                    e.item     = item
                     e.text = sub_item.text
                     e.text_color = sub_item.text_color
                     e.x = rect.x + temp_item_w
@@ -185,7 +184,6 @@ class ListView(ListViewBase):
                     temp_item_w += column.width
                     #
                     self.on_draw_sub_item(e)
-                    self.on_draw_item(e)
             # 保存绘制行的y坐标.
             temp_item_h += self.__items_padding_height
             temp_index  += 1
@@ -193,15 +191,19 @@ class ListView(ListViewBase):
     ################################################
     ## @ on_draw_column_heade : 连接头的重绘函数.
     def __on_draw_column_heade_hd(self, e):
-        #print "on_draw_column_heade_hd......", e.text_color
+        e.cr.set_source_rgba(0, 0, 0, 0.1)
+        if self.columns[len(self.columns)-1] == e.column:
+            e.cr.rectangle(e.x + e.w, e.y, self.allocation.width - e.x, e.h)
+            e.cr.fill()
+        e.cr.rectangle(e.x, e.y, e.w, e.h)
+        e.cr.fill()
+        # 画标题栏文本.
         draw_text(e.cr, 
                   e.text,
                   e.x, e.y, e.w, e.h,
                   text_color=e.text_color,
                   alignment=pango.ALIGN_CENTER)
-        e.cr.set_source_rgba(0, 0, 0, 0.1)
-        e.cr.rectangle(e.x, e.y, e.w, e.h)
-        e.cr.fill()
+        #
 
     @property
     def on_draw_column_heade(self):
@@ -275,9 +277,19 @@ class ListView(ListViewBase):
     def on_draw_sub_item(self):
         del self.__on_draw_sub_item
 
+    def __set_listview_size(self):
+        rect = self.allocation
+        listview_height =  len(self.items) * self.__items_padding_height
+        listview_width  =  188
+        for column in self.columns:
+            listview_width += column.width 
+        if (rect.height != listview_height) or (rect.width != listview_width):
+            self.set_size_request(listview_width, listview_height)
+
 class SubItemEventArgs(object):
     def __init__(self):
         self.cr = None
+        self.item = None
         self.sub_item = None
         self.sub_item_index = None
         self.text = ""
@@ -311,16 +323,11 @@ if __name__ == "__main__":
         #listview1.items[0].sub_items.add("fdjkf")
         #listview1.items[0].sub_items[0].text = "我爱你,精灵..."
         listview1.begin_update()
-        temp_width = 0
-        for i in range(0, 20000):
+        for i in range(0, 10000):
             #listview1.items.add_insert(0, [[str(i), "男", "程序员", "美国" + str(i)]])
             listview1.items.add_range([[str(i), "男", "程序员", "美国" + str(i)]])
-            temp_width += 40
         listview1.end_update()
-        listview1.set_size_request(listview1.allocation.width, 
-                                   listview1.allocation.height + temp_width)
         
-
     def listview1_test_on_draw_column_heade(e):
         print "listview1_test_on_draw_column_heade.... 重绘标题头"
 
