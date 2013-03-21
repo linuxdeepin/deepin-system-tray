@@ -301,13 +301,13 @@ if __name__ == "__main__":
         #listview1.items.add_range([["微软", "男", "程序员", "美国"]])
         #listview1.items[0].sub_items.add("fdjkf")
         #listview1.items[0].sub_items[0].text = "我爱你,精灵..."
-        #listview1.begin_update()
+        listview1.begin_update()
         temp_width = 0
-        for i in range(0, 10000):
+        for i in range(0, 80000):
             #listview1.items.add_insert(0, [[str(i), "男", "程序员", "美国" + str(i)]])
             listview1.items.add_range([[str(i), "男", "程序员", "美国" + str(i)]])
             temp_width += 40
-        #listview1.end_update()
+        listview1.end_update()
         listview1.set_size_request(listview1.allocation.width, 
                                    listview1.allocation.height + temp_width)
         

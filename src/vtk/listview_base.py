@@ -64,6 +64,9 @@ class ListViewBase(gtk.Button):
         #print "items_update_date_event:", items
         self.on_queue_draw_area()
 
+    def get_expose_check(self):
+        return self.__expose_check
+
     def clear(self):
         self.columns = []
         self.items = []
