@@ -40,6 +40,7 @@ DrawItem 事件可以针对每个 ListView 项发生。当 View 属性设置为 
 您还可以仅使用这两个事件中的一个事件绘制 ListView 控件中的所有元素，尽管这可能不十分方便。
 若要绘制详细信息视图中的列标题，必须处理 DrawColumnHeader 事件。
 '''
+
 class ListView(ListViewBase):
     def __init__(self):
         ListViewBase.__init__(self)
@@ -60,13 +61,28 @@ class ListView(ListViewBase):
         self.__items_padding_height = 40
 
     def __init_events(self):
+        # gtk_tree_view_adjustment_changed
+        self.connect("realize",              self.__listview_realize_event)
         self.connect("motion-notify-event",  self.__listview_motion_notify_event)
         self.connect("button-press-event",   self.__listview_button_press_event)
         self.connect("button-release-event", self.__listview_button_release_event)
         self.connect("enter-notify-event",   self.__listview_enter_notify_event)
         self.connect("leave-notify-event",   self.__listview_leave_notify_event)
         self.connect("expose-event",         self.__listview_expose_event)
-    
+
+    def __listview_realize_event(self, widget):
+        widget.set_realized(True)
+
+        scroll_win = get_match_parent(widget, "ScrolledWindow")
+        scroll_win.get_vadjustment().connect("value-changed",
+                                self.__scroll_win_vajustment_changed)
+
+    def __scroll_win_vajustment_changed(self, adjustment):
+        self.on_queue_draw_area()
+        self.window.process_updates(True)
+        self.window.process_updates(True)
+        self.on_queue_draw_area()
+
     def __listview_motion_notify_event(self, widget, event):
         #print "__listview_motion_notify_event..."
         pass
@@ -112,6 +128,7 @@ class ListView(ListViewBase):
 
     def __draw_view_details(self, cr, rect, widget):
         temp_column_w = 0
+        offset_x, offset_y, viewport = self.__get_offset_coordinate(widget)
         for column in self.columns: # 标题头.
             # 保存属性.
             e = ColumnHeaderEventArgs()
@@ -119,7 +136,7 @@ class ListView(ListViewBase):
             e.column = column 
             e.text = column.text
             e.x = rect.x + temp_column_w
-            e.y = rect.y
+            e.y = offset_y + rect.y
             e.w = column.width
             e.h = self.__columns_padding_height
             e.text_color = column.text_color
@@ -130,8 +147,8 @@ class ListView(ListViewBase):
         temp_item_h  = self.__columns_padding_height
         temp_index   = 0
         # 优化listview.
-        start_index  = 0
-        end_index    = start_index + rect.width / self.__columns_padding_height
+        start_index  = max(int(offset_y / self.__items_padding_height), 0)
+        end_index    = start_index + rect.width / self.__items_padding_height
         for item in self.items[start_index:end_index]: #每行元素.
             temp_item_w = 0
             # 行中的列元素.
@@ -145,10 +162,10 @@ class ListView(ListViewBase):
                     e.text = sub_item.text
                     e.text_color = sub_item.text_color
                     e.x = rect.x + temp_item_w
-                    e.y = rect.y + temp_item_h
+                    e.y = offset_y + rect.y + temp_item_h
                     e.w = column.width
                     e.h = self.__items_padding_height 
-                    e.sub_item_index = temp_index
+                    e.sub_item_index = start_index + temp_index
                     temp_item_w += column.width
                     #
                     self.on_draw_sub_item(e)
@@ -284,10 +301,16 @@ if __name__ == "__main__":
         #listview1.items.add_range([["微软", "男", "程序员", "美国"]])
         #listview1.items[0].sub_items.add("fdjkf")
         #listview1.items[0].sub_items[0].text = "我爱你,精灵..."
-        listview1.begin_update()
+        #listview1.begin_update()
+        temp_width = 0
         for i in range(0, 10000):
-            listview1.items.add_insert(0, [["微软", "男", "程序员", "美国"]])
-        listview1.end_update()
+            #listview1.items.add_insert(0, [[str(i), "男", "程序员", "美国" + str(i)]])
+            listview1.items.add_range([[str(i), "男", "程序员", "美国" + str(i)]])
+            temp_width += 40
+        #listview1.end_update()
+        listview1.set_size_request(listview1.allocation.width, 
+                                   listview1.allocation.height + temp_width)
+        
 
     def listview1_test_on_draw_column_heade(e):
         print "listview1_test_on_draw_column_heade.... 重绘标题头"
