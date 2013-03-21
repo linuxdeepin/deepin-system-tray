@@ -34,16 +34,17 @@ DEFAULT_FONT_SIZE = 10
 
 import os
 import time
-os.system("touch /tmp/trayicon.log")
+
 LOG_FILE = "/tmp/trayicon.log"
 create_fp = open(LOG_FILE, "w")
 create_fp.close()
-fp = open("/tmp/trayicon.log", "a")
 
 def print_msg(msg):
+    fp = open("/tmp/trayicon.log", "a")
     fp.write("===============================================\n")
     fp.write("%s\n"%(time.ctime()))
     fp.write(msg)
     print "msg:", msg
     fp.write("\n===============================================\n")
+    fp.close()
 

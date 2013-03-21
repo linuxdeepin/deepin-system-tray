@@ -24,7 +24,8 @@ import sys
 import os
 from vtk.utils import init_config, get_config_file, get_config_path
 from vtk.ini import Config
-from vtk.constant import print_msg, fp
+from vtk.constant import print_msg, LOG_FILE
+from traceback import print_exc
 
 
 class ModulesInfo(object):
@@ -97,10 +98,9 @@ class PluginManage(object):
                             self.key_dict[class_run.id()] = class_run
                         except Exception, e:
                             print_msg("tray plugin error:%s"%(e))
-                            from traceback import print_exc
+                            fp = open(LOG_FILE, "a")
                             print_exc(file=fp)
-                            #print error_msg
-                            #print_msg(error_msg)
+                            fp.close()
 
 
  
