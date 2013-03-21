@@ -21,6 +21,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import gtk
+import pango
 
 # 视图.
 LARGEICON, DETAILS, SMALLICON, LIST, TITLE = range(0, 5)
@@ -31,8 +32,6 @@ list      =>> 每个项都显示一个小图标, 右边带一个标签, 各项�
 Details   =>> 包含列标头, 每列都可以显示一个图标和标签.
 tile      =>> 
 '''
-# 字体对齐方式.
-LEFT, RIGHT, MID = range(0, 3)
 
 def type_check(type_name, type_str):
     return type(type_name).__name__ == type_str
@@ -198,7 +197,7 @@ class ColumnHeader(object):
         self.__text = ""  # 保存文本.
         self.__width = 50 # ColumnHeader 宽度.
         self.__text_color = "#000000"
-        self.text_align = MID # 文本对齐方式.
+        self.text_align = pango.ALIGN_LEFT # 文本对齐方式.
         self.image_key = None # 图片key.
         self.image_index = None # 图片索引.
         self.__function_point = None
@@ -389,7 +388,7 @@ class SubItem(object):
     def __init_values(self):
         self.__text = ""
         self.__text_color = "#000000"
-        self.__text_align = MID
+        self.__text_align = pango.ALIGN_LEFT
         self.__function_point = None
 
     def connect(self, event_name, function_point):

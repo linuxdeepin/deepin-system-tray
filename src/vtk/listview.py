@@ -27,12 +27,13 @@ from utils import get_text_size, get_match_parent
 from listview_base import type_check
 from listview_base import ListViewBase
 from listview_base import LARGEICON, DETAILS, SMALLICON, LIST, TITLE
-from listview_base import LEFT, RIGHT, MID
+import pango
 import gtk
 
 
 
 '''
+!!再也不用写item了.那是一件幸福的事情.
 DrawItem 事件可以针对每个 ListView 项发生。当 View 属性设置为 View = Details 时，
 还会发生 DrawSubItem 和 DrawColumnHeader 事件。
 在这种情况下，可以处理 DrawItem 事件以绘制所有项共有的元素（如背景），
@@ -53,15 +54,22 @@ class ListView(ListViewBase):
 
     def __init_values(self):
         #
+        self.__init_values_events()
+        self.__init_values_columns()
+        self.__init_values_items()
+
+    def __init_values_events(self):
         self.__on_draw_column_heade = self.__on_draw_column_heade_hd
         self.__on_draw_sub_item     = self.__on_draw_sub_item_hd
         self.__on_draw_item         = self.__on_draw_item_hd
-        #
+
+    def __init_values_columns(self):
         self.__columns_padding_height = 30
+
+    def __init_values_items(self):
         self.__items_padding_height = 40
 
     def __init_events(self):
-        # gtk_tree_view_adjustment_changed
         self.connect("realize",              self.__listview_realize_event)
         self.connect("motion-notify-event",  self.__listview_motion_notify_event)
         self.connect("button-press-event",   self.__listview_button_press_event)
@@ -76,8 +84,16 @@ class ListView(ListViewBase):
         scroll_win = get_match_parent(widget, "ScrolledWindow")
         scroll_win.get_vadjustment().connect("value-changed",
                                 self.__scroll_win_vajustment_changed)
+        scroll_win.get_hadjustment().connect("value-changed",
+                                self.__scroll_win_hajustment_changed)
 
     def __scroll_win_vajustment_changed(self, adjustment):
+        self.__scroll_win_event()
+
+    def __scroll_win_hajustment_changed(self, adjustment):
+        self.__scroll_win_event()
+
+    def __scroll_win_event(self):
         self.on_queue_draw_area()
         self.window.process_updates(True)
         self.window.process_updates(True)
@@ -156,7 +172,7 @@ class ListView(ListViewBase):
                                         self.columns,  
                                         item.sub_items):
                 if column and sub_item:
-                    #
+                    # 保存subitem的所有信息.
                     e = SubItemEventArgs()
                     e.cr = cr
                     e.text = sub_item.text
@@ -178,12 +194,11 @@ class ListView(ListViewBase):
     ## @ on_draw_column_heade : 连接头的重绘函数.
     def __on_draw_column_heade_hd(self, e):
         #print "on_draw_column_heade_hd......", e.text_color
-        text_size = get_text_size(e.text)
         draw_text(e.cr, 
                   e.text,
-                  e.x + e.w/2 - text_size[0]/2,
-                  e.y + e.h/2 - text_size[1]/2, 
-                  text_color=e.text_color)
+                  e.x, e.y, e.w, e.h,
+                  text_color=e.text_color,
+                  alignment=pango.ALIGN_CENTER)
         e.cr.set_source_rgba(0, 0, 0, 0.1)
         e.cr.rectangle(e.x, e.y, e.w, e.h)
         e.cr.fill()
@@ -232,24 +247,16 @@ class ListView(ListViewBase):
     ## @ on_draw_sub_item : 连.
     def __on_draw_sub_item_hd(self, e):
         #print "__on_draw_sub_item_hd..."
-        text_size = get_text_size(e.text)
-        if e.text_align == MID:
-            x_padding = e.w/2 - text_size[0]/2
-        elif e.text_align == LEFT:
-            x_padding = 0
-        elif e.text_align == RIGHT:
-            x_padding = e.w - text_size[0]
-        draw_text(e.cr, 
-                  e.text, 
-                  e.x + x_padding, 
-                  e.y + e.h/2 - text_size[1]/2, 
-                  text_color=e.text_color)
-        if e.sub_item_index in [1, 3, 5]:
-            e.cr.set_source_rgba(0, 0, 1, 0.1)
-        else:
-            e.cr.set_source_rgba(1, 0, 0, 0.1)
+        '''
+        e.cr.set_source_rgba(0, 0, 0, 0.7)
         e.cr.rectangle(e.x, e.y, e.w, e.h)
         e.cr.fill()
+        '''
+        e.draw_text(e.cr, 
+                  e.text, 
+                  e.x, e.y, e.w, e.h,
+                  text_color=e.text_color, 
+                  alignment=pango.ALIGN_CENTER)
         
     @property
     def on_draw_sub_item(self, e):
@@ -275,7 +282,8 @@ class SubItemEventArgs(object):
         self.sub_item_index = None
         self.text = ""
         self.text_color = "#000000"
-        self.text_align = MID
+        self.text_align = pango.ALIGN_LEFT
+        self.draw_text = draw_text
         self.x = 0
         self.y = 0
         self.w = 0
@@ -287,7 +295,8 @@ class ColumnHeaderEventArgs(object):
         self.column = None
         self.text = ""
         self.text_color = "#000000"
-        self.text_align = MID
+        self.text_align = pango.ALIGN_LEFT
+        self.draw_text = draw_text
         self.x = 0
         self.y = 0
         self.w = 0
@@ -303,7 +312,7 @@ if __name__ == "__main__":
         #listview1.items[0].sub_items[0].text = "我爱你,精灵..."
         listview1.begin_update()
         temp_width = 0
-        for i in range(0, 80000):
+        for i in range(0, 20000):
             #listview1.items.add_insert(0, [[str(i), "男", "程序员", "美国" + str(i)]])
             listview1.items.add_range([[str(i), "男", "程序员", "美国" + str(i)]])
             temp_width += 40
@@ -326,7 +335,7 @@ if __name__ == "__main__":
     #listview1.on_draw_column_heade =  listview1_test_on_draw_column_heade
     #listview1.on_draw_sub_item     =  listview1_test_on_draw_sub_item
     listview1.columns.add("姓名")
-    listview1.columns.add_range(["性别", "职业", "国籍"])
+    listview1.columns.add_range(["性别", "职业", "国籍", "企业", "前景", "背景"])
     listview1.items.add("皮卡丘")
     listview1.items[0].sub_items.add("男")
     listview1.items[0].sub_items.add("宠物")

@@ -22,6 +22,7 @@
 
 from constant import DEFAULT_FONT, DEFAULT_FONT_SIZE
 from color import color_hex_to_cairo 
+from utils import get_text_size
 import cairo
 import pango
 import pangocairo
@@ -33,22 +34,38 @@ def draw_pixbuf(cr, pixbuf, x, y, alpha=1.0):
     cr.set_source_pixbuf(pixbuf, x, y)
     cr.paint_with_alpha(1.0)
 
-def draw_text(cr, text, x, y, 
+def draw_text(cr, text, x, y, w=0, h=0,
               text_size=DEFAULT_FONT_SIZE,
               text_color="#FFFFFF",
               text_font=DEFAULT_FONT,
-              alignment=pango.ALIGN_LEFT,
+              alignment=None,
               pango_list=None):
     cr.set_source_rgb(*color_hex_to_cairo(text_color)) 
 
     context = pangocairo.CairoContext(cr)
     layout = context.create_layout()
+    # 设置字体.
     layout.set_font_description(pango.FontDescription("%s %s" % (text_font, text_size)))
+    # 设置文本.
     layout.set_text(text) 
     # add pango list attributes.
     if pango_list:
         layout.set_attributes(pango_list)
-    cr.move_to(x, y)
+    # 设置文本的alignment.
+    text_size = get_text_size(text, text_size, text_font)
+    x_padding, y_padding = 0, 0
+    if alignment == pango.ALIGN_LEFT:
+        x_padding = 0
+        y_padding = h/2 - text_size[1]/2
+    elif alignment == pango.ALIGN_CENTER:
+        x_padding = w/2 - text_size[0]/2
+        y_padding = h/2 - text_size[1]/2
+    elif alignment == pango.ALIGN_RIGHT:
+        x_padding = w/2 - text_size[0]
+        y_padding = h/2 - text_size[1]/2
+    # 设置移动.
+    cr.move_to(x + x_padding, y + y_padding)
+    #
     context.update_layout(layout)
     context.show_layout(layout)
 
