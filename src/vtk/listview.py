@@ -103,16 +103,25 @@ class ListView(ListViewBase):
 
     def __listview_motion_notify_event(self, widget, event):
         #print "__listview_motion_notify_event..."
+        row_index, col_index = self.__get_items_mouse_data(event)
+        if not (None in [row_index, col_index]):
+            print self.items[row_index].sub_items[col_index].text
+        else:
+            print "motion..==========================="
         pass
 
     def __listview_button_press_event(self, widget, event):
         #print "__listview_button_press_event...."
-        print is_double_click(event)
+        #print is_double_click(event)
+        pass
 
     def __listview_button_release_event(self, widget, event):
         #print "__listview_button_release_event..."
-        items_index = int(event.y - self.__columns_padding_height) / self.__items_padding_height
-        print self.items[items_index].sub_items[0].text
+        row_index, col_index = self.__get_items_mouse_data(event)
+        if not (None in [row_index, col_index]):
+            print self.items[row_index].sub_items[col_index].text
+        else:
+            print "release==========================="
 
     def __listview_enter_notify_event(self, widget, event):
         #print "__listview_enter_enter...notify_event..."
@@ -170,7 +179,7 @@ class ListView(ListViewBase):
         # 
         # 剪切出绘制items的区域,防止绘制到标题头上.
         cr.save()
-        cr.rectangle(rect.x, 
+        cr.rectangle(rect.x + offset_x, 
                      rect.y + offset_y + self.__columns_padding_height, 
                      scroll_win.allocation.width, 
                      scroll_win.allocation.height)
@@ -299,14 +308,42 @@ class ListView(ListViewBase):
         del self.__on_draw_sub_item
 
     def __set_listview_size(self):
+        # 设置listview的高度和宽度.
         rect = self.allocation
+        # 最后的 self.__items....height 是额外添加的高度.
         listview_height =  (len(self.items) + 1) * self.__items_padding_height + self.__items_padding_height
-        listview_width  =  188
+        listview_width  =  188 # 额外添加 188 的宽度.
         for column in self.columns:
             listview_width += column.width 
         if (rect.height != listview_height) or (rect.width != listview_width):
             self.set_size_request(listview_width, listview_height)
 
+    def __get_items_mouse_data(self, event):
+        offset_x, offset_y, viewport = get_offset_coordinate(self)
+        if self.__in_items_check(offset_y, event):
+            event_x = event.x # 获取鼠标x.
+            # 获取行号.
+            row_index = int(event.y - self.__columns_padding_height) / self.__items_padding_height
+            x_padding = 0
+            col_index = 0
+            # 获取行item,列的sub_items.
+            for column in self.columns:
+                if x_padding <= int(event.x) <= x_padding + column.width:
+                    break
+                x_padding += column.width
+                col_index += 1
+            # 判断是否在可显示的列内.
+            if ((row_index < len(self.items)) and 
+                (col_index < len(self.items[row_index].sub_items))):
+                return row_index, col_index
+            else:
+                return row_index, None
+        else: # 鼠标点击不在区域内.
+            return None, None
+
+    def __in_items_check(self, offset_y, event):
+        return ((offset_y + self.__columns_padding_height) < event.y <= 
+                ((len(self.items) + 1) * self.__items_padding_height))
 
 class ItemEventArgs(object):
     def __init__(self):
@@ -367,7 +404,13 @@ if __name__ == "__main__":
         listview1.begin_update()
         for i in range(0, 10000):
             #listview1.items.add_insert(0, [[str(i), "男", "程序员", "美国" + str(i)]])
-            listview1.items.add_range([[str(i), "男", "程序员", "美国" + str(i)]])
+            listview1.items.add_range([[str(i), 
+                                        "男", 
+                                        "程序员", 
+                                        "美国" + str(i), 
+                                        "你是" + str(i), 
+                                        "#FFFFFF" + str(i),
+                                        "#EDEDED" + str(i)]])
         listview1.end_update()
         
     def listview1_test_on_draw_column_heade(e):
@@ -384,13 +427,16 @@ if __name__ == "__main__":
     #listview1.on_draw_column_heade =  listview1_test_on_draw_column_heade
     #listview1.on_draw_sub_item     =  listview1_test_on_draw_sub_item
     listview1.columns.add("姓名")
-    listview1.columns.add_range(["性别", "职业", "国籍", "企业", "前景", "背景"])
+    listview1.columns.add_range(["性别", "职业", "国籍", "企业", "前景", "背景",
+                                 "性别", "职业", "国籍", "企业", "前景", "背景",
+                                 "性别", "职业", "国籍", "企业", "前景", "背景",
+                                ])
     listview1.items.add("皮卡丘")
     listview1.items[0].sub_items.add("男")
     listview1.items[0].sub_items.add("宠物")
     listview1.items[0].sub_items.add("宠物国")
     listview1.items.add_range([["张飞", "男", "武士", "蜀国"], 
-                              ["孙策", "男", "骑士", "吴国"]])
+                              ["孙策", "男", "骑士", "吴国", "aaa", "b", "c", "d", "f"]])
     listview1.items.add_range([["求伯灿", "男", "程序员", "中国"], 
                               ["linus", "男", "内核开发", "荷兰"]])
     #
