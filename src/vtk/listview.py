@@ -24,6 +24,7 @@
 
 from draw import draw_text, draw_pixbuf
 from utils import get_text_size, get_match_parent, get_offset_coordinate
+from utils import is_single_click, is_double_click
 from listview_base import type_check
 from listview_base import ListViewBase
 from listview_base import LARGEICON, DETAILS, SMALLICON, LIST, TITLE
@@ -106,11 +107,12 @@ class ListView(ListViewBase):
 
     def __listview_button_press_event(self, widget, event):
         #print "__listview_button_press_event...."
-        pass
+        print is_double_click(event)
 
     def __listview_button_release_event(self, widget, event):
         #print "__listview_button_release_event..."
-        pass
+        items_index = int(event.y - self.__columns_padding_height) / self.__items_padding_height
+        print self.items[items_index].sub_items[0].text
 
     def __listview_enter_notify_event(self, widget, event):
         #print "__listview_enter_enter...notify_event..."
@@ -135,6 +137,7 @@ class ListView(ListViewBase):
 
     def __draw_view_details(self, cr, rect, widget):
         #self.on_draw_item(e)
+        column_index = 0
         temp_column_w = 0
         offset_x, offset_y, viewport = get_offset_coordinate(widget)
         for column in self.columns: # 绘制标题头.
@@ -142,6 +145,7 @@ class ListView(ListViewBase):
             e = ColumnHeaderEventArgs()
             e.cr     = cr
             e.column = column 
+            e.column_index = column_index
             e.text = column.text
             e.x = rect.x + temp_column_w
             e.y = offset_y + rect.y
@@ -150,6 +154,7 @@ class ListView(ListViewBase):
             e.text_color = column.text_color
             #
             temp_column_w += column.width
+            column_index += 1
             self.on_draw_column_heade(e)
         # 
         temp_item_h  = self.__columns_padding_height
@@ -160,9 +165,21 @@ class ListView(ListViewBase):
         scroll_rect_h = rect.height
         if scroll_win: # 如果没有滚动窗口,直接获取listview的高度.
             scroll_rect_h = scroll_win.allocation.height
-        start_index  = max(int(offset_y / self.__items_padding_height), 0)
-        end_index    = start_index + scroll_rect_h / self.__items_padding_height
-        for item in self.items[start_index:end_index]: #每行元素.
+        # dtk.ui.listview ===>>>
+        start_y = offset_y - self.__columns_padding_height
+        end_y   = offset_y + viewport.allocation.height - self.__columns_padding_height
+        start_index  = max(start_y / self.__items_padding_height, 0)
+        end_index    = (start_index + (scroll_rect_h + self.__columns_padding_height)/ self.__items_padding_height) + 1
+        # 
+        # 剪切出绘制items的区域,防止绘制到标题头上.
+        cr.save()
+        cr.rectangle(rect.x, 
+                     rect.y + offset_y + self.__columns_padding_height, 
+                     scroll_win.allocation.width, 
+                     scroll_win.allocation.height)
+        cr.clip()
+        #
+        for row, item in enumerate(self.items[start_index:end_index]):
             temp_item_w = 0
             # 行中的列元素.
             for column, sub_item in map(lambda s, c:(s, c), 
@@ -177,7 +194,7 @@ class ListView(ListViewBase):
                     e.text = sub_item.text
                     e.text_color = sub_item.text_color
                     e.x = rect.x + temp_item_w
-                    e.y = offset_y + rect.y + temp_item_h
+                    e.y = rect.y + (row + start_index) * self.__items_padding_height + self.__columns_padding_height
                     e.w = column.width
                     e.h = self.__items_padding_height 
                     e.sub_item_index = start_index + temp_index
@@ -187,6 +204,7 @@ class ListView(ListViewBase):
             # 保存绘制行的y坐标.
             temp_item_h += self.__items_padding_height
             temp_index  += 1
+        cr.restore()
 
     ################################################
     ## @ on_draw_column_heade : 连接头的重绘函数.
@@ -249,11 +267,12 @@ class ListView(ListViewBase):
     ## @ on_draw_sub_item : 连.
     def __on_draw_sub_item_hd(self, e):
         #print "__on_draw_sub_item_hd..."
-        '''
         e.cr.set_source_rgba(0, 0, 0, 0.7)
         e.cr.rectangle(e.x, e.y, e.w, e.h)
         e.cr.fill()
-        '''
+        e.cr.set_source_rgba(0, 0, 1, 0.7)
+        e.cr.rectangle(e.x + 1, e.y + 1, e.w - 2, e.h - 2)
+        e.cr.fill()
         e.draw_text(e.cr, 
                   e.text, 
                   e.x, e.y, e.w, e.h,
@@ -279,12 +298,32 @@ class ListView(ListViewBase):
 
     def __set_listview_size(self):
         rect = self.allocation
-        listview_height =  len(self.items) * self.__items_padding_height
+        listview_height =  (len(self.items) + 1) * self.__items_padding_height + self.__items_padding_height
         listview_width  =  188
         for column in self.columns:
             listview_width += column.width 
         if (rect.height != listview_height) or (rect.width != listview_width):
             self.set_size_request(listview_width, listview_height)
+
+
+class ItemEventArgs(object):
+    def __init__(self):
+        self.cr = None
+        self.select_items = []
+        # 鼠标的起点和结束点.
+        self.start_x = 0
+        self.start_y = 0
+        self.end_x   = 0
+        self.end_y   = 0
+        # item.
+        self.item    = None
+        self.text    = ""
+        self.image   = ""
+        self.x =  0
+        self.y =  0
+        self.w =  0
+        self.h =  0
+
 
 class SubItemEventArgs(object):
     def __init__(self):
@@ -305,6 +344,7 @@ class ColumnHeaderEventArgs(object):
     def __init__(self):
         self.cr     = None
         self.column = None
+        self.column_index = 0
         self.text = ""
         self.text_color = "#000000"
         self.text_align = pango.ALIGN_LEFT

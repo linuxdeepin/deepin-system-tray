@@ -285,6 +285,23 @@ def get_offset_coordinate(widget):
     else:
         return (0, 0, viewport)
 
+def is_single_click(event): # 单击
+    return event.button == 1 and event.type == gtk.gdk.BUTTON_PRESS
+
+def is_double_click(event): # 双击
+    return event.button == 1 and event.type == gtk.gdk._2BUTTON_PRESS
+
+def is_left_button(event): # 左键.
+    return event.button == 1
+
+def is_right_button(event): # 右键.
+    return event.button == 3
+
+def is_mid_button(event): # 滚轮按下.
+    return event.button == 2
+
+
+
 if __name__ == "__main__":
     print get_home_path()
     print get_config_path()
