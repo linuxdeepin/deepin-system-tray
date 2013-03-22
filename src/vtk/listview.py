@@ -137,15 +137,14 @@ class ListView(ListViewBase):
 
     def __draw_view_details(self, cr, rect, widget):
         #self.on_draw_item(e)
-        column_index = 0
         temp_column_w = 0
         offset_x, offset_y, viewport = get_offset_coordinate(widget)
-        for column in self.columns: # 绘制标题头.
+        for index, column in enumerate(self.columns): # 绘制标题头.
             # 保存属性.
             e = ColumnHeaderEventArgs()
             e.cr     = cr
             e.column = column 
-            e.column_index = column_index
+            e.column_index = index
             e.text = column.text
             e.x = rect.x + temp_column_w
             e.y = offset_y + rect.y
@@ -154,11 +153,9 @@ class ListView(ListViewBase):
             e.text_color = column.text_color
             #
             temp_column_w += column.width
-            column_index += 1
             self.on_draw_column_heade(e)
         # 
         temp_item_h  = self.__columns_padding_height
-        temp_index   = 0
         # 优化listview.
         # 获取滚动窗口.
         scroll_win = get_match_parent(self, "ScrolledWindow")
@@ -194,22 +191,24 @@ class ListView(ListViewBase):
                     e.text = sub_item.text
                     e.text_color = sub_item.text_color
                     e.x = rect.x + temp_item_w
-                    e.y = rect.y + (row + start_index) * self.__items_padding_height + self.__columns_padding_height
+                    e.y = rect.y + ((row + start_index) * self.__items_padding_height) + self.__columns_padding_height
                     e.w = column.width
                     e.h = self.__items_padding_height 
-                    e.sub_item_index = start_index + temp_index
+                    e.sub_item_index = row + start_index
                     temp_item_w += column.width
                     #
                     self.on_draw_sub_item(e)
             # 保存绘制行的y坐标.
             temp_item_h += self.__items_padding_height
-            temp_index  += 1
         cr.restore()
 
     ################################################
     ## @ on_draw_column_heade : 连接头的重绘函数.
     def __on_draw_column_heade_hd(self, e):
-        e.cr.set_source_rgba(0, 0, 0, 0.1)
+        if e.column_index in [1, 3]:
+            e.cr.set_source_rgba(1, 0, 0, 0.1)
+        else:
+            e.cr.set_source_rgba(0, 0, 0, 0.1)
         if self.columns[len(self.columns)-1] == e.column:
             e.cr.rectangle(e.x + e.w, e.y, self.allocation.width - e.x, e.h)
             e.cr.fill()
@@ -241,7 +240,7 @@ class ListView(ListViewBase):
         del self.__on_draw_column_heade
 
     ################################################
-    ## @ on_draw_item : 连.
+    ## @ on_draw_item : 连. 当 owner_draw 设置为真的时候发生.
     def __on_draw_item_hd(self, e):
         #print "__on_draw_item_hd..."
         pass
@@ -267,7 +266,10 @@ class ListView(ListViewBase):
     ## @ on_draw_sub_item : 连.
     def __on_draw_sub_item_hd(self, e):
         #print "__on_draw_sub_item_hd..."
-        e.cr.set_source_rgba(0, 0, 0, 0.7)
+        if e.sub_item_index in [1, 3, 5, 7, 9]:
+            e.cr.set_source_rgba(1, 0, 0, 0.1)
+        else:
+            e.cr.set_source_rgba(0, 0, 0, 0.7)
         e.cr.rectangle(e.x, e.y, e.w, e.h)
         e.cr.fill()
         e.cr.set_source_rgba(0, 0, 1, 0.7)
@@ -315,10 +317,10 @@ class ItemEventArgs(object):
         self.start_y = 0
         self.end_x   = 0
         self.end_y   = 0
+        self.state   = 0 # 状态.
         # item.
         self.item    = None
-        self.text    = ""
-        self.image   = ""
+        # Bounds
         self.x =  0
         self.y =  0
         self.w =  0

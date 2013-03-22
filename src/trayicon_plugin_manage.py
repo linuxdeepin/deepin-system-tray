@@ -80,22 +80,34 @@ class PluginManage(object):
                             add_sys_path(scan_path + "/" + modules_info.id + "/src")
                             modual = __import__("%s.%s" % (modules_info.id, modules_info.include), fromlist=["keywords"])
                             class_init = modual.return_plugin()
+                            class_insert = modual.return_insert()
+                            print class_insert
 
-                            class_run = class_init()
+                            class_run = class_init#()
+                            if class_insert != None:
+                                #self.keywords.insert(class_insert, class_run)
+                                if self.keywords[class_insert] == None:
+                                    self.keywords[class_insert] = class_run
+                            else:
+                                self.keywords.append(class_run)
+                            '''
                             try:
                                 print_msg("load plugin[id]:%s"%(class_run.id()))
                                 index = class_run.insert()
                                 #self.keywords.insert(index, class_run)
-                                if self.keywords[index] == None:
-                                    self.keywords[index] = class_run
+                                if index != None:
+                                    if self.keywords[index] == None:
+                                        self.keywords[index] = class_run
                                 else:
                                     self.keywords.append(class_run)
                             except:
                                 self.keywords.append(class_run)
                             #
                             self.key_dict[class_run.id()] = class_run
+                            '''
                         except Exception, e:
                             print_msg("tray plugin error:%s"%(e))
+
 
 
  
