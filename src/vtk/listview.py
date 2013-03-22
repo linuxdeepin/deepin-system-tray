@@ -70,6 +70,8 @@ class ListView(ListViewBase):
 
     def __init_values_items(self):
         self.__items_padding_height = 40
+        self.__double_items = None
+        self.__double_click_hd = None
 
     def __init_events(self):
         self.connect("realize",              self.__listview_realize_event)
@@ -109,24 +111,33 @@ class ListView(ListViewBase):
     def __listview_motion_notify_event(self, widget, event):
         #print "__listview_motion_notify_event..."
         row_index, col_index = self.__get_items_mouse_data(event)
+        '''
         if not (None in [row_index, col_index]):
             print self.items[row_index].sub_items[col_index].text
         else:
             print "motion..==========================="
         pass
+        '''
 
     def __listview_button_press_event(self, widget, event):
-        #print "__listview_button_press_event...."
-        #print is_double_click(event)
-        pass
+        # 判断双击的区域.
+        if is_double_click(event):
+            row_index, col_index = self.__get_items_mouse_data(event)
+            if not (None in [row_index, col_index]):
+                self.__double_items = self.items[row_index]
+                if self.__double_click_hd:
+                    self.__double_click_hd(self, self.__double_items, row_index, col_index)
+                self.on_queue_draw_area()
 
     def __listview_button_release_event(self, widget, event):
         #print "__listview_button_release_event..."
         row_index, col_index = self.__get_items_mouse_data(event)
+        '''
         if not (None in [row_index, col_index]):
             print self.items[row_index].sub_items[col_index].text
         else:
             print "release==========================="
+        '''
 
     def __listview_enter_notify_event(self, widget, event):
         #print "__listview_enter_enter...notify_event..."
@@ -135,6 +146,10 @@ class ListView(ListViewBase):
     def __listview_leave_notify_event(self, widget, event):
         #print "__listview_leave_notify_event...."
         pass
+
+    def connect_event(self, event_name, function_point):
+        if event_name == "double-click":
+            self.__double_click_hd = function_point
 
     def __listview_expose_event(self, widget, event):
         #print "__listview_expose_event.."
@@ -201,6 +216,7 @@ class ListView(ListViewBase):
                     e = SubItemEventArgs()
                     e.cr = cr
                     e.sub_item = sub_item
+                    e.double_items = self.__double_items
                     e.item     = item
                     e.text = sub_item.text
                     e.text_color = sub_item.text_color
@@ -280,15 +296,19 @@ class ListView(ListViewBase):
     ## @ on_draw_sub_item : 连.
     def __on_draw_sub_item_hd(self, e):
         #print "__on_draw_sub_item_hd..."
-        if e.sub_item_index in [1, 3, 5, 7, 9]:
-            e.cr.set_source_rgba(1, 0, 0, 0.1)
+        if e.double_items != e.item:
+            if e.sub_item_index in [1, 3, 5, 7, 9]:
+                e.cr.set_source_rgba(1, 0, 0, 0.1)
+            else:
+                e.cr.set_source_rgba(0, 0, 0, 0.7)
+            e.cr.rectangle(e.x, e.y, e.w, e.h)
+            e.cr.fill()
+            e.cr.set_source_rgba(0, 0, 1, 0.7)
+            e.cr.rectangle(e.x + 1, e.y + 1, e.w - 2, e.h - 2)
+            e.cr.fill()
+            e.text_color = "#FFFFFF"
         else:
-            e.cr.set_source_rgba(0, 0, 0, 0.7)
-        e.cr.rectangle(e.x, e.y, e.w, e.h)
-        e.cr.fill()
-        e.cr.set_source_rgba(0, 0, 1, 0.7)
-        e.cr.rectangle(e.x + 1, e.y + 1, e.w - 2, e.h - 2)
-        e.cr.fill()
+            e.text_color = "#0000FF"
         e.draw_text(e.cr, 
                   e.text, 
                   e.x, e.y, e.w, e.h,
@@ -315,8 +335,7 @@ class ListView(ListViewBase):
     def __set_listview_size(self):
         # 设置listview的高度和宽度.
         rect = self.allocation
-        # 最后的 self.__items....height 是额外添加的高度.
-        listview_height =  (len(self.items) + 1) * self.__items_padding_height + self.__items_padding_height
+        listview_height =  (len(self.items)) * self.__items_padding_height + self.__columns_padding_height
         listview_width  =  188 # 额外添加 188 的宽度.
         for column in self.columns:
             listview_width += column.width 
@@ -328,7 +347,8 @@ class ListView(ListViewBase):
         if self.__in_items_check(offset_y, event):
             event_x = event.x # 获取鼠标x.
             # 获取行号.
-            row_index = int(event.y - self.__columns_padding_height) / self.__items_padding_height
+            event_y_padding = int(event.y - self.__columns_padding_height)
+            row_index = event_y_padding / self.__items_padding_height
             x_padding = 0
             col_index = 0
             # 获取行item,列的sub_items.
@@ -347,8 +367,9 @@ class ListView(ListViewBase):
             return None, None
 
     def __in_items_check(self, offset_y, event):
-        return ((offset_y + self.__columns_padding_height) < event.y <= 
-                ((len(self.items) + 1) * self.__items_padding_height))
+        start_y = (offset_y + self.__columns_padding_height)
+        end_y   = ((len(self.items) + 1) * self.__items_padding_height)
+        return (start_y < event.y <= start_y + end_y)
 
     @property
     def items_height(self):
@@ -409,6 +430,7 @@ class SubItemEventArgs(object):
         self.item = None
         self.sub_item = None
         self.sub_item_index = None
+        self.double_items = None
         self.text = ""
         self.text_color = "#000000"
         self.text_align = pango.ALIGN_LEFT
@@ -458,11 +480,16 @@ if __name__ == "__main__":
     def listview1_test_on_draw_sub_item(e):
         print "sub item..我来啦...O(∩_∩)O哈哈~..."
 
+    def test_listview_double_click(listview, double_items, row, col):
+        print double_items.sub_items[col].text, row, col
+
     win = gtk.Window(gtk.WINDOW_TOPLEVEL)
     win.set_size_request(500, 500)
     listview1 = ListView()
-    listview1.items_height = 120
-    listview1.columns_height = 150
+    listview1.connect_event("double-click", test_listview_double_click) 
+    #listview1.connect_event("
+    listview1.items_height = 30
+    listview1.columns_height = 50
     listview1.set_size_request(500, 1500)
     # 重载函数.
     #listview1.on_draw_column_heade =  listview1_test_on_draw_column_heade
