@@ -88,6 +88,9 @@ class PluginManage(object):
                                 #self.keywords.insert(class_insert, class_run)
                                 if self.keywords[class_insert] == None:
                                     self.keywords[class_insert] = class_run
+                                else:
+                                    self.keywords.append(class_run)
+
                             else:
                                 self.keywords.append(class_run)
                             '''
