@@ -69,7 +69,7 @@ class ListView(ListViewBase):
         self.__columns_padding_height = 30
 
     def __init_values_items(self):
-        self.__items_padding_height = 40
+        self.__items_padding_height = 30
         self.__double_items = None
         self.__double_click_hd = None
 
@@ -123,7 +123,7 @@ class ListView(ListViewBase):
         # 判断双击的区域.
         if is_double_click(event):
             row_index, col_index = self.__get_items_mouse_data(event)
-            if not (None in [row_index, col_index]):
+            if not (None in [row_index]):
                 self.__double_items = self.items[row_index]
                 if self.__double_click_hd:
                     self.__double_click_hd(self, self.__double_items, row_index, col_index)
@@ -235,15 +235,12 @@ class ListView(ListViewBase):
     ################################################
     ## @ on_draw_column_heade : 连接头的重绘函数.
     def __on_draw_column_heade_hd(self, e):
-        if e.column_index in [1, 3]:
-            e.cr.set_source_rgba(1, 0, 0, 0.1)
-        else:
-            e.cr.set_source_rgba(0, 0, 0, 0.1)
+        e.cr.set_source_rgba(0, 0, 0, 0.1)
+        e.cr.rectangle(e.x, e.y, e.w, e.h)
+        e.cr.fill()
         if self.columns[len(self.columns)-1] == e.column:
             e.cr.rectangle(e.x + e.w, e.y, self.allocation.width - e.x, e.h)
             e.cr.fill()
-        e.cr.rectangle(e.x, e.y, e.w, e.h)
-        e.cr.fill()
         # 画标题栏文本.
         draw_text(e.cr, 
                   e.text,
@@ -295,20 +292,6 @@ class ListView(ListViewBase):
     ################################################
     ## @ on_draw_sub_item : 连.
     def __on_draw_sub_item_hd(self, e):
-        #print "__on_draw_sub_item_hd..."
-        if e.double_items != e.item:
-            if e.sub_item_index in [1, 3, 5, 7, 9]:
-                e.cr.set_source_rgba(1, 0, 0, 0.1)
-            else:
-                e.cr.set_source_rgba(0, 0, 0, 0.7)
-            e.cr.rectangle(e.x, e.y, e.w, e.h)
-            e.cr.fill()
-            e.cr.set_source_rgba(0, 0, 1, 0.7)
-            e.cr.rectangle(e.x + 1, e.y + 1, e.w - 2, e.h - 2)
-            e.cr.fill()
-            e.text_color = "#FFFFFF"
-        else:
-            e.text_color = "#0000FF"
         e.draw_text(e.cr, 
                   e.text, 
                   e.x, e.y, e.w, e.h,
@@ -367,9 +350,9 @@ class ListView(ListViewBase):
             return None, None
 
     def __in_items_check(self, offset_y, event):
-        start_y = (offset_y + self.__columns_padding_height)
+        start_y = (offset_y) # + self.__columns_padding_height)
         end_y   = ((len(self.items) + 1) * self.__items_padding_height)
-        return (start_y < event.y <= start_y + end_y)
+        return (start_y < event.y < start_y + end_y)
 
     @property
     def items_height(self):
@@ -481,15 +464,15 @@ if __name__ == "__main__":
         print "sub item..我来啦...O(∩_∩)O哈哈~..."
 
     def test_listview_double_click(listview, double_items, row, col):
-        print double_items.sub_items[col].text, row, col
+        print double_items.sub_items[0], row, col
 
     win = gtk.Window(gtk.WINDOW_TOPLEVEL)
     win.set_size_request(500, 500)
     listview1 = ListView()
     listview1.connect_event("double-click", test_listview_double_click) 
     #listview1.connect_event("
-    listview1.items_height = 30
-    listview1.columns_height = 50
+    #listview1.items_height = 30
+    #listview1.columns_height = 50
     listview1.set_size_request(500, 1500)
     # 重载函数.
     #listview1.on_draw_column_heade =  listview1_test_on_draw_column_heade
