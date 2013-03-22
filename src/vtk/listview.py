@@ -84,10 +84,15 @@ class ListView(ListViewBase):
         widget.set_realized(True)
 
         scroll_win = get_match_parent(widget, "ScrolledWindow")
-        scroll_win.get_vadjustment().connect("value-changed",
-                                self.__scroll_win_vajustment_changed)
-        scroll_win.get_hadjustment().connect("value-changed",
-                                self.__scroll_win_hajustment_changed)
+        if scroll_win:
+            scroll_win.get_vadjustment().connect("value-changed",
+                                    self.__scroll_win_vajustment_changed)
+            scroll_win.get_hadjustment().connect("value-changed",
+                                    self.__scroll_win_hajustment_changed)
+            scroll_win.connect("scroll-event", self.__scroll_win_scroll_event)
+
+    def __scroll_win_scroll_event(self, widget, event):
+        self.__scroll_win_event()
 
     def __scroll_win_vajustment_changed(self, adjustment):
         self.__scroll_win_event()
@@ -345,6 +350,40 @@ class ListView(ListViewBase):
         return ((offset_y + self.__columns_padding_height) < event.y <= 
                 ((len(self.items) + 1) * self.__items_padding_height))
 
+    @property
+    def items_height(self):
+        return self.__items_padding_height
+    
+    @items_height.setter
+    def items_height(self, height):
+        self.__items_padding_height = height
+        self.on_queue_draw_area()
+
+    @items_height.getter
+    def items_height(self):
+        return self.__items_padding_height
+
+    @items_height.deleter
+    def items_height(self):
+        del self.__items_padding_height
+
+    @property
+    def columns_height(slef):
+        return self.__columns_padding_height
+
+    @columns_height.setter
+    def columns_height(self, height):
+        self.__columns_padding_height = height
+        self.on_queue_draw_area()
+
+    @columns_height.getter
+    def  columns_height(self):
+        return self.__columns_padding_height
+
+    @columns_height.deleter
+    def columns_height(self):
+        del self.__columns_padding_height
+
 class ItemEventArgs(object):
     def __init__(self):
         self.cr = None
@@ -422,6 +461,8 @@ if __name__ == "__main__":
     win = gtk.Window(gtk.WINDOW_TOPLEVEL)
     win.set_size_request(500, 500)
     listview1 = ListView()
+    listview1.items_height = 120
+    listview1.columns_height = 150
     listview1.set_size_request(500, 1500)
     # 重载函数.
     #listview1.on_draw_column_heade =  listview1_test_on_draw_column_heade
