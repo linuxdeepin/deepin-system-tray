@@ -131,13 +131,15 @@ class ListView(ListViewBase):
 
     def __listview_button_release_event(self, widget, event):
         #print "__listview_button_release_event..."
-        row_index, col_index = self.__get_items_mouse_data(event)
-        '''
-        if not (None in [row_index, col_index]):
-            print self.items[row_index].sub_items[col_index].text
+        # 获取标题头触发的release事件返回的x索引.
+        col_index =  self.__get_columns_mouse_data(event)
+        if col_index != None:
+            print self.columns[col_index].text
         else:
-            print "release==========================="
-        '''
+            # 获取items触发的release事件返回的x,y索引.
+            row_index, col_index = self.__get_items_mouse_data(event)
+            if not (None in [row_index, col_index]):
+                print self.items[row_index].sub_items[col_index].text
 
     def __listview_enter_notify_event(self, widget, event):
         #print "__listview_enter_enter...notify_event..."
@@ -292,6 +294,8 @@ class ListView(ListViewBase):
     ################################################
     ## @ on_draw_sub_item : 连.
     def __on_draw_sub_item_hd(self, e):
+        if e.double_items == e.item:
+            e.text_color = "#0000ff"
         e.draw_text(e.cr, 
                   e.text, 
                   e.x, e.y, e.w, e.h,
@@ -350,10 +354,29 @@ class ListView(ListViewBase):
             return None, None
 
     def __in_items_check(self, offset_y, event):
-        start_y = (offset_y) # + self.__columns_padding_height)
-        end_y   = ((len(self.items) + 1) * self.__items_padding_height)
-        return (start_y < event.y < start_y + end_y)
+        start_y = (offset_y) + self.__columns_padding_height
+        end_y   = start_y + ((len(self.items) + 1) * self.__items_padding_height)
+        return (start_y < event.y < end_y)
 
+    def __get_columns_mouse_data(self, event):
+        offset_x, offset_y, viewport = get_offset_coordinate(self)
+        if self.__in_columns_check(offset_y, event):
+            # 获取行item,列的sub_items.
+            x_padding = 0
+            col_index = 0
+            for column in self.columns:
+                if x_padding <= int(event.x) <= x_padding + column.width:
+                    return col_index
+                x_padding += column.width
+                col_index += 1
+            return None
+
+    def __in_columns_check(self, offset_y, event):
+        start_y = offset_y
+        end_y   = start_y + self.__columns_padding_height
+        return (start_y < event.y < end_y)
+
+    # 设置每行的高度.
     @property
     def items_height(self):
         return self.__items_padding_height
@@ -371,6 +394,7 @@ class ListView(ListViewBase):
     def items_height(self):
         del self.__items_padding_height
 
+    # 设置标题头的高度.
     @property
     def columns_height(slef):
         return self.__columns_padding_height
@@ -446,7 +470,7 @@ if __name__ == "__main__":
         #listview1.items[0].sub_items.add("fdjkf")
         #listview1.items[0].sub_items[0].text = "我爱你,精灵..."
         listview1.begin_update()
-        for i in range(0, 10000):
+        for i in range(0, 20000):
             #listview1.items.add_insert(0, [[str(i), "男", "程序员", "美国" + str(i)]])
             listview1.items.add_range([[str(i), 
                                         "男", 
@@ -467,6 +491,7 @@ if __name__ == "__main__":
         print double_items.sub_items[0], row, col
 
     win = gtk.Window(gtk.WINDOW_TOPLEVEL)
+    win.connect("destroy", lambda w : gtk.main_quit())
     win.set_size_request(500, 500)
     listview1 = ListView()
     listview1.connect_event("double-click", test_listview_double_click) 
@@ -474,7 +499,7 @@ if __name__ == "__main__":
     #listview1.items_height = 30
     #listview1.columns_height = 50
     listview1.set_size_request(500, 1500)
-    # 重载函数.
+    # 连接主要绘制函数.
     #listview1.on_draw_column_heade =  listview1_test_on_draw_column_heade
     #listview1.on_draw_sub_item     =  listview1_test_on_draw_sub_item
     listview1.columns.add("姓名")
