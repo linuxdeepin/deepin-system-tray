@@ -25,7 +25,9 @@ import gtk
 import pango
 
 # 视图.
-LARGEICON, DETAILS, SMALLICON, LIST, TITLE = range(0, 5)
+class View:
+    LARGEICON, DETAILS, SMALLICON, LIST, TITLE = range(0, 5)
+
 '''
 largeicon =>> 每个项为一个最大化图标, 下面是一个标签.
 smallicon =>> 每个项为一个小图标, 右边带一个标签.
@@ -33,6 +35,9 @@ list      =>> 每个项都显示一个小图标, 右边带一个标签, 各项�
 Details   =>> 包含列标头, 每列都可以显示一个图标和标签.
 tile      =>> 
 '''
+
+class Text:
+    LEFT, RIGHT, CENTER = (pango.ALIGN_LEFT, pango.ALIGN_RIGHT, pango.ALIGN_CENTER)
 
 def type_check(type_name, type_str):
     return type(type_name).__name__ == type_str
@@ -48,7 +53,7 @@ class ListViewBase(gtk.Button):
         self.__expose_check = True # 防止大量数据加载的闪烁问题.
         self.columns = Columns() # 保存 ColumnHeader
         self.items   = Items()   # 保存 ListViewItem
-        self.__view = DETAILS    # 设置视图, 默认为 Details.
+        self.__view = View.DETAILS    # 设置视图, 默认为 Details.
         self.__grid_lines = False # Details视图, 显示网格线.
         self.__multi_select = False # 是否可以选择多个项.
         self.__alignment = None #各项对齐方式.

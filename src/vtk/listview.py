@@ -27,7 +27,7 @@ from utils import get_text_size, get_match_parent, get_offset_coordinate
 from utils import is_single_click, is_double_click
 from listview_base import type_check
 from listview_base import ListViewBase
-from listview_base import LARGEICON, DETAILS, SMALLICON, LIST, TITLE
+from listview_base import View, Text
 import pango
 import gtk
 
@@ -64,14 +64,16 @@ class ListView(ListViewBase):
         self.__on_draw_column_heade = self.__on_draw_column_heade_hd
         self.__on_draw_sub_item     = self.__on_draw_sub_item_hd
         self.__on_draw_item         = self.__on_draw_item_hd
+        # 保存双击的事件.
+        self.__double_click_hd = None
 
     def __init_values_columns(self):
         self.__columns_padding_height = 30
 
     def __init_values_items(self):
         self.__items_padding_height = 30
+        # 保存双击items.
         self.__double_items = None
-        self.__double_click_hd = None
 
     def __init_events(self):
         self.connect("realize",              self.__listview_realize_event)
@@ -158,7 +160,7 @@ class ListView(ListViewBase):
         cr = widget.window.cairo_create()
         rect = widget.allocation
         #
-        if self.view == DETAILS: # 带标题头的视图, 比如详细信息.
+        if self.view == View.DETAILS: # 带标题头的视图, 比如详细信息.
             self.__draw_view_details(cr, rect, widget)
         #elif self.view == 
         #
@@ -248,7 +250,7 @@ class ListView(ListViewBase):
                   e.text,
                   e.x, e.y, e.w, e.h,
                   text_color=e.text_color,
-                  alignment=pango.ALIGN_CENTER)
+                  alignment=Text.CENTER)
         #
 
     @property
@@ -300,7 +302,7 @@ class ListView(ListViewBase):
                   e.text, 
                   e.x, e.y, e.w, e.h,
                   text_color=e.text_color, 
-                  alignment=pango.ALIGN_CENTER)
+                  alignment=Text.CENTER)
         
     @property
     def on_draw_sub_item(self, e):
@@ -355,7 +357,7 @@ class ListView(ListViewBase):
 
     def __in_items_check(self, offset_y, event):
         start_y = (offset_y) + self.__columns_padding_height
-        end_y   = start_y + ((len(self.items) + 1) * self.__items_padding_height)
+        end_y   = start_y + ((len(self.items)) * self.__items_padding_height)
         return (start_y < event.y < end_y)
 
     def __get_columns_mouse_data(self, event):
@@ -440,7 +442,7 @@ class SubItemEventArgs(object):
         self.double_items = None
         self.text = ""
         self.text_color = "#000000"
-        self.text_align = pango.ALIGN_LEFT
+        self.text_align = Text.LEFT
         self.draw_text = draw_text
         self.x = 0
         self.y = 0
@@ -454,7 +456,7 @@ class ColumnHeaderEventArgs(object):
         self.column_index = 0
         self.text = ""
         self.text_color = "#000000"
-        self.text_align = pango.ALIGN_LEFT
+        self.text_align = Text.LEFT
         self.draw_text = draw_text
         self.x = 0
         self.y = 0
@@ -489,6 +491,8 @@ if __name__ == "__main__":
 
     def test_listview_double_click(listview, double_items, row, col):
         print double_items.sub_items[0], row, col
+        #listview.items[row].sub_items[0].text = "明天"
+        listview.items.remove(double_items)
 
     win = gtk.Window(gtk.WINDOW_TOPLEVEL)
     win.connect("destroy", lambda w : gtk.main_quit())
