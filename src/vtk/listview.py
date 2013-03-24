@@ -24,7 +24,7 @@
 
 from draw import draw_text, draw_pixbuf
 from utils import get_text_size, get_match_parent, get_offset_coordinate
-from utils import is_single_click, is_double_click
+from utils import is_single_click, is_double_click, is_left_button
 from listview_base import type_check
 from listview_base import ListViewBase
 from listview_base import View, Text
@@ -64,8 +64,10 @@ class ListView(ListViewBase):
         self.__on_draw_column_heade = self.__on_draw_column_heade_hd
         self.__on_draw_sub_item     = self.__on_draw_sub_item_hd
         self.__on_draw_item         = self.__on_draw_item_hd
-        # 保存双击的事件.
-        self.__double_click_hd = None
+        # 保存事件.
+        self.__double_click_hd  = None
+        self.__motion_notify_hd = None
+        self.__single_click_hd  = None
 
     def __init_values_columns(self):
         self.__columns_padding_height = 30
@@ -74,6 +76,10 @@ class ListView(ListViewBase):
         self.__items_padding_height = 30
         # 保存双击items.
         self.__double_items = None
+        # 保存移动的items.
+        self.__motion_items = None
+        # 保存单击的items.
+        self.__single_items = None
 
     def __init_events(self):
         self.connect("realize",              self.__listview_realize_event)
@@ -113,13 +119,12 @@ class ListView(ListViewBase):
     def __listview_motion_notify_event(self, widget, event):
         #print "__listview_motion_notify_event..."
         row_index, col_index = self.__get_items_mouse_data(event)
-        '''
-        if not (None in [row_index, col_index]):
-            print self.items[row_index].sub_items[col_index].text
-        else:
-            print "motion..==========================="
-        pass
-        '''
+        if not (None in [row_index]):
+            self.__motion_items = self.items[row_index]
+            # 发送信号.
+            if self.__motion_notify_hd:
+                self.__motion_notify_hd(self, self.__motion_items, row_index, col_index)
+            self.on_queue_draw_area()
 
     def __listview_button_press_event(self, widget, event):
         # 判断双击的区域.
@@ -127,6 +132,7 @@ class ListView(ListViewBase):
             row_index, col_index = self.__get_items_mouse_data(event)
             if not (None in [row_index]):
                 self.__double_items = self.items[row_index]
+                # 发送信号.
                 if self.__double_click_hd:
                     self.__double_click_hd(self, self.__double_items, row_index, col_index)
                 self.on_queue_draw_area()
@@ -134,14 +140,17 @@ class ListView(ListViewBase):
     def __listview_button_release_event(self, widget, event):
         #print "__listview_button_release_event..."
         # 获取标题头触发的release事件返回的x索引.
-        col_index =  self.__get_columns_mouse_data(event)
-        if col_index != None:
-            print self.columns[col_index].text
-        else:
+        if is_left_button(event):
+            # 列标头.
+            col_index =  self.__get_columns_mouse_data(event)
+            if col_index != None:
+                print self.columns[col_index].text
             # 获取items触发的release事件返回的x,y索引.
             row_index, col_index = self.__get_items_mouse_data(event)
             if not (None in [row_index, col_index]):
-                print self.items[row_index].sub_items[col_index].text
+                # 发送信号.
+                self.__single_items = self.items[row_index]
+                self.__single_click_hd(self, self.__single_items, row_index, col_index)
 
     def __listview_enter_notify_event(self, widget, event):
         #print "__listview_enter_enter...notify_event..."
@@ -153,7 +162,11 @@ class ListView(ListViewBase):
 
     def connect_event(self, event_name, function_point):
         if event_name == "double-click":
-            self.__double_click_hd = function_point
+            self.__double_click_hd  = function_point
+        elif event_name == "motion-notify":
+            self.__motion_notify_hd = function_point
+        elif event_name == "single-click":
+            self.__single_click_hd  = function_point
 
     def __listview_expose_event(self, widget, event):
         #print "__listview_expose_event.."
@@ -228,6 +241,8 @@ class ListView(ListViewBase):
                     e.cr = cr
                     e.sub_item = sub_item
                     e.double_items = self.__double_items
+                    e.motion_items = self.__motion_items
+                    e.single_items = self.__single_items
                     e.item     = item
                     e.text = sub_item.text
                     e.text_color = sub_item.text_color
@@ -304,6 +319,10 @@ class ListView(ListViewBase):
     def __on_draw_sub_item_hd(self, e):
         if e.double_items == e.item:
             e.text_color = "#0000ff"
+        elif e.single_items == e.item:
+            e.text_color = "#00FF00"
+        if e.motion_items == e.item:
+            e.text_color = "#FF0000"
         e.draw_text(e.cr, 
                   e.text, 
                   e.x, e.y, e.w, e.h,
@@ -446,6 +465,8 @@ class SubItemEventArgs(object):
         self.sub_item = None
         self.sub_item_index = None
         self.double_items = None
+        self.motion_items = None
+        self.single_items = None
         self.text = ""
         self.text_color = "#000000"
         self.text_align = Text.LEFT
@@ -506,11 +527,21 @@ if __name__ == "__main__":
         # 测试改变标题头高度.
         #listview.columns_height += 5
 
+    def test_listview_motion_notify(listview, motion_items, row, col):
+        if col == None:
+            col = 0
+        print motion_items.sub_items[col].text, row, col
+
+    def test_listview_single_click(listview, single_items, row, col):
+        print single_items.sub_items[0].text
+
     win = gtk.Window(gtk.WINDOW_TOPLEVEL)
     win.connect("destroy", lambda w : gtk.main_quit())
     win.set_size_request(500, 500)
     listview1 = ListView()
-    listview1.connect_event("double-click", test_listview_double_click) 
+    listview1.connect_event("double-click",  test_listview_double_click) 
+    listview1.connect_event("motion-notify", test_listview_motion_notify)
+    listview1.connect_event("single-click",  test_listview_single_click) 
     #listview1.connect_event("
     #listview1.items_height = 130
     #listview1.columns_height = 150
