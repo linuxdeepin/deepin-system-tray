@@ -170,25 +170,9 @@ class ListView(ListViewBase):
 
     def __draw_view_details(self, cr, rect, widget):
         #self.on_draw_item(e)
-        temp_column_w = 0
         offset_x, offset_y, viewport = get_offset_coordinate(widget)
-        for index, column in enumerate(self.columns): # 绘制标题头.
-            # 保存属性.
-            e = ColumnHeaderEventArgs()
-            e.cr     = cr
-            e.column = column 
-            e.column_index = index
-            e.text = column.text
-            e.x = rect.x + temp_column_w
-            e.y = offset_y + rect.y
-            e.w = column.width
-            e.h = self.__columns_padding_height + 1
-            e.text_color = column.text_color
-            #
-            temp_column_w += column.width
-            self.on_draw_column_heade(e)
-        # 
-        temp_item_h  = self.__columns_padding_height
+        # 画标题头.
+        self.__draw_view_details_column(offset_y, cr, rect)
         # 优化listview.
         # 获取滚动窗口.
         scroll_win = get_match_parent(self, "ScrolledWindow")
@@ -208,7 +192,30 @@ class ListView(ListViewBase):
                      scroll_win.allocation.width, 
                      scroll_win.allocation.height)
         cr.clip()
-        #
+        # 画 items.
+        self.__draw_view_details_items(start_index, end_index, cr, rect)
+        cr.restore()
+
+    def __draw_view_details_column(self, offset_y, cr, rect):
+        temp_column_w = 0
+        for index, column in enumerate(self.columns): # 绘制标题头.
+            # 保存属性.
+            e = ColumnHeaderEventArgs()
+            e.cr     = cr
+            e.column = column 
+            e.column_index = index
+            e.text = column.text
+            e.x = rect.x + temp_column_w
+            e.y = offset_y + rect.y
+            e.w = column.width
+            e.h = self.__columns_padding_height + 1
+            e.text_color = column.text_color
+            #
+            temp_column_w += column.width
+            self.on_draw_column_heade(e)
+
+    def __draw_view_details_items(self, start_index, end_index, cr, rect):
+        temp_item_h  = self.__columns_padding_height
         for row, item in enumerate(self.items[start_index:end_index]):
             temp_item_w = 0
             # 行中的列元素.
@@ -234,7 +241,6 @@ class ListView(ListViewBase):
                     self.on_draw_sub_item(e)
             # 保存绘制行的y坐标.
             temp_item_h += self.__items_padding_height
-        cr.restore()
 
     ################################################
     ## @ on_draw_column_heade : 连接头的重绘函数.
@@ -491,8 +497,14 @@ if __name__ == "__main__":
 
     def test_listview_double_click(listview, double_items, row, col):
         print double_items.sub_items[0], row, col
+        # 测试双击改变第一个文本.
         #listview.items[row].sub_items[0].text = "明天"
-        listview.items.remove(double_items)
+        # 测试删除双击下的items.
+        #listview.items.remove(double_items)
+        # 测试在指定位置插入items.
+        #listview.items.add_insert(row + 1, [["long", "fjdkf", "fjdkf"]])
+        # 测试改变标题头高度.
+        #listview.columns_height += 5
 
     win = gtk.Window(gtk.WINDOW_TOPLEVEL)
     win.connect("destroy", lambda w : gtk.main_quit())
@@ -500,9 +512,8 @@ if __name__ == "__main__":
     listview1 = ListView()
     listview1.connect_event("double-click", test_listview_double_click) 
     #listview1.connect_event("
-    #listview1.items_height = 30
-    #listview1.columns_height = 50
-    listview1.set_size_request(500, 1500)
+    #listview1.items_height = 130
+    #listview1.columns_height = 150
     # 连接主要绘制函数.
     #listview1.on_draw_column_heade =  listview1_test_on_draw_column_heade
     #listview1.on_draw_sub_item     =  listview1_test_on_draw_sub_item
