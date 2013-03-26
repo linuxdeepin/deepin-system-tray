@@ -214,7 +214,7 @@ class ColumnHeader(object):
 
     def __init_values(self):
         self.__text = ""  # 保存文本.
-        self.__width = 50 # ColumnHeader 宽度.
+        self.__width = 80 # ColumnHeader 宽度.
         self.__text_color = "#000000"
         self.text_align = pango.ALIGN_LEFT # 文本对齐方式.
         self.image_key = None # 图片key.
@@ -289,9 +289,6 @@ class Items(list):
     def __init_values(self):
         self.__function_point = None
 
-    def __type_check(self, type_name, type_str):
-        return type(type_name).__name__ == type_str
-
     def connect(self, event_name, function_point): 
         if event_name == "update-data":
             self.__function_point = function_point
@@ -305,20 +302,21 @@ class Items(list):
         del self[:]
         self.emit()
 
-    def add(self, text):
-        if self.__type_check(text, "str"): # 判断是否为 str  类型.
+    def add(self, text_item):
+        if type_check(text_item, "list"): # 判断是否为 str  类型.
             listview_item = ListViewItem()
-            listview_item.sub_items.add(text)
+            for text in text_item:
+                listview_item.sub_items.add(text)
             listview_item.connect("update-data", self.__listview_item_update_data_event)
             self.append(listview_item)
             # 发送信号.
             self.emit()
 
     def add_range(self, text_items):
-        if self.__type_check(text_items, "list"):
+        if type_check(text_items, "list"):
             emit_check = False # 初始化发送信号的标志位.
             for item in text_items:
-                if self.__type_check(item, "list"):
+                if type_check(item, "list"):
                     if not emit_check: # 设置发送信号的标志位.
                         emit_check = True # 设置发送信号的标志位为真.
                     #
@@ -331,10 +329,10 @@ class Items(list):
                 self.emit()
 
     def add_insert(self, index, text_items):
-        if self.__type_check(text_items, "list"):
+        if type_check(text_items, "list"):
             emit_check = False # 初始化发送信号的标志位.
             for item in text_items:
-                if self.__type_check(item, "list"):
+                if type_check(item, "list"):
                     if not emit_check: # 设置发送信号的标志位.
                         emit_check = True # 设置发送信号的标志位为真.
                     #
@@ -385,15 +383,23 @@ class SubItems(list):
             self.__function_point(self)
 
     def add(self, text):
-        sub_item = SubItem(text)
+        if type_check(text, "tuple"):
+            sub_item = SubItem()
+            sub_item.text   = text[0]
+            sub_item.pixbuf = text[1]
+        elif type_check(text, "str"):
+            sub_item = SubItem(text)
         sub_item.connect("update-data", self.__sub_item_update_data_event)
         self.append(sub_item)
 
     def add_range(self, items_text):
         for text in items_text:
+            self.add(text)
+            '''
             sub_item = SubItem(text)
             sub_item.connect("update-data", self.__sub_item_update_data_event)
             self.append(sub_item)
+            '''
 
     def __sub_item_update_data_event(self, sub_item):
         self.emit()
@@ -406,6 +412,7 @@ class SubItem(object):
 
     def __init_values(self):
         self.__text = ""
+        self.__pixbuf = None
         self.__text_color = "#000000"
         self.__text_align = pango.ALIGN_LEFT
         self.__function_point = None
@@ -417,10 +424,11 @@ class SubItem(object):
     def emit(self):
         if self.__function_point:
             self.__function_point(self)
-
+    
+    # text.
     @property
     def text(self):
-        self.__text
+        return self.__text
 
     @text.setter
     def text(self, text):
@@ -435,6 +443,7 @@ class SubItem(object):
     def text(self):
         del self.__text
 
+    # text color.
     @property
     def text_color(self):
         return self.__text_color
@@ -452,6 +461,33 @@ class SubItem(object):
     def text_color(self):
         del self.__text_color
 
+    # pixbuf
+    @property
+    def pixbuf(self):
+        return self.__pixbuf
+
+    @pixbuf.setter
+    def pixbuf(self, pixbuf):
+        self.__pixbuf = pixbuf
+        self.emit()
+
+    @pixbuf.getter
+    def pixbuf(self):
+        return self.__pixbuf
+
+    @pixbuf.deleter
+    def pixbuf(self):
+        del self.__pixbuf
+
+    @property
+    def text_color(self):
+        return self.__text_color
+
+    @text_color.setter
+    def text_color(self, text_color):
+        self.__text_color = text_color
+        self.emit()
+
 '''
 columns[列表] <= ColumnHeader
 items[列表]   <= ListViewItem
@@ -462,3 +498,25 @@ ListViewItem[列表] <= SubItems <= SubItem---{属性:text...}
 控制层.
 数据层.
 '''
+
+if __name__ == "__main__":
+    listview1 = ListViewBase()
+    listview1.items.add_range([[("文本", "gtk.gdk.pixbuf")],
+                               [("文件管理七", "gtk.gdk.pixbuf")],
+                               [("文件管理七", "gtk.gdk.pixbuf")],
+                               [("文件管理七", "gtk.gdk.pixbuf")],
+                               [("文件管理七", "gtk.gdk.pixbuf")],
+                               [("文件管理七", "gtk.gdk.pixbuf")],
+                               [("文件管理七", "gtk.gdk.pixbuf")],
+                               [("文件管理七", "gtk.gdk.pixbuf")],
+                               [("文件管理七", "gtk.gdk.pixbuf")],
+                               [("文件管理七", "gtk.gdk.pixbuf")],
+                               [("文件管理七", "gtk.gdk.pixbuf")],
+                              ])
+    #
+    for item in listview1.items:
+        for sub_item in item.sub_items:
+            print "sub_item:", sub_item.text, sub_item.pixbuf
+
+
+
