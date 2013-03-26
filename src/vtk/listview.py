@@ -128,6 +128,8 @@ class ListView(ListViewBase):
             if self.__motion_columns_hd:
                 self.__motion_columns_hd(self, self.__motion_columns, col_index)
             self.on_queue_draw_area()
+        else:
+            self.__motion_columns = None
         #
         row_index, col_index = self.__get_items_mouse_data(event)
         if not (None in [row_index]):
