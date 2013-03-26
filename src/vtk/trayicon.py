@@ -56,6 +56,7 @@ class TrayIcon(gtk.Window):
         self.root = self.screen.root
         # init atom.
         self.opcode_atom = self.xdisplay.intern_atom("_NET_SYSTEM_TRAY_OPCODE")
+        self.xdisplay.intern_atom("_NET_SYSTEM_TRAY_ORIENTATION")
         self.visual_atom = self.xdisplay.intern_atom("_NET_SYSTEM_TRAY_VISUAL")
         atom = "_NET_SYSTEM_TRAY_S%d" % (self.xdisplay.get_default_screen())
         self.manager_atom = self.xdisplay.intern_atom(atom) 

@@ -61,7 +61,7 @@ def draw_text(cr, text, x, y, w=0, h=0,
         x_padding = w/2 - text_size[0]/2
         y_padding = h/2 - text_size[1]/2
     elif alignment == pango.ALIGN_RIGHT:
-        x_padding = w/2 - text_size[0]
+        x_padding = w - text_size[0]
         y_padding = h/2 - text_size[1]/2
     # 设置移动.
     cr.move_to(x + x_padding, y + y_padding)

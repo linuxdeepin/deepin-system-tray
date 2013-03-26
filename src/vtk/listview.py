@@ -23,6 +23,7 @@
 
 
 from draw import draw_text, draw_pixbuf
+from color import color_hex_to_cairo, alpha_color_hex_to_cairo
 from utils import get_text_size, get_match_parent, get_offset_coordinate
 from utils import is_single_click, is_double_click, is_left_button
 from listview_base import type_check
@@ -66,8 +67,9 @@ class ListView(ListViewBase):
         self.__on_draw_item         = self.__on_draw_item_hd
         # 保存事件.
         self.__double_click_hd  = None
-        self.__motion_notify_hd = None
+        self.__motion_items_hd = None
         self.__single_click_hd  = None
+        self.__motion_columns_hd = None
 
     def __init_values_columns(self):
         self.__columns_padding_height = 30
@@ -80,6 +82,8 @@ class ListView(ListViewBase):
         self.__motion_items = None
         # 保存单击的items.
         self.__single_items = None
+        # 保存移动的columns.
+        self.__motion_columns = None
 
     def __init_events(self):
         self.connect("realize",              self.__listview_realize_event)
@@ -118,12 +122,19 @@ class ListView(ListViewBase):
 
     def __listview_motion_notify_event(self, widget, event):
         #print "__listview_motion_notify_event..."
+        col_index =  self.__get_columns_mouse_data(event)
+        if not (None in [col_index]):
+            self.__motion_columns = self.columns[col_index]
+            if self.__motion_columns_hd:
+                self.__motion_columns_hd(self, self.__motion_columns, col_index)
+            self.on_queue_draw_area()
+        #
         row_index, col_index = self.__get_items_mouse_data(event)
         if not (None in [row_index]):
             self.__motion_items = self.items[row_index]
             # 发送信号.
-            if self.__motion_notify_hd:
-                self.__motion_notify_hd(self, self.__motion_items, row_index, col_index)
+            if self.__motion_items_hd:
+                self.__motion_items_hd(self, self.__motion_items, row_index, col_index)
             self.on_queue_draw_area()
 
     def __listview_button_press_event(self, widget, event):
@@ -147,7 +158,7 @@ class ListView(ListViewBase):
                 print self.columns[col_index].text
             # 获取items触发的release事件返回的x,y索引.
             row_index, col_index = self.__get_items_mouse_data(event)
-            if not (None in [row_index, col_index]):
+            if not (None in [row_index]):
                 # 发送信号.
                 self.__single_items = self.items[row_index]
                 self.__single_click_hd(self, self.__single_items, row_index, col_index)
@@ -163,10 +174,12 @@ class ListView(ListViewBase):
     def connect_event(self, event_name, function_point):
         if event_name == "double-click":
             self.__double_click_hd  = function_point
-        elif event_name == "motion-notify":
-            self.__motion_notify_hd = function_point
+        elif event_name == "motion-notify-items":
+            self.__motion_items_hd = function_point
         elif event_name == "single-click":
             self.__single_click_hd  = function_point
+        elif event_name == "motion-notify-columns":
+            self.__motion_columns_hd = function_point
 
     def __listview_expose_event(self, widget, event):
         #print "__listview_expose_event.."
@@ -217,6 +230,7 @@ class ListView(ListViewBase):
             e.cr     = cr
             e.column = column 
             e.column_index = index
+            e.motion_columns = self.__motion_columns
             e.text = column.text
             e.x = rect.x + temp_column_w
             e.y = offset_y + rect.y
@@ -260,12 +274,17 @@ class ListView(ListViewBase):
     ################################################
     ## @ on_draw_column_heade : 连接头的重绘函数.
     def __on_draw_column_heade_hd(self, e):
-        e.cr.set_source_rgba(0, 0, 0, 0.1)
+        if e.motion_columns == e.column:
+            e.cr.set_source_rgba(*alpha_color_hex_to_cairo(("#0000FF", 0.1)))
+            e.text_color = "#0000FF"
+        else:
+            e.cr.set_source_rgba(*alpha_color_hex_to_cairo(("#FF00FF", 0.1)))
+            e.text_color = "#FF00FF"
         e.cr.rectangle(e.x, e.y, e.w, e.h)
-        e.cr.fill()
+        e.cr.stroke()
         if self.columns[len(self.columns)-1] == e.column:
             e.cr.rectangle(e.x + e.w, e.y, self.allocation.width - e.x, e.h)
-            e.cr.fill()
+            e.cr.stroke()
         # 画标题栏文本.
         draw_text(e.cr, 
                   e.text,
@@ -481,6 +500,7 @@ class ColumnHeaderEventArgs(object):
         self.cr     = None
         self.column = None
         self.column_index = 0
+        self.motion_columns = None
         self.text = ""
         self.text_color = "#000000"
         self.text_align = Text.LEFT
@@ -506,9 +526,10 @@ if __name__ == "__main__":
                                         "程序员", 
                                         "美国" + str(i), 
                                         "你是" + str(i), 
-                                        "#FFFFFF" + str(i),
-                                        "#EDEDED" + str(i)]])
+                                        "#FF" + str(i),
+                                        "#ED" + str(i)]])
         listview1.end_update()
+        #listview1.columns[10].width += 5
         
     def listview1_test_on_draw_column_heade(e):
         print "listview1_test_on_draw_column_heade.... 重绘标题头"
@@ -527,10 +548,13 @@ if __name__ == "__main__":
         # 测试改变标题头高度.
         #listview.columns_height += 5
 
-    def test_listview_motion_notify(listview, motion_items, row, col):
+    def test_listview_motion_notify_items(listview, motion_items, row, col):
         if col == None:
             col = 0
-        print motion_items.sub_items[col].text, row, col
+        print "test_listview_motion_notify_items:", motion_items.sub_items[col].text, row, col
+
+    def test_listview_motion_notify_columns(listview, motion_columns, col):
+        print "test_listview_motion_notify_columns:", motion_columns
 
     def test_listview_single_click(listview, single_items, row, col):
         print single_items.sub_items[0].text
@@ -540,7 +564,8 @@ if __name__ == "__main__":
     win.set_size_request(500, 500)
     listview1 = ListView()
     listview1.connect_event("double-click",  test_listview_double_click) 
-    listview1.connect_event("motion-notify", test_listview_motion_notify)
+    listview1.connect_event("motion-notify-items", test_listview_motion_notify_items)
+    listview1.connect_event("motion-notify-columns", test_listview_motion_notify_columns)
     listview1.connect_event("single-click",  test_listview_single_click) 
     #listview1.connect_event("
     #listview1.items_height = 130
