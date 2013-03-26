@@ -39,7 +39,8 @@ def draw_text(cr, text, x, y, w=0, h=0,
               text_color="#FFFFFF",
               text_font=DEFAULT_FONT,
               alignment=None,
-              pango_list=None):
+              pango_list=None,
+              markup=None):
     cr.set_source_rgb(*color_hex_to_cairo(text_color)) 
 
     context = pangocairo.CairoContext(cr)
@@ -63,6 +64,11 @@ def draw_text(cr, text, x, y, w=0, h=0,
     elif alignment == pango.ALIGN_RIGHT:
         x_padding = w - text_size[0]
         y_padding = h/2 - text_size[1]/2
+    # 设置markup.
+    if markup:
+        layout.set_markup(markup)
+        if alignment:
+            layout.set_alignment(alignment)
     # 设置移动.
     cr.move_to(x + x_padding, y + y_padding)
     #
