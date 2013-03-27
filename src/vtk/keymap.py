@@ -31,6 +31,13 @@ class Key:
     super_m   = gtk.gdk.SUPER_MASK   #
     alt_m     = gtk.gdk.MOD1_MASK
     hyper_m   = gtk.gdk.HYPER_MASK
+    is_lower    = gtk.gdk.keyval_is_lower # 小写.
+    is_upper    = gtk.gdk.keyval_is_upper # 大写.
+    k_2_upper   = gtk.gdk.keyval_to_upper # keyval 转大写
+    k_2_lower   = gtk.gdk.keyval_to_lower # keyval 转小写
+    k_2_unicode = gtk.gdk.keyval_to_unicode
+    u_2_keyval  = gtk.gdk.unicode_to_keyval
+    name        = gtk.gdk.keyval_name # 获取按键名 : 比如按下 右边的Ctrl,那就是 Control_R
     # 
     gtk.gdk.MOD2_MASK
     gtk.gdk.MOD3_MASK
@@ -44,14 +51,6 @@ class Key:
     gtk.gdk.META_MASK
     gtk.gdk.RELEASE_MASK
     gtk.gdk.MODIFIER_MASK
-    #
-    is_lower    = gtk.gdk.keyval_is_lower # 小写.
-    is_upper    = gtk.gdk.keyval_is_upper # 大写.
-    k_2_upper   = gtk.gdk.keyval_to_upper # keyval 转大写
-    k_2_lower   = gtk.gdk.keyval_to_lower # keyval 转小写
-    k_2_unicode = gtk.gdk.keyval_to_unicode
-    u_2_keyval  = gtk.gdk.unicode_to_keyval
-    name        = gtk.gdk.keyval_name # 获取按键名 : 比如按下 右边的Ctrl,那就是 Control_R
     #
     gtk.gdk.keyval_convert_case
     gtk.gdk.keyval_from_name
