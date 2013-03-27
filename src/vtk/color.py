@@ -24,10 +24,13 @@ import gtk
 import cairo
 import pango
 
+
 def alpha_color_hex_to_cairo((color, alpha)):
     (r, g, b) = color_hex_to_cairo(color)
     return (r, g, b, alpha)
     
 def color_hex_to_cairo(color):
+    # 将 #FF0000 转换成 set_source_rgb 适应的值. 范围是 0.0 ~ 1.0
     gdk_color = gtk.gdk.color_parse(color)
     return (gdk_color.red / 65535.0, gdk_color.green / 65535.0, gdk_color.blue / 65535.0)
+
