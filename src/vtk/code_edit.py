@@ -151,7 +151,7 @@ class CodeEdit(gtk.Bin):
         
     # 事件.
     def do_scroll_event(self, e):
-        print "do_scroll_event"
+        print "do_scroll_event", e.y, e.x
 
     def do_motion_notify_event(self, e):
         if e.window == self.__h_window:
@@ -160,6 +160,10 @@ class CodeEdit(gtk.Bin):
                 self.__h_bar.x += (e.x - self.__h_bar.x) - self.__h_bar.save_x_padding
                 self.__h_bar.x = min(max(self.__h_bar.x, 0), h_size[0] - self.__h_bar.w)
                 self.window.process_updates(True)
+                self.__set_viewport_win(self.__line_win_width - self.__h_bar.x, 
+                                            -self.__v_bar.y, 
+                                            self.__width, 
+                                            self.__height)
                 self.queue_draw()
             return True
         elif e.window == self.__v_window:
@@ -168,6 +172,10 @@ class CodeEdit(gtk.Bin):
                 self.__v_bar.y += (e.y - self.__v_bar.y) - self.__v_bar.save_y_padding
                 self.__v_bar.y = min(max(self.__v_bar.y, 0), v_size[1] - self.__v_bar.h)
                 print "v_bar.y:", self.__v_bar.y
+                self.__set_viewport_win(self.__line_win_width - self.__h_bar.x, 
+                                            -self.__v_bar.y, 
+                                            self.__width, 
+                                            self.__height)
                 self.window.process_updates(True)
                 self.queue_draw()
             print "v_window motion....", e.x
