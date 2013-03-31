@@ -151,8 +151,14 @@ class CodeEdit(gtk.Bin):
         
     # 事件.
     def do_scroll_event(self, e):
+        # gtk+ gtkscrolledwindow.c 
+        # gtk_scrolled_window_scroll_event.
         print "do_scroll_event", e.y, e.x
-
+        if e.direction == gdk.SCROLL_DOWN:
+            print "滚动正在往上哈...."
+        elif e.direction == gdk.SCROLL_UP:
+            print "顿动正在往下哈...."
+                                            
     def do_motion_notify_event(self, e):
         if e.window == self.__h_window:
             if self.__h_bar.move_check:
