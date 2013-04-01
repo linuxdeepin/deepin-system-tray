@@ -16,8 +16,8 @@ from vtk.window import TrayIconWin
 TRAY_HEIGHT = 16
 plugin_ids = ["date_time", 
               "shutdown", 
-              "network", 
               "sound", 
+              "network", 
               "mount_media", 
               "power", 
               "bluetooth"
