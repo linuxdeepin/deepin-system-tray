@@ -63,7 +63,7 @@ class TrayIcon(TrayIconWin):
         self.tray_window.connect("expose-event", self.__window_expose_event)
         self.tray_window.set_decorated(False)
         self.tray_window.set_app_paintable(True)
-        #self.tray_window.set_wmclass("deepintrayicon", "DeepinTrayIcon")
+        self.tray_window.set_wmclass("deepintrayicon", "DeepinTrayIcon")
         self.tray_window.set_colormap(gtk.gdk.Screen().get_rgba_colormap())
         self.tray_window.set_skip_pager_hint(True)
         self.tray_window.set_skip_taskbar_hint(True)
@@ -80,7 +80,7 @@ class TrayIcon(TrayIconWin):
     def __load_plugin_timeout(self, p_class):
         _class = p_class()
         widget = Element()
-        widget.set_size_request(25, TRAY_HEIGHT)
+        widget.set_size_request(28, TRAY_HEIGHT)
         _class.init_values([self, widget])
         widget.set_text("")
         widget.connect('popup-menu-event', self.__tray_icon_popup_menu, _class)
