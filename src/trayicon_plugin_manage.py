@@ -79,9 +79,9 @@ class PluginManage(object):
                         try:
                             add_sys_path(scan_path + "/" + modules_info.id + "/src")
                             modual = __import__("%s.%s" % (modules_info.id, modules_info.include), fromlist=["keywords"])
-                            class_init = modual.return_plugin()
+                            class_init   = modual.return_plugin()
                             class_insert = modual.return_insert()
-                            print class_insert
+                            class_id     = modual.return_id()
 
                             class_run = class_init#()
                             if class_insert != None:
@@ -93,6 +93,8 @@ class PluginManage(object):
 
                             else:
                                 self.keywords.append(class_run)
+                            # class_id..
+                            self.key_dict[class_id] = class_run
                             '''
                             try:
                                 print_msg("load plugin[id]:%s"%(class_run.id()))
