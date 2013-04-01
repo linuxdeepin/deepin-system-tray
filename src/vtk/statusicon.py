@@ -271,7 +271,7 @@ class Element(gtk.Button):
             self.emit("popup-menu-event", self.get_geometry())
                 
     def __widget_expose_event(self, widget, event):
-        return self.expose_event(widget, event)
+        return self.__expose_event_function(widget, event)
 
     def __expose_event_function(self, widget, event):
         cr = widget.window.cairo_create()

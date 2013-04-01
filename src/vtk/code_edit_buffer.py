@@ -110,8 +110,8 @@ class TextBufferClass(gobject.GObject):
     def notify(self, pspec):
         pass
 
-    def set_text(self, text, len):
-        self.emit("insert-text", self.btree, text, len)
+    def set_text(self, text):
+        self.emit("insert-text", self.btree, text, len(text))
         # ... ...
 
     def insert_text(self, pos, text, length):
@@ -182,7 +182,7 @@ if __name__ == "__main__":
 
     text_buffer = TextBuffer()
     text_buffer.connect("insert-text", insert_text_test)
-    text_buffer.set_text("fjdsklfjsdlf", 10)
+    text_buffer.set_text("fjdsklfjsdlf")
 
 
 
