@@ -35,17 +35,8 @@ DEFAULT_FONT_SIZE = 10
 import time
 from traceback import print_exc
 
-LOG_FILE = "/tmp/trayicon.log"
-create_fp = open(LOG_FILE, "w")
-create_fp.close()
 
 def print_msg(msg):
-    fp = open("/tmp/trayicon.log", "a")
-    fp.write("===============================================\n")
-    fp.write("%s\n"%(time.ctime()))
-    fp.write(msg)
     print_exc(file=fp)
     print "msg:", msg
-    fp.write("\n===============================================\n")
-    fp.close()
 

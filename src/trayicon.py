@@ -30,8 +30,13 @@ from trayicon_plugin_manage import PluginManage
 from vtk.statusicon import Element
 from vtk.utils import propagate_expose
 from vtk.window import TrayIconWin
+from vtk.unique_service import UniqueService, is_exists
+import dbus
+import sys
 
 
+APP_DBUS_NAME = "com.deepin.trayicon"
+APP_OBJECT_NAME = "/com/deepin/trayicon"
 
 TRAY_HEIGHT = 16
 plugin_ids = ["date_time", 
@@ -47,6 +52,10 @@ plugin_ids = ["date_time",
 class TrayIcon(TrayIconWin):
     def __init__(self):
         TrayIconWin.__init__(self)
+        if is_exists(APP_DBUS_NAME, APP_OBJECT_NAME): 
+            sys.exit()
+        app_bus_name = dbus.service.BusName(APP_DBUS_NAME, bus=dbus.SessionBus())
+        UniqueService(app_bus_name, APP_DBUS_NAME, APP_OBJECT_NAME)
         self.metry = None
         self.tray_icon_to_screen_width=10
         root = self.get_root_window()
@@ -230,7 +239,7 @@ class TrayIcon(TrayIconWin):
                     self.tray_widget_wind = self.display.create_resource_object("window", self.tray_window.window.xid)
                 else:
                     self.__init_tray_window()
-                    self.__tray_find_dock()
+                    #self.__tray_find_dock()
             self.__tray_send_opcode(
                     self.tray_win,
                     self.opcode_atom,

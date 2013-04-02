@@ -24,7 +24,6 @@ import sys
 import os
 from vtk.utils import init_config, get_config_file, get_config_path
 from vtk.ini import Config
-from vtk.constant import print_msg, LOG_FILE
 
 class ModulesInfo(object):
     def __init__(self):
