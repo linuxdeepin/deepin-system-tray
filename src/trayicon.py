@@ -88,7 +88,8 @@ class TrayIcon(TrayIconWin):
             print "id:", id
             if self.plugin_manage.key_dict.has_key(id):
                 p_class = self.plugin_manage.key_dict[id]
-                gtk.timeout_add(100, self.__load_plugin_timeout, p_class)
+                gtk.timeout_add(20, self.__load_plugin_timeout, p_class)
+                #self.__load_plugin_timeout(p_class)
         #
         self.tray_window   = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.tray_window.add_events(gtk.gdk.ALL_EVENTS_MASK)
