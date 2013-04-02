@@ -55,6 +55,7 @@ class TrayIcon(TrayIconWin):
             sys.exit()
         app_bus_name = dbus.service.BusName(APP_DBUS_NAME, bus=dbus.SessionBus())
         UniqueService(app_bus_name, APP_DBUS_NAME, APP_OBJECT_NAME)
+        self.__save_trayicon = None
         self.metry = None
         self.__save_width = 0
         self.tray_icon_to_screen_width=10
@@ -110,7 +111,7 @@ class TrayIcon(TrayIconWin):
     def __load_plugin_timeout(self, p_class):
         _class = p_class()
         widget = Element()
-        #widget.set_size_request(28, TRAY_HEIGHT)
+        widget.set_size_request(-1, TRAY_HEIGHT)
         _class.init_values([self, widget])
         widget.set_text("")
         widget.connect('popup-menu-event', self.__tray_icon_popup_menu, _class)
@@ -133,6 +134,7 @@ class TrayIcon(TrayIconWin):
     def init_popup_menu(self, statusicon, plug):
         self.container_remove_all(self.main_ali)
         widget = plug.plugin_widget()
+        self.__save_trayicon = plug
         plug.show_menu()
         self.add_plugin(widget)
         self.metry = statusicon.get_geometry()
@@ -151,7 +153,14 @@ class TrayIcon(TrayIconWin):
         self.move_menu()
         self.show_all()
 
+    def tray_icon_button_press(self, widget, event):        
+        if self.in_window_check(widget, event):
+            self.hide_menu()
+
     def hide_menu(self):
+        print "hide_menu"
+        if self.__save_trayicon:
+            self.__save_trayicon.hide_menu()
         self.hide_all()        
         self.grab_remove()
 
@@ -193,7 +202,7 @@ class TrayIcon(TrayIconWin):
         #print "__tray_icon_manager_filter:", event
         if self.tray_window == None:
             self.__init_tray_window()
-        #return self.__tray_find_dock()
+        return self.__tray_find_dock()
 
     def __window_expose_event(self, widget, event):
         cr = widget.window.cairo_create()
