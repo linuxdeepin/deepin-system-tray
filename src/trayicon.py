@@ -45,8 +45,7 @@ plugin_ids = ["date_time",
               "network", 
               "mount_media", 
               "power", 
-              "bluetooth",
-              "fjkdsf",
+              "bluetooth"
               ]
 
 class TrayIcon(TrayIconWin):
