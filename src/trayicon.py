@@ -56,6 +56,8 @@ class TrayIcon(TrayIconWin):
         app_bus_name = dbus.service.BusName(APP_DBUS_NAME, bus=dbus.SessionBus())
         UniqueService(app_bus_name, APP_DBUS_NAME, APP_OBJECT_NAME)
         self.__save_trayicon = None
+        self.__find_tray_dock_check = True
+        self.__find_tray_dock_num   = 3
         self.metry = None
         self.__save_width = 0
         self.tray_icon_to_screen_width=10
@@ -95,6 +97,7 @@ class TrayIcon(TrayIconWin):
         self.tray_window.set_decorated(False)
         self.tray_window.set_app_paintable(True)
         self.tray_window.set_wmclass("deepintrayicon", "DeepinTrayIcon")
+        self.tray_window.connect("unmap", self.__tray_window_unmap_event)
         self.tray_window.set_colormap(gtk.gdk.Screen().get_rgba_colormap())
         self.tray_window.set_skip_pager_hint(True)
         self.tray_window.set_skip_taskbar_hint(True)
@@ -107,6 +110,10 @@ class TrayIcon(TrayIconWin):
         #
         self.init_tray()
         self.__tray_find_dock()
+
+    def __tray_window_unmap_event(self, widget):
+        self.__find_tray_dock_check = True
+        self.__find_tray_dock_num   = 3
 
     def __load_plugin_timeout(self, p_class):
         _class = p_class()
@@ -158,7 +165,6 @@ class TrayIcon(TrayIconWin):
             self.hide_menu()
 
     def hide_menu(self):
-        print "hide_menu"
         if self.__save_trayicon:
             self.__save_trayicon.hide_menu()
         self.hide_all()        
@@ -232,34 +238,39 @@ class TrayIcon(TrayIconWin):
         return True
 
     def __tray_find_dock(self):
-        #print "tray_find_dock..."
-        self.dock_atom = self.display.intern_atom(self.atom_names[0])
-        self.dock_selection  = self.display.get_selection_owner(self.dock_atom)
+        print "find check:", self.__find_tray_dock_check
+        if self.__find_tray_dock_check:
+            self.__find_tray_dock_num -= 1
+            if self.__find_tray_dock_num == 0:
+                self.__find_tray_dock_check = False
+            #print "tray_find_dock..."
+            self.dock_atom = self.display.intern_atom(self.atom_names[0])
+            self.dock_selection  = self.display.get_selection_owner(self.dock_atom)
 
-        if self.dock_selection:
-            #print "dock_selection:", self.dock_selection.id
-            pass
+            if self.dock_selection:
+                #print "dock_selection:", self.dock_selection.id
+                pass
 
-        if self.dock_selection: # 给 dock selection 发送消息.
-            self.tray_win = self.display.create_resource_object("window", self.dock_selection.id)
-            self.tray_win.get_full_property(self.visual_atom, Xatom.VISUALID)
-            if self.tray_window:
-                if self.tray_window.window:
-                    self.tray_widget_wind = self.display.create_resource_object("window", self.tray_window.window.xid)
-                else:
-                    self.__init_tray_window()
-                    #self.__tray_find_dock()
-            self.__tray_send_opcode(
-                    self.tray_win,
-                    self.opcode_atom,
-                    [X.CurrentTime, 0L, self.tray_widget_wind.id, 0L, 0L],
-                    X.NoEventMask
-                    )
-            self.display.flush()
-            self.tray_window.show_all()
-            return False;
-        else: # 如果 dock selection 不存在.
-            self.__release_tray_window()
+            if self.dock_selection: # 给 dock selection 发送消息.
+                self.tray_win = self.display.create_resource_object("window", self.dock_selection.id)
+                self.tray_win.get_full_property(self.visual_atom, Xatom.VISUALID)
+                if self.tray_window:
+                    if self.tray_window.window:
+                        self.tray_widget_wind = self.display.create_resource_object("window", self.tray_window.window.xid)
+                    else:
+                        self.__init_tray_window()
+                        #self.__tray_find_dock()
+                self.__tray_send_opcode(
+                        self.tray_win,
+                        self.opcode_atom,
+                        [X.CurrentTime, 0L, self.tray_widget_wind.id, 0L, 0L],
+                        X.NoEventMask
+                        )
+                self.display.flush()
+                self.tray_window.show_all()
+                return False;
+            else: # 如果 dock selection 不存在.
+                self.__release_tray_window()
 
         return True;
 
