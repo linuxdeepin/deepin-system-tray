@@ -56,6 +56,7 @@ class TrayIcon(TrayIconWin):
         app_bus_name = dbus.service.BusName(APP_DBUS_NAME, bus=dbus.SessionBus())
         UniqueService(app_bus_name, APP_DBUS_NAME, APP_OBJECT_NAME)
         self.metry = None
+        self.__save_width = 0
         self.tray_icon_to_screen_width=10
         root = self.get_root_window()
         self.menu_screen = root.get_screen()
@@ -109,7 +110,7 @@ class TrayIcon(TrayIconWin):
     def __load_plugin_timeout(self, p_class):
         _class = p_class()
         widget = Element()
-        widget.set_size_request(28, TRAY_HEIGHT)
+        #widget.set_size_request(28, TRAY_HEIGHT)
         _class.init_values([self, widget])
         widget.set_text("")
         widget.connect('popup-menu-event', self.__tray_icon_popup_menu, _class)
@@ -288,13 +289,17 @@ class TrayIcon(TrayIconWin):
         width = 0
         for child in self.__main_hbox.get_children():
             if child.get_visible():
-                width += child.allocation.width
-        self.tray_window.set_geometry_hints(None, 
-                                       width, 
-                                       TRAY_HEIGHT, 
-                                       width, 
-                                       TRAY_HEIGHT, 
-                                       -1, -1, -1, -1, -1, -1)
+                width += child.get_size_request()[0]
+
+        if self.__save_width != width:
+            self.__save_width = width 
+            self.tray_window.set_geometry_hints(None, 
+                                           width, 
+                                           TRAY_HEIGHT, 
+                                           width, 
+                                           TRAY_HEIGHT, 
+                                           -1, -1, -1, -1, -1, -1)
+
 
     #############################################
     def get_tray_position(self):
