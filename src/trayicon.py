@@ -1,4 +1,24 @@
-#!coding:utf-8
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2013 Deepin, Inc.
+#               2013 Hailong Qiu
+#
+# Author:     Hailong Qiu <356752238@qq.com>
+# Maintainer: Hailong Qiu <356752238@qq.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import gtk
@@ -20,7 +40,8 @@ plugin_ids = ["date_time",
               "network", 
               "mount_media", 
               "power", 
-              "bluetooth"
+              "bluetooth",
+              "fjkdsf",
               ]
 
 class TrayIcon(TrayIconWin):
@@ -49,13 +70,13 @@ class TrayIcon(TrayIconWin):
         self.__init_tray_window()
 
     def __init_tray_window(self):
-        print "\n\n\n\n\n\ init_tray_window \n\n\n\n\n\n"
         self.__main_hbox = gtk.HBox()
         # 加载插件.
         for id in plugin_ids:
             print "id:", id
-            p_class = self.plugin_manage.key_dict[id]
-            gtk.timeout_add(100, self.__load_plugin_timeout, p_class)
+            if self.plugin_manage.key_dict.has_key(id):
+                p_class = self.plugin_manage.key_dict[id]
+                gtk.timeout_add(100, self.__load_plugin_timeout, p_class)
         #
         self.tray_window   = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.tray_window.add_events(gtk.gdk.ALL_EVENTS_MASK)
@@ -101,31 +122,12 @@ class TrayIcon(TrayIconWin):
         container.foreach(lambda widget: container.remove(widget))
 
     def init_popup_menu(self, statusicon, plug):
-        print "你点击我拉..."
         self.container_remove_all(self.main_ali)
         widget = plug.plugin_widget()
         plug.show_menu()
         self.add_plugin(widget)
         self.metry = statusicon.get_geometry()
         self.show_menu()
-        '''
-        error_check = False
-        # remove child widget.
-        self.container_remove_all(self.main_ali)
-        # save plug.
-        self.save_trayicon = plug
-        try:
-        # add child widgets plugs.
-            widget = self.save_trayicon.plugin_widget()
-            self.add_plugin(widget)
-        except Exception, e:
-            print_msg("init_popup_menu[error]:%s"%(e))
-            error_check = True
-        # get tray icon metry.
-        self.metry = statusicon.get_geometry()
-        if not error_check:
-            self.show_menu()
-        '''
 
     def menu_configure_event(self, widget, event):
         self.resize(1, 1)
