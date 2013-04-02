@@ -193,7 +193,7 @@ class TrayIcon(TrayIconWin):
         #print "__tray_icon_manager_filter:", event
         if self.tray_window == None:
             self.__init_tray_window()
-        return self.__tray_find_dock()
+        #return self.__tray_find_dock()
 
     def __window_expose_event(self, widget, event):
         cr = widget.window.cairo_create()
