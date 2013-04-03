@@ -29,6 +29,7 @@ from utils import is_single_click, is_double_click, is_left_button
 from listview_base import type_check
 from listview_base import ListViewBase
 from listview_base import View, Text
+from keymap import get_keyevent_name, ctrl_mask_check, shift_mask_check
 import pango
 import gtk
 
@@ -50,9 +51,109 @@ DrawItem 事件可以针对每个 ListView 项发生。
 class ListView(ListViewBase):
     def __init__(self):
         ListViewBase.__init__(self)
+        self.__init_keymap()
         self.__init_settings()
         self.__init_values()
         self.__init_events()
+
+    def __init_keymap(self):
+        self.__keymap_dict = {
+                "Down"     :   self.__listview_down_event,
+                "Up"       :   self.__listview_up_event,
+                "Home"     :   self.__listview_home_event,
+                "End"      :   self.__listview_end_event,
+                "Page_Up"  :   self.__listview_page_up_event,
+                "Page_Down":   self.__listview_page_down_event,
+                "Delete"   :   self.__listview_delete_event,
+                "Return"   :   self.__listview_return_event,
+                "Ctrl + a" :   self.__listview_ctrl_a_event,
+                }
+
+    def __listview_down_event(self):
+        print "__listview_down_event..."
+        if self.__single_items == []:  # 如果为空,则跳转到开头.
+            self.__listview_end_event()
+        else:
+            vadjustment = get_match_parent(self, ["ScrolledWindow"]).get_vadjustment()
+            if vadjustment:
+                value = vadjustment.get_value()
+                max_value = vadjustment.get_upper() - vadjustment.get_page_size()
+                #vadjustment.set_value(min(value + self.__items_padding_height, max_value))
+                #self.on_queue_draw_area()
+                row_index = self.items.index(self.__single_items[len(self.__single_items)-1]) 
+                row_index += 1
+                if row_index > len(self.items) - 1:
+                    row_index = 0
+                self.__single_items = [self.items[row_index]]
+                self.on_queue_draw_area()
+            
+    
+    def __listview_up_event(self):
+        print "__listview_up_event.."
+        if self.__single_items == []:  # 如果为空,则跳转到开头.
+            self.__listview_home_event()
+        else:
+            vadjustment = get_match_parent(self, ["ScrolledWindow"]).get_vadjustment()
+            if vadjustment:
+                value = vadjustment.get_value()
+                max_value = vadjustment.get_upper() - vadjustment.get_page_size()
+                #vadjustment.set_value(min(value + self.__items_padding_height, max_value))
+                #self.on_queue_draw_area()
+                row_index = self.items.index(self.__single_items[len(self.__single_items)-1])
+                self.__single_items = [self.items[row_index - 1]]
+                self.on_queue_draw_area()
+
+    def __listview_home_event(self): # 开头第一个项.
+        print "__listview_home_event..."
+        vadjustment = get_match_parent(self, ["ScrolledWindow"]).get_vadjustment()
+        if vadjustment:
+            value = vadjustment.get_lower()
+            # 设置选中items.
+            if self.items != []:
+                self.__single_items = [self.items[0]]
+                vadjustment.set_value(value)
+                self.on_queue_draw_area()
+
+    def __listview_end_event(self): # 最末尾项.
+        print "__listview_end_event..."
+        vadjustment = get_match_parent(self, ["ScrolledWindow"]).get_vadjustment()
+        if vadjustment:
+            value = vadjustment.get_upper() - vadjustment.get_page_size()
+            # 设置选中items.
+            if self.items != []:
+                self.__single_items = [self.items[len(self.items) - 1]]
+                vadjustment.set_value(value)
+                self.on_queue_draw_area()
+        
+    def __listview_page_up_event(self): # 向下翻页.
+        print "__listview_page_up_event..."
+        if self.__single_items == []:  # 如果为空,则跳转到开头.
+            self.__listview_home_event()
+        else:
+            pass
+
+    def __listview_page_down_event(self): # 向上翻页.
+        print "__listview_page_down_event.."
+        if self.__single_items == []: # 如果为空,则跳转到结尾.
+            self.__listview_end_event()
+        else:
+            pass
+
+    def __listview_delete_event(self): # 删除一个选项.
+        print "__listiew_delete_event..."
+        if self.__single_items != []:
+            for item in self.__single_items:
+                self.items.remove(item)
+            self.__single_items = []
+            self.on_queue_draw_area()
+
+    def __listview_return_event(self):
+        print "__listview_return_event..."
+
+    def __listview_ctrl_a_event(self):
+        print "__listview_ctrl_a_event..."
+        self.__single_items = self.items[:]
+        self.on_queue_draw_area()
 
     def __init_settings(self):
         self.add_events(gtk.gdk.ALL_EVENTS_MASK)
@@ -79,19 +180,27 @@ class ListView(ListViewBase):
         self.__columns_padding_height = 30
 
     def __init_values_items(self):
+        self.__ctrl_check  = False
+        self.__shift_check = False
+        self.__save_press_move_item_num = None
+        #
         self.__items_padding_height = 30
         # 保存双击items.
         self.__double_items = None
         # 保存移动的items.
         self.__motion_items = None
         # 保存单击的items.
-        self.__single_items = None
+        self.__single_items = []
         # 保存移动的columns.
         self.__motion_columns = None
         # 保存单击的columns.
         self.__single_columns = None
+        # 保存拖动的items下来.
+        self.__drag_items = None
 
     def __init_events(self):
+        self.connect("key-press-event",      self.__listview_key_press_event) 
+        self.connect("key-release-event",    self.__listview_key_release_event)
         self.connect("realize",              self.__listview_realize_event)
         self.connect("motion-notify-event",  self.__listview_motion_notify_event)
         self.connect("button-press-event",   self.__listview_button_press_event)
@@ -99,6 +208,26 @@ class ListView(ListViewBase):
         self.connect("enter-notify-event",   self.__listview_enter_notify_event)
         self.connect("leave-notify-event",   self.__listview_leave_notify_event)
         self.connect("expose-event",         self.__listview_expose_event)
+
+    def __listview_key_press_event(self, widget, event):
+        #
+        if ctrl_mask_check(event):
+            self.__ctrl_check = True
+        if shift_mask_check(event):
+            self.__shift_check = True
+        #
+        key_code = get_keyevent_name(event, False)
+        print "key_code:", key_code
+        if self.__keymap_dict.has_key(key_code):
+            self.__keymap_dict[key_code]()
+        return True
+
+    def __listview_key_release_event(self, widget, event):
+        #
+        if ctrl_mask_check(event):
+            self.__ctrl_check = False
+        if shift_mask_check(event):
+            self.__shift_check = False
 
     def __listview_realize_event(self, widget):
         widget.set_realized(True)
@@ -160,6 +289,11 @@ class ListView(ListViewBase):
                 if self.__double_items_hd:
                     self.__double_items_hd(self, self.__double_items, row_index, col_index, item_x, item_y)
                 self.on_queue_draw_area()
+        else:
+            row_index, col_index, item_x, item_y = self.__get_items_mouse_data(event)
+            print "press_event:", row_index
+            self.__save_press_move_item_num = row_index # 保存按下的items row.
+
 
     def __listview_button_release_event(self, widget, event):
         #print "__listview_button_release_event..."
@@ -175,7 +309,14 @@ class ListView(ListViewBase):
             row_index, col_index, item_x, item_y = self.__get_items_mouse_data(event)
             if not (None in [row_index]):
                 # 发送信号.
-                self.__single_items = self.items[row_index]
+                print self.__ctrl_check
+                if not self.__ctrl_check:
+                    self.__single_items = []
+                # 判断是否重新选择了,如果是就消除掉.
+                if self.items[row_index] in self.__single_items:
+                   self.__single_items.remove(self.items[row_index]) 
+                else:
+                    self.__single_items.append(self.items[row_index])
                 self.__single_items_hd(self, self.__single_items, row_index, col_index, item_x, item_y)
 
     def __listview_enter_notify_event(self, widget, event):
@@ -214,8 +355,17 @@ class ListView(ListViewBase):
         return True
 
     def __draw_view_details(self, cr, rect, widget):
-        #self.on_draw_item(e)
+        #
         offset_x, offset_y, viewport = get_offset_coordinate(widget)
+        #
+        e = ItemEventArgs()
+        save_rect = rect
+        e.cr = cr
+        e.rect = (rect.x, 
+                  rect.y + offset_y + self.__items_padding_height, 
+                  rect.width, 
+                  rect.height)
+        self.on_draw_item(e)
         # 画标题头.
         self.__draw_view_details_column(offset_y, cr, rect)
         # 优化listview.
@@ -478,6 +628,7 @@ class ListView(ListViewBase):
 class ItemEventArgs(object):
     def __init__(self):
         self.cr = None
+        self.rect = None
         self.select_items = []
         # 鼠标的起点和结束点.
         self.start_x = 0
@@ -553,22 +704,31 @@ if __name__ == "__main__":
 
     def listview1_test_on_draw_sub_item(e):
         if e.double_items == e.item:
-            e.text_color = "#0000ff"
-        elif e.single_items == e.item:
+            e.text_color = "#0000FF"
+            text_size=10
+        elif e.item in e.single_items:
             e.text_color = "#00FF00"
-        if e.motion_items == e.item:
-            e.text_color = "#FF0000"
-        if e.sub_item in [listview1.items[0].sub_items[0],
-                          listview1.items[1].sub_items[1]]:
-            e.cr.set_source_rgb(0, 0, 1)
-            e.cr.rectangle(e.x, e.y + e.h/2 - 10, int(e.text), 20)
-            e.cr.fill()
+            text_size=10
         else:
+            e.text_color = "#000000"
+            text_size=10
+
+        if e.motion_items == e.item:
+            e.text_color  = "#FF0000"
+            text_size=12
+
+        if True:
             e.draw_text(e.cr, 
                       str(e.text), 
                       e.x, e.y, e.w, e.h,
                       text_color=e.text_color, 
+                      text_size=text_size,
                       alignment=Text.CENTER)
+
+    def listview1_test_on_draw_item(e):
+        e.cr.set_source_rgba(0, 0, 0, 0.5)
+        e.cr.rectangle(*e.rect)
+        e.cr.fill()
 
     def test_listview_double_items(listview, double_items, row, col, item_x, item_y):
         print double_items.sub_items[0], row, col, item_x, item_y
@@ -588,16 +748,18 @@ if __name__ == "__main__":
         #motion_items.sub_items[col].text = item_x
 
     def test_listview_motion_notify_columns(listview, motion_columns, col, item_x, item_y):
-        print "test_listview_motion_notify_columns:", motion_columns, item_x, item_y
+        #print "test_listview_motion_notify_columns:", motion_columns, item_x, item_y
+        pass
 
     def test_listview_single_items(listview, single_items, row, col, item_x, item_y):
         if col == None:
             col = 0
-        single_items.sub_items[col].text = item_x
-        print single_items.sub_items[col].text, item_x, item_y
+        single_items[0].sub_items[col].text = item_x
+        print single_items[0].sub_items[col].text, item_x, item_y
 
     def test_listview_single_columns(listview, single_columns, col, item_x, item_y):
         print single_columns.text, item_x, item_y
+    
 
     win = gtk.Window(gtk.WINDOW_TOPLEVEL)
     win.connect("destroy", lambda w : gtk.main_quit())
@@ -615,6 +777,7 @@ if __name__ == "__main__":
     # 连接主要绘制函数.
     #listview1.on_draw_column_heade =  listview1_test_on_draw_column_heade
     listview1.on_draw_sub_item     =  listview1_test_on_draw_sub_item
+    listview1.on_draw_item = listview1_test_on_draw_item
     listview1.columns.add("姓名")
     listview1.columns.add_range(["性别", "职业", "国籍", "企业", "前景", "背景",
                                  "性别", "职业", "国籍", "企业", "前景", "背景",
