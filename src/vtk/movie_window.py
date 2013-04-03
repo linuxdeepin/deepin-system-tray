@@ -91,6 +91,7 @@ class MovieWindow(gtk.Bin):
             self.child.set_parent_window(self.__viewport_window)
 
     def __create_top_toolbar_window(self):
+        self.top_toolbar_expose_event = None
         self.__top_toolbar_h = 30 
         self.__top_toolbar_window = gdk.Window(
             self.__bin_window,
@@ -112,16 +113,13 @@ class MovieWindow(gtk.Bin):
                       ))
         self.__top_toolbar_window.set_user_data(self)
         self.style.set_background(self.__top_toolbar_window, gtk.STATE_NORMAL)
-        '''
-        self.__top_toolbar_window.set_opacity(0.1)
-        region = gdk.region_rectangle(gdk.Rectangle(0, 0, self.allocation.width, self.__top_toolbar_h))
-        self.__top_toolbar_window.shape_combine_region(region, self.allocation.x, self.allocation.y)
-        '''
+        #
         if self.__top_child:
             self.__top_child.set_parent_window(self.__top_toolbar_window)
 
         
     def __create_bottom_toolbar_window(self):
+        self.bottom_toolbar_expose_event = None
         self.__bottom_toolbar_h = 120
         self.__bottom_toolbar_window = gdk.Window(
             self.__bin_window,
@@ -178,7 +176,6 @@ class MovieWindow(gtk.Bin):
             if ((position[1] >= temp_y) or 
                 (position[0] >= temp_x) or 
                 (position[0] + t_size[0] <= temp_x)):
-                print "hide_top_toolbar..."
                 self.hide_top_toolbar()
         elif e.window == self.__bottom_toolbar_window:
             position = self.get_parent_window().get_position()
@@ -211,17 +208,13 @@ class MovieWindow(gtk.Bin):
   
     def do_expose_event(self, event):
         if event.window == self.__top_toolbar_window:
-            cr = self.__top_toolbar_window.cairo_create()
-            cr.set_source_rgba(0, 0, 0, 0.85)
-            cr.rectangle(*self.allocation)
-            cr.fill()
+            if self.top_toolbar_expose_event:
+                self.top_toolbar_expose_event(self.__top_toolbar_window, self.allocation)
             gtk.Bin.do_expose_event(self, event)
             return True
         if event.window == self.__bottom_toolbar_window:
-            cr = self.__bottom_toolbar_window.cairo_create()
-            cr.set_source_rgba(1, 0, 0, 0.85)
-            cr.rectangle(*self.allocation)
-            cr.fill()
+            if self.bottom_toolbar_expose_event:
+                self.bottom_toolbar_expose_event(self.__bottom_toolbar_window, self.allocation)
             gtk.Bin.do_expose_event(self, event)
             return True
         else:
@@ -351,29 +344,33 @@ if __name__ == '__main__':
     hbox = gtk.HBox()
     code_edit = MovieWindow()
     ali = gtk.Alignment(0, 0, 1, 1)
-    ali.set_padding(5, 5, 5, 5)
+    #ali.set_padding(5, 5, 5, 5)
     btn = gtk.DrawingArea() 
     #btn.unset_flags(gtk.DOUBLE_BUFFERED)
-    #btn.connect("expose-event", btn_expose_event)
+    btn.connect("expose-event", btn_expose_event)
     ali.add(btn)
     code_edit.add(ali)
     test_ali  = gtk.Alignment(0, 0, 0, 1)
     test_hbox = gtk.HBox()
     test_ali.add(test_hbox)
     test_hbox.pack_start(gtk.Button("fjdsfk"))
+    '''
     test_hbox.pack_start(gtk.Button("fjdsfk"))
     test_hbox.pack_start(gtk.Button("fjdsfk"))
     test_hbox.pack_start(gtk.Button("fjdsfk"))
     test_hbox.pack_start(gtk.Button("fjdsfk"))
+    '''
     code_edit.top_add_widget(test_ali)
     test_hbox2 = gtk.HBox()
     test_ali2  = gtk.Alignment(0, 0, 0, 1)
     test_ali2.add(test_hbox2)
     test_hbox2.pack_start(gtk.Button("fjdsfk"))
     test_hbox2.pack_start(gtk.Button("fjdsfk"))
+    '''
     test_hbox2.pack_start(gtk.Button("fjdsfk"))
     test_hbox2.pack_start(gtk.Button("fjdsfk"))
     test_hbox2.pack_start(gtk.Button("fjdsfk"))
+    '''
     code_edit.bottom_add_widget(test_ali2)
     hbox.pack_start(code_edit)
     hbox.pack_start(gtk.Button("fdjskf"), False, False)
