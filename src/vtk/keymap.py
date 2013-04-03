@@ -112,6 +112,12 @@ def get_key_name(keyval, to_upper=False):
     else:
         return str(unichr(key_unicode))
         
+def ctrl_mask_check(event):
+    return get_key_name(event.keyval) in ["Control_L", "Control_R"]
+
+def shift_mask_check(event):
+    return get_key_name(event.keyval) in ["Shift_L", "Shift_R"]
+
 
 
 if __name__ == "__main__":
