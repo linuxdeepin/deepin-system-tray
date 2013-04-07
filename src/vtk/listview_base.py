@@ -215,6 +215,7 @@ class ColumnHeader(object):
     def __init_values(self):
         self.__text = ""  # 保存文本.
         self.__width = 80 # ColumnHeader 宽度.
+        self.min_width = 50
         self.__text_color = "#000000"
         self.text_align = pango.ALIGN_LEFT # 文本对齐方式.
         self.image_key = None # 图片key.
@@ -329,8 +330,8 @@ class Items(list):
                 self.emit()
 
     def add_insert(self, index, text_items):
+        emit_check = False # 初始化发送信号的标志位.
         if type_check(text_items, "list"):
-            emit_check = False # 初始化发送信号的标志位.
             for item in text_items:
                 if type_check(item, "list"):
                     if not emit_check: # 设置发送信号的标志位.
@@ -340,9 +341,13 @@ class Items(list):
                     listview_item.connect("update-data", self.__listview_item_update_data_event)
                     self.insert(index, listview_item)
 
-            if emit_check: # 判断是否发送信号.
-                # 发送信号.
-                self.emit()
+        elif type_check(text_items, "ListViewItem"):
+            emit_check = True
+            self.insert(index, text_items)
+
+        if emit_check: # 判断是否发送信号.
+            # 发送信号.
+            self.emit()
     def __listview_item_update_data_event(self, listview_item):
         self.emit()
 
