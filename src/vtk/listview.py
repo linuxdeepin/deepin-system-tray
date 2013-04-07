@@ -81,7 +81,6 @@ class ListView(ListViewBase):
                 start_index, end_index = self.__get_start_end_index()
                 row_index = self.items.index(self.__single_items[len(self.__single_items)-1]) 
                 row_index += 1
-                #
                 if row_index <= len(self.items) - 1:
                     self.__single_items = [self.items[row_index]]
                     self.on_queue_draw_area()
