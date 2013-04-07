@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/ python
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2013 Deepin, Inc.
@@ -70,41 +70,44 @@ class ListView(ListViewBase):
                 }
 
     def __listview_down_event(self):
-        print "__listview_down_event..."
+        #print "__listview_down_event..."
         if self.__single_items == []:  # 如果为空,则跳转到开头.
             self.__listview_end_event()
         else:
             vadjustment = get_match_parent(self, ["ScrolledWindow"]).get_vadjustment()
             if vadjustment:
                 value = vadjustment.get_value()
-                max_value = vadjustment.get_upper() - vadjustment.get_page_size()
-                #vadjustment.set_value(min(value + self.__items_padding_height, max_value))
-                #self.on_queue_draw_area()
+                # 获取 start, end index.
+                start_index, end_index = self.__get_start_end_index()
                 row_index = self.items.index(self.__single_items[len(self.__single_items)-1]) 
                 row_index += 1
-                if row_index > len(self.items) - 1:
-                    row_index = 0
-                self.__single_items = [self.items[row_index]]
-                self.on_queue_draw_area()
-            
+                #
+                if row_index <= len(self.items) - 1:
+                    self.__single_items = [self.items[row_index]]
+                    self.on_queue_draw_area()
+                    # 滚动窗口.
+                    if row_index + 1 == end_index:
+                        vadjustment.set_value(value + self.__items_padding_height)
     
     def __listview_up_event(self):
-        print "__listview_up_event.."
+        #print "__listview_up_event.."
         if self.__single_items == []:  # 如果为空,则跳转到开头.
             self.__listview_home_event()
         else:
             vadjustment = get_match_parent(self, ["ScrolledWindow"]).get_vadjustment()
             if vadjustment:
                 value = vadjustment.get_value()
-                max_value = vadjustment.get_upper() - vadjustment.get_page_size()
-                #vadjustment.set_value(min(value + self.__items_padding_height, max_value))
-                #self.on_queue_draw_area()
+                start_index, end_index = self.__get_start_end_index()
                 row_index = self.items.index(self.__single_items[len(self.__single_items)-1])
-                self.__single_items = [self.items[row_index - 1]]
-                self.on_queue_draw_area()
+                if (row_index - 1) >= 0:
+                    self.__single_items = [self.items[max(row_index - 1, 0)]]
+                    self.on_queue_draw_area()
+                    # 滚动窗口.
+                    if row_index - 1 == start_index:
+                        vadjustment.set_value(value - self.__items_padding_height)
 
     def __listview_home_event(self): # 开头第一个项.
-        print "__listview_home_event..."
+        #print "__listview_home_event..."
         vadjustment = get_match_parent(self, ["ScrolledWindow"]).get_vadjustment()
         if vadjustment:
             value = vadjustment.get_lower()
@@ -115,7 +118,7 @@ class ListView(ListViewBase):
                 self.on_queue_draw_area()
 
     def __listview_end_event(self): # 最末尾项.
-        print "__listview_end_event..."
+        #print "__listview_end_event..."
         vadjustment = get_match_parent(self, ["ScrolledWindow"]).get_vadjustment()
         if vadjustment:
             value = vadjustment.get_upper() - vadjustment.get_page_size()
@@ -126,21 +129,48 @@ class ListView(ListViewBase):
                 self.on_queue_draw_area()
         
     def __listview_page_up_event(self): # 向下翻页.
-        print "__listview_page_up_event..."
+        #print "__listview_page_up_event..."
         if self.__single_items == []:  # 如果为空,则跳转到开头.
             self.__listview_home_event()
         else:
-            pass
+            vadjustment = get_match_parent(self, ["ScrolledWindow"]).get_vadjustment()
+            if vadjustment:
+                value = vadjustment.get_value()
+                start_index, end_index = self.__get_start_end_index()
+                min_value  = vadjustment.get_lower()
+                move_value = self.__items_padding_height * abs(start_index - end_index - 1)
+                # 滚动窗口.
+                value = value - move_value
+                # 如果滚动的页超出了最小值,直接到开头.
+                if value < min_value:
+                    vadjustment.set_value(min_value)
+                else:
+                    vadjustment.set_value(value)
+                self.on_queue_draw_area()
+            
 
     def __listview_page_down_event(self): # 向上翻页.
-        print "__listview_page_down_event.."
+        #print "__listview_page_down_event.."
         if self.__single_items == []: # 如果为空,则跳转到结尾.
             self.__listview_end_event()
         else:
-            pass
+            vadjustment = get_match_parent(self, ["ScrolledWindow"]).get_vadjustment()
+            if vadjustment:
+                value = vadjustment.get_value()
+                start_index, end_index = self.__get_start_end_index()
+                # 滚动窗口.
+                max_value  = vadjustment.get_upper() - vadjustment.get_page_size()
+                move_value = self.__items_padding_height * abs(end_index - start_index - 1)
+                value = value + move_value
+                # 如果滚动的页超出了,直接到末尾.
+                if value > max_value:
+                    vadjustment.set_value(max_value)
+                else:
+                    vadjustment.set_value(value)
+                self.on_queue_draw_area()
 
     def __listview_delete_event(self): # 删除一个选项.
-        print "__listiew_delete_event..."
+        #print "__listiew_delete_event..."
         if self.__single_items != []:
             for item in self.__single_items:
                 self.items.remove(item)
@@ -148,15 +178,19 @@ class ListView(ListViewBase):
             self.on_queue_draw_area()
 
     def __listview_return_event(self):
-        print "__listview_return_event..."
+        #print "__listview_return_event..."
+        if self.__single_items != []:
+            self.__double_items = self.__single_items[len(self.__single_items)-1]
+            self.on_queue_draw_area()
 
     def __listview_ctrl_a_event(self):
-        print "__listview_ctrl_a_event..."
+        #print "__listview_ctrl_a_event..."
         self.__single_items = self.items[:]
         self.on_queue_draw_area()
 
     def __init_settings(self):
         self.add_events(gtk.gdk.ALL_EVENTS_MASK)
+        self.set_can_focus(True)
 
     def __init_values(self):
         #
@@ -178,11 +212,23 @@ class ListView(ListViewBase):
 
     def __init_values_columns(self):
         self.__columns_padding_height = 30
+        self.__move_column_check = False
+        self.__save_move_column_x = 0
+        self.__save_move_column_index  = 0
+        # 需要移动标题头的时候, 按下的触发区域.
+        self.__press_columns_area_width = 3
 
     def __init_values_items(self):
         self.__ctrl_check  = False
         self.__shift_check = False
         self.__save_press_move_item_num = None
+        #
+        self.__save_press_items_index = 0
+        self.__save_press_items_check = False
+        #
+        self.__move_items_check = False
+        self.__save_move_items_x = 0
+        self.__save_move_items_index = 0
         #
         self.__items_padding_height = 30
         # 保存双击items.
@@ -217,7 +263,7 @@ class ListView(ListViewBase):
             self.__shift_check = True
         #
         key_code = get_keyevent_name(event, False)
-        print "key_code:", key_code
+        #print "key_code:", key_code
         if self.__keymap_dict.has_key(key_code):
             self.__keymap_dict[key_code]()
         return True
@@ -259,6 +305,16 @@ class ListView(ListViewBase):
         #print "__listview_motion_notify_event..."
         # 标题头移动事件处理.
         if self.view == View.DETAILS:  # 判断是否为试图.
+            # 判断是否移动标题头.
+            if self.__move_column_check:
+                width = self.columns[self.__save_move_column_index].width
+                min_width   = self.columns[self.__save_move_column_index].min_width
+                value_width = int(event.x) - self.__save_move_column_x
+                # 防止超过最小值.
+                if width + value_width > min_width:
+                    self.columns[self.__save_move_column_index].width += value_width
+                    self.__save_move_column_x = int(event.x)
+            #
             col_index, column_x, column_y =  self.__get_columns_mouse_data(event)
             if not (None in [col_index]):
                 self.__motion_columns = self.columns[col_index]
@@ -269,17 +325,42 @@ class ListView(ListViewBase):
         #
         # items移动事件处理.
         row_index, col_index, item_x, item_y = self.__get_items_mouse_data(event)
-        if not (None in [row_index]):
+        if not (None in [row_index]) and row_index < len(self.items):
             self.__motion_items = self.items[row_index]
             # 发送信号.
             if self.__motion_items_hd:
                 self.__motion_items_hd(self, self.__motion_items, row_index, col_index, item_x, item_y)
         else:
             self.__motion_items = None
-
+        #
         self.on_queue_draw_area()
 
     def __listview_button_press_event(self, widget, event):
+        if is_left_button(event):
+            if self.view == View.DETAILS:
+                move_index, move_check =  self.__get_columns_mouse_data(event, move_check=True)
+                if move_check and move_index != None:
+                    self.__move_column_check  = move_check
+                    self.__save_move_column_index  = move_index
+                    self.__save_move_column_x = int(event.x)
+            # 移动items.
+            move_index, move_check = self.__get_items_mouse_data(event, move_check=True)
+            # 按下items.
+            press_index, press_check = move_index, move_check
+            if press_check and press_index != None:
+                self.__save_press_items_index = press_index
+                self.__save_press_items_check = press_check
+            
+            if move_index != None and move_check:
+                for item in self.__single_items:
+                    if item == self.items[move_index]:
+                        self.__move_items_check      = move_check
+                        self.__save_move_items_index = move_index
+                        self.__save_move_items_x     = int(event.x)
+                        break
+                else:
+                    self.__move_items_check = False
+            
         # 判断双击的区域.
         if is_double_click(event):
             row_index, col_index, item_x, item_y = self.__get_items_mouse_data(event)
@@ -291,12 +372,12 @@ class ListView(ListViewBase):
                 self.on_queue_draw_area()
         else:
             row_index, col_index, item_x, item_y = self.__get_items_mouse_data(event)
-            print "press_event:", row_index
+            #print "press_event:", row_index
             self.__save_press_move_item_num = row_index # 保存按下的items row.
-
 
     def __listview_button_release_event(self, widget, event):
         #print "__listview_button_release_event..."
+        self.__move_column_check = False # 取消移动标题头.
         # 获取标题头触发的release事件返回的x索引.
         if is_left_button(event):
             # 列标头.
@@ -307,22 +388,30 @@ class ListView(ListViewBase):
                     self.__single_columns_hd(self, self.__single_columns, col_index, column_x, column_y)
             # 获取items触发的release事件返回的x,y索引.
             row_index, col_index, item_x, item_y = self.__get_items_mouse_data(event)
+            #insert_index = self.__move_column_insert_index
+            insert_index = row_index
             if not (None in [row_index]):
                 # 发送信号.
-                print self.__ctrl_check
-                if not self.__ctrl_check:
-                    self.__single_items = []
-                # 判断是否重新选择了,如果是就消除掉.
-                if self.items[row_index] in self.__single_items:
-                   self.__single_items.remove(self.items[row_index]) 
-                else:
-                    self.__single_items.append(self.items[row_index])
-                self.__single_items_hd(self, self.__single_items, row_index, col_index, item_x, item_y)
+                if self.__save_press_items_index == row_index:
+                    if not self.__ctrl_check:
+                        self.__single_items = []
+                    # 判断是否重新选择了,如果是就消除掉.
+                    if self.items[row_index] in self.__single_items:
+                       self.__single_items.remove(self.items[row_index]) 
+                    else:
+                        self.__single_items.append(self.items[row_index])
+                    self.__single_items_hd(self, self.__single_items, row_index, col_index, item_x, item_y)
+            else:
+                insert_index = len(self.items)
+            
+            if self.__move_items_check and self.__save_press_items_index != row_index:
+                for insert_item in self.__single_items:
+                    self.items.remove(insert_item)
+                    self.items.add_insert(insert_index, insert_item)
 
     def __listview_enter_notify_event(self, widget, event):
         #print "__listview_enter_enter...notify_event..."
         pass
-
 
     def __listview_leave_notify_event(self, widget, event):
         #print "__listview_leave_notify_event...."
@@ -377,8 +466,9 @@ class ListView(ListViewBase):
         # dtk.ui.listview ===>>>
         start_y = offset_y - self.__columns_padding_height
         end_y   = offset_y + viewport.allocation.height - self.__columns_padding_height
-        start_index  = max(start_y / self.__items_padding_height, 0)
-        end_index    = (start_index + (scroll_rect_h + self.__columns_padding_height)/ self.__items_padding_height) + 1
+        #start_index  = max(start_y / self.__items_padding_height, 0)
+        start_index  = max(int(scroll_win.get_vadjustment().get_value() / self.__items_padding_height), 0)
+        end_index    = (start_index + (scroll_rect_h - self.__columns_padding_height)/ self.__items_padding_height) + 1
         # 
         # 剪切出绘制items的区域,防止绘制到标题头上.
         cr.save()
@@ -400,6 +490,7 @@ class ListView(ListViewBase):
             e.column = column 
             e.column_index = index
             e.motion_columns = self.__motion_columns
+            e.single_columns = self.__single_columns
             e.text = column.text
             e.x = rect.x + temp_column_w
             e.y = offset_y + rect.y
@@ -440,28 +531,26 @@ class ListView(ListViewBase):
             # 保存绘制行的y坐标.
             temp_item_h += self.__items_padding_height
 
+
+    def __get_start_end_index(self):
+        rect = self.allocation
+        offset_x, offset_y, viewport = get_offset_coordinate(self)
+        #
+        # 获取滚动窗口.
+        scroll_win = get_match_parent(self, "ScrolledWindow")
+        scroll_rect_h = rect.height
+        if scroll_win: # 如果没有滚动窗口,直接获取listview的高度.
+            scroll_rect_h = scroll_win.allocation.height
+        start_y = offset_y - self.__columns_padding_height
+        end_y   = offset_y + viewport.allocation.height - self.__columns_padding_height
+        start_index  = max(int(scroll_win.get_vadjustment().get_value() / self.__items_padding_height), 0)
+        end_index    = (start_index + (scroll_rect_h - self.__columns_padding_height)/ self.__items_padding_height) + 1
+        return start_index, end_index
+
     ################################################
     ## @ on_draw_column_heade : 连接头的重绘函数.
     def __on_draw_column_heade_hd(self, e):
-        if e.motion_columns == e.column:
-            e.cr.set_source_rgba(*alpha_color_hex_to_cairo(("#0000FF", 0.1)))
-            e.text_color = "#0000FF"
-        else:
-            e.cr.set_source_rgba(*alpha_color_hex_to_cairo(("#FF00FF", 0.1)))
-            e.text_color = "#FF00FF"
-        e.cr.rectangle(e.x, e.y, e.w, e.h)
-        e.cr.stroke()
-        if self.columns[len(self.columns)-1] == e.column:
-            e.cr.set_source_rgba(*alpha_color_hex_to_cairo(("#FF00FF", 0.1)))
-            e.cr.rectangle(e.x + e.w, e.y, self.allocation.width - e.x, e.h)
-            e.cr.stroke()
-        # 画标题栏文本.
-        draw_text(e.cr, 
-                  e.text,
-                  e.x, e.y, e.w, e.h,
-                  text_color=e.text_color,
-                  alignment=Text.CENTER)
-        #
+        pass
 
     @property
     def on_draw_column_heade(self):
@@ -535,7 +624,7 @@ class ListView(ListViewBase):
         if (rect.height != listview_height) or (rect.width != listview_width):
             self.set_size_request(listview_width, listview_height)
 
-    def __get_items_mouse_data(self, event):
+    def __get_items_mouse_data(self, event, move_check=False):
         offset_x, offset_y, viewport = get_offset_coordinate(self)
         save_x, save_y = 0, 0
         if self.__in_items_check(offset_y, event):
@@ -546,28 +635,38 @@ class ListView(ListViewBase):
             x_padding = 0
             col_index = 0
             # 获取行item,列的sub_items.
-            for column in self.columns:
-                if x_padding <= int(event.x) <= x_padding + column.width:
-                    save_x = int(event.x - x_padding)
-                    save_y = int(event_y_padding - row_index * self.__items_padding_height)
-                    break
-                x_padding += column.width
-                col_index += 1
+            if not move_check:
+                for column in self.columns:
+                    if x_padding <= int(event.x) <= x_padding + column.width:
+                        save_x = int(event.x - x_padding)
+                        save_y = int(event_y_padding - row_index * self.__items_padding_height)
+                        break
+                    x_padding += column.width
+                    col_index += 1
             # 判断是否在可显示的列内.
             if ((row_index < len(self.items)) and 
                 (col_index < len(self.items[row_index].sub_items))):
-                return row_index, col_index, save_x, save_y
+                if move_check: # 判断是否移动items.
+                    return row_index, True
+                else:
+                    return row_index, col_index, save_x, save_y
             else:
-                return row_index, None, save_x, save_y
+                if move_check: # 判断是否移动items.
+                    return row_index, True
+                else:
+                    return row_index, None, save_x, save_y
         else: # 鼠标点击不在区域内.
-            return None, None, None, None
+            if move_check: # 判断是否移动items.
+                return None, False
+            else:
+                return None, None, None, None
 
     def __in_items_check(self, offset_y, event):
         start_y = (offset_y) + self.__columns_padding_height
         end_y   = start_y + ((len(self.items)) * self.__items_padding_height)
         return (start_y < event.y < end_y)
 
-    def __get_columns_mouse_data(self, event):
+    def __get_columns_mouse_data(self, event, move_check=False):
         offset_x, offset_y, viewport = get_offset_coordinate(self)
         save_x, save_y = 0, 0
         if self.__in_columns_check(offset_y, event):
@@ -575,14 +674,23 @@ class ListView(ListViewBase):
             x_padding = 0
             col_index = 0
             for column in self.columns:
-                if x_padding <= int(event.x) <= x_padding + column.width:
-                    save_x = int(event.x - x_padding)
-                    save_y = int(event.y)
-                    return col_index, save_x, save_y
-                x_padding += column.width
+                if move_check:
+                    padding_width = x_padding + column.width
+                    # 判断是否在移动区域内.
+                    if (padding_width - self.__press_columns_area_width) <= int(event.x) <= padding_width:
+                        return col_index, True
+                else:
+                    if x_padding <= int(event.x) <= x_padding + column.width:
+                        save_x = int(event.x - x_padding)
+                        save_y = int(event.y)
+                        return col_index, save_x, save_y
                 col_index += 1
+                x_padding += column.width
         # 返回空数据.
-        return None, None, None
+        if move_check:
+            return None, False
+        else:
+            return None, None, None
 
     def __in_columns_check(self, offset_y, event):
         start_y = offset_y
@@ -669,6 +777,7 @@ class ColumnHeaderEventArgs(object):
         self.column = None
         self.column_index = 0
         self.motion_columns = None
+        self.single_columns = None
         self.text = ""
         self.text_color = "#000000"
         self.text_align = Text.LEFT
@@ -687,7 +796,7 @@ if __name__ == "__main__":
         #listview1.items[0].sub_items.add("fdjkf")
         #listview1.items[0].sub_items[0].text = "我爱你,精灵..."
         listview1.begin_update()
-        for i in range(0, 2000):
+        for i in range(0, 10000):
             #listview1.items.add_insert(0, [[str(i), "男", "程序员", "美国" + str(i)]])
             listview1.items.add([str(i), 
                                 "男", 
@@ -700,30 +809,50 @@ if __name__ == "__main__":
         #listview1.columns[10].width += 5
         
     def listview1_test_on_draw_column_heade(e):
-        print "listview1_test_on_draw_column_heade.... 重绘标题头"
+        if e.single_columns == e.column:
+            e.cr.set_source_rgba(*alpha_color_hex_to_cairo(("#ebebeb", 0.1)))
+            e.text_color = "#000000"
+        elif e.motion_columns == e.column:
+            e.cr.set_source_rgba(*alpha_color_hex_to_cairo(("#0000FF", 0.1)))
+            e.text_color = "#0000FF"
+        else:
+            e.cr.set_source_rgba(*alpha_color_hex_to_cairo(("#FF00FF", 0.1)))
+            e.text_color = "#FF00FF"
+        e.cr.rectangle(e.x, e.y, e.w, e.h)
+        e.cr.stroke()
+        if listview1.columns[len(listview1.columns)-1] == e.column:
+            e.cr.set_source_rgba(*alpha_color_hex_to_cairo(("#FF00FF", 0.1)))
+            e.cr.rectangle(e.x + e.w, e.y, listview1.allocation.width - e.x, e.h)
+            e.cr.stroke()
+        # 画标题栏文本.
+        draw_text(e.cr, 
+                  e.text,
+                  e.x, e.y, e.w, e.h,
+                  text_color=e.text_color,
+                  alignment=Text.CENTER)
+        #
 
     def listview1_test_on_draw_sub_item(e):
+
         if e.double_items == e.item:
             e.text_color = "#0000FF"
             text_size=10
         elif e.item in e.single_items:
             e.text_color = "#00FF00"
             text_size=10
+        elif e.motion_items == e.item:
+            e.text_color  = "#FF0000"
+            text_size=12
         else:
             e.text_color = "#000000"
             text_size=10
 
-        if e.motion_items == e.item:
-            e.text_color  = "#FF0000"
-            text_size=12
-
-        if True:
-            e.draw_text(e.cr, 
-                      str(e.text), 
-                      e.x, e.y, e.w, e.h,
-                      text_color=e.text_color, 
-                      text_size=text_size,
-                      alignment=Text.CENTER)
+        e.draw_text(e.cr, 
+                  str(e.text), 
+                  e.x, e.y, e.w, e.h,
+                  text_color=e.text_color, 
+                  text_size=text_size,
+                  alignment=Text.CENTER)
 
     def listview1_test_on_draw_item(e):
         e.cr.set_source_rgba(0, 0, 0, 0.5)
@@ -731,7 +860,8 @@ if __name__ == "__main__":
         e.cr.fill()
 
     def test_listview_double_items(listview, double_items, row, col, item_x, item_y):
-        print double_items.sub_items[0], row, col, item_x, item_y
+        #print double_items.sub_items[0], row, col, item_x, item_y
+        pass
         # 测试双击改变第一个文本.
         #listview.items[row].sub_items[0].text = "明天"
         # 测试删除双击下的items.
@@ -754,11 +884,12 @@ if __name__ == "__main__":
     def test_listview_single_items(listview, single_items, row, col, item_x, item_y):
         if col == None:
             col = 0
-        single_items[0].sub_items[col].text = item_x
+        #single_items[0].sub_items[col].text = item_x
         print single_items[0].sub_items[col].text, item_x, item_y
 
     def test_listview_single_columns(listview, single_columns, col, item_x, item_y):
         print single_columns.text, item_x, item_y
+        pass
     
 
     win = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -775,7 +906,7 @@ if __name__ == "__main__":
     #listview1.items_height = 130
     #listview1.columns_height = 150
     # 连接主要绘制函数.
-    #listview1.on_draw_column_heade =  listview1_test_on_draw_column_heade
+    listview1.on_draw_column_heade =  listview1_test_on_draw_column_heade
     listview1.on_draw_sub_item     =  listview1_test_on_draw_sub_item
     listview1.on_draw_item = listview1_test_on_draw_item
     listview1.columns.add("姓名")
