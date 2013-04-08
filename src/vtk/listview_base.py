@@ -93,8 +93,8 @@ class ListViewBase(gtk.Button):
             rect = self.allocation
             if scroll_win:
                 rect = scroll_win.allocation
-                x      = rect.x + offset_x
-                y      = rect.y + offset_y
+                x      = 0  + offset_x #rect.x + offset_x
+                y      = 0  + offset_y #rect.y + offset_y
                 w      = rect.width
                 h      = rect.height
             else:

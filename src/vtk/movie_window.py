@@ -145,17 +145,15 @@ class MovieWindow(gtk.Bin):
             self.__bottom_child.set_parent_window(self.__bottom_toolbar_window)
 
     def do_motion_notify_event(self, e):
-        position = self.get_parent_window().get_position()
-        temp_x = int(e.x_root) - position[0]
-        temp_y = int(e.y_root)
         bo_size = self.__bottom_toolbar_window.get_size()
-        if position[1] <= temp_y <= position[1] + self.__top_toolbar_h:
-            self.show_top_toolbar()
-        elif (position[1] + self.allocation.height - bo_size[1] <= temp_y <= position[1] + self.allocation.height):
+        self.allocation
+        print "event.x:", e.y
+        y = int(e.y)
+        if self.allocation.y < y < self.allocation.y + self.__top_toolbar_h:
+            if e.window != self.__bottom_toolbar_window:
+                self.show_top_toolbar()
+        elif self.allocation.y + self.allocation.height - bo_size[1] < y < self.allocation.y + self.allocation.height:
             self.show_bottom_toolbar()
-        else:
-            self.hide_top_toolbar()
-            self.hide_bottom_toolbar()
         return False
 
     def do_button_press_event(self, e):
@@ -244,6 +242,8 @@ class MovieWindow(gtk.Bin):
   
     def do_size_allocate(self, allocation):
         self.allocation = allocation
+        self.allocation.x = 0
+        self.allocation.y = 0
         # set child widget.
         if self.child:
             allocation = gdk.Rectangle()
@@ -254,8 +254,7 @@ class MovieWindow(gtk.Bin):
             self.child.size_allocate(allocation)
 
         if self.flags() & gtk.REALIZED:
-            self.__bin_window.resize(self.allocation.width,
-                                     self.allocation.height)
+            self.__bin_window.move_resize(*self.allocation)
                                      
             # 布局窗口.
             self.__viewport_window.move_resize(*self.allocation)

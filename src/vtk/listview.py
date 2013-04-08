@@ -147,7 +147,6 @@ class ListView(ListViewBase):
                     vadjustment.set_value(value)
                 self.on_queue_draw_area()
             
-
     def __listview_page_down_event(self): # 向上翻页.
         #print "__listview_page_down_event.."
         if self.__single_items == []: # 如果为空,则跳转到结尾.
@@ -384,7 +383,8 @@ class ListView(ListViewBase):
                 col_index, column_x, column_y =  self.__get_columns_mouse_data(event)
                 if col_index != None: 
                     self.__single_columns = self.columns[col_index]
-                    self.__single_columns_hd(self, self.__single_columns, col_index, column_x, column_y)
+                    if self.__single_columns_hd:
+                        self.__single_columns_hd(self, self.__single_columns, col_index, column_x, column_y)
             # 获取items触发的release事件返回的x,y索引.
             row_index, col_index, item_x, item_y = self.__get_items_mouse_data(event)
             #insert_index = self.__move_column_insert_index
@@ -399,7 +399,8 @@ class ListView(ListViewBase):
                        self.__single_items.remove(self.items[row_index]) 
                     else:
                         self.__single_items.append(self.items[row_index])
-                    self.__single_items_hd(self, self.__single_items, row_index, col_index, item_x, item_y)
+                    if self.__single_items_hd:
+                        self.__single_items_hd(self, self.__single_items, row_index, col_index, item_x, item_y)
             else:
                 insert_index = len(self.items)
             
@@ -549,7 +550,28 @@ class ListView(ListViewBase):
     ################################################
     ## @ on_draw_column_heade : 连接头的重绘函数.
     def __on_draw_column_heade_hd(self, e):
-        pass
+        if e.single_columns == e.column:
+            e.cr.set_source_rgba(*alpha_color_hex_to_cairo(("#ebebeb", 0.1)))
+            e.text_color = "#000000"
+        elif e.motion_columns == e.column:
+            e.cr.set_source_rgba(*alpha_color_hex_to_cairo(("#0000FF", 0.1)))
+            e.text_color = "#0000FF"
+        else:
+            e.cr.set_source_rgba(*alpha_color_hex_to_cairo(("#FF00FF", 0.1)))
+            e.text_color = "#FF00FF"
+        e.cr.rectangle(e.x, e.y, e.w, e.h)
+        e.cr.stroke()
+        if self.columns[len(self.columns)-1] == e.column:
+            e.cr.set_source_rgba(*alpha_color_hex_to_cairo(("#FF00FF", 0.1)))
+            e.cr.rectangle(e.x + e.w, e.y, self.allocation.width - e.x, e.h)
+            e.cr.stroke()
+        # 画标题栏文本.
+        draw_text(e.cr, 
+                  e.text,
+                  e.x, e.y, e.w, e.h,
+                  text_color=e.text_color,
+                  alignment=Text.CENTER)
+        #
 
     @property
     def on_draw_column_heade(self):
@@ -594,7 +616,25 @@ class ListView(ListViewBase):
     ################################################
     ## @ on_draw_sub_item : 连.
     def __on_draw_sub_item_hd(self, e):
-        pass
+        if e.double_items == e.item:
+            e.text_color = "#0000FF"
+            text_size=10
+        elif e.item in e.single_items:
+            e.text_color = "#00FF00"
+            text_size=10
+        elif e.motion_items == e.item:
+            e.text_color  = "#FF0000"
+            text_size=12
+        else:
+            e.text_color = "#000000"
+            text_size=10
+
+        e.draw_text(e.cr, 
+                  str(e.text), 
+                  e.x, e.y, e.w, e.h,
+                  text_color=e.text_color, 
+                  text_size=text_size,
+                  alignment=Text.CENTER)
         
     @property
     def on_draw_sub_item(self, e):
