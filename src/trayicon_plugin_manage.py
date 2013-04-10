@@ -110,7 +110,7 @@ class PluginManage(object):
                             self.key_dict[class_run.id()] = class_run
                             '''
                         except Exception, e:
-                            print_msg("tray plugin error:%s"%(e))
+                            print "trayicon_plugin_manager ERROR:". e
 
 
 
