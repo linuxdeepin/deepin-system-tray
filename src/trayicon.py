@@ -22,9 +22,8 @@
 
 
 import gtk
-import pangocairo
 import cairo
-from Xlib import display, error, Xatom, X
+from Xlib import display, Xatom, X
 import Xlib.protocol.event
 from trayicon_plugin_manage import PluginManage
 from vtk.statusicon import Element
@@ -105,7 +104,7 @@ class TrayIcon(TrayIconWin):
         self.tray_window.show_all()
 
         screen  = self.tray_window.get_screen()
-        display = screen.get_display()
+        #display = screen.get_display()
         root_win = screen.get_root_window()
         root_win.add_filter(self.__tray_icon_manager_filter)
         #
@@ -178,7 +177,7 @@ class TrayIcon(TrayIconWin):
             tray_icon_rect = metry[1]        
             # get screen height and width. 
             screen_h = self.menu_screen.get_height()
-            screen_w = self.menu_screen.get_width()       
+            #screen_w = self.menu_screen.get_width()       
             # get x.
             x = tray_icon_rect[0] + tray_icon_rect[2]/2 - self.get_size_request()[0]/2
             x -= self.set_max_show_menu(x)

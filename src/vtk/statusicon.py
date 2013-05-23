@@ -22,8 +22,8 @@
 
 from trayicon import TrayIcon
 from window import ToolTip
-from utils import propagate_expose, new_surface, get_text_size
-from utils import pixbuf_check, text_check, get_run_app_path
+from utils import propagate_expose, get_text_size
+from utils import pixbuf_check, text_check
 from draw import draw_pixbuf, draw_tray_text
 from theme import vtk_theme
 from timer import Timer
@@ -33,7 +33,6 @@ import atk
 import cairo
 import gobject
 import sys 
-import os
 
 
 class StatusIcon(TrayIcon):
@@ -287,7 +286,7 @@ class Element(gtk.Button):
         pixbuf_w = 0
         if pixbuf != None:
             pixbuf_w = pixbuf.get_width() 
-            pixbuf_h = pixbuf.get_height()
+            #pixbuf_h = pixbuf.get_height()
             pixbuf_x_padding = x + 5
             if text == "":
                 pixbuf_x_padding = x + w/2 - pixbuf_w/2 
@@ -360,13 +359,13 @@ class Element(gtk.Button):
     def __widget_enter_notify_event(self, widget, event):
         if self.tool_tip.draw_btn.get_label() != "":
             metry =  self.get_geometry()
-            screen = metry[0]
+            #screen = metry[0]
             rect   = metry[1]
-            screen_w = screen.get_width() 
-            screen_h = screen.get_height()
+            #screen_w = screen.get_width() 
+            #screen_h = screen.get_height()
             x_padding = rect[0] + rect[2]/2 - self.tool_tip.get_size_request()[0]/2 
             x_padding -= self.__set_max_show_menu(x_padding)
-            y_padding_to_creen = self.tool_tip.get_size_request()[1]
+            #y_padding_to_creen = self.tool_tip.get_size_request()[1]
             x = x_padding
             y = rect[1] - self.tool_tip.get_size_request()[1]
             self.tool_tip.show_all()

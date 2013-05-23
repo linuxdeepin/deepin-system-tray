@@ -65,7 +65,7 @@ class TrayTime(gobject.GObject):
         self.set_hour_type(not self.set_date.get_boolean("is-24hour"))
 
     def get_time(self):
-        time_struct = time.localtime(time.time())
+        #time_struct = time.localtime(time.time())
         #
         if self.__tray_time_hour_type == TRAY_TIME_12_HOUR: 
             time_show_text = time.strftime("%P %I %M", time.localtime()).split(" ")

@@ -22,7 +22,7 @@
 
 import sys
 import os
-from vtk.utils import init_config, get_config_file, get_config_path
+from vtk.utils import init_config, get_config_file
 from vtk.ini import Config
 
 class ModulesInfo(object):
