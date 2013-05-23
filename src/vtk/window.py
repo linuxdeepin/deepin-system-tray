@@ -22,7 +22,6 @@
 
 import cairo
 import gtk
-import math
 from constant import print_msg
 from draw  import draw_text
 from color import alpha_color_hex_to_cairo, color_hex_to_cairo
@@ -432,7 +431,7 @@ class ToolTip(Window):
         Window.__init__(self, gtk.WINDOW_POPUP)
         self.base_color = "#000000"
         self.sahow_check = False # 设置外发光.
-        self.text_size = 11
+        self.text_size = 10
         self.radius = 3 # 设置圆角.
         self.set_opacity(0.7) # 设置透明值.
         self.draw_btn = gtk.Button("")
