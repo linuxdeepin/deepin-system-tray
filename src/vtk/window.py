@@ -444,12 +444,13 @@ class ToolTip(Window):
         rect = self.draw_btn.allocation
         self.draw_btn.queue_draw_area(rect.x, rect.y, rect.width, rect.height)
         size = get_text_size(text, text_size=self.text_size)
-        width_padding = 10
-        height_padding = 15
+        width_padding = 12
+        height_padding = 10
         self.resize(1, 1)
         text_size = get_text_size("我们", text_size=self.text_size)
-        self.set_size_request(size[0] + width_padding + 17, 
-                              text_size[1] + height_padding + 10)
+        #
+        self.set_size_request(size[0] + width_padding + self.ali_left + self.ali_right, 
+                              text_size[1] + height_padding + self.ali_top + self.ali_bottom)
 
     def __draw_btn_expose_event(self, widget, event):
         cr = widget.window.cairo_create()
@@ -470,16 +471,6 @@ class ToolTip(Window):
         draw_text(cr, text, 
                   rect.x + x_padding,
                   rect.y + rect.height/2 - size[1]/2, text_color=text_color, text_size=self.text_size)
-        width_padding = 10
-        height_padding = 15
-        #widget.set_size_request(size[0] + width_padding, size[1] + height_padding) 
-        win_width = size[0] + width_padding + 17
-        win_height = size[1] + height_padding + 10
-        '''
-        self.resize(1, 1)
-        self.set_size_request(win_width, 
-                              win_height)
-        '''
         return True
 
 
