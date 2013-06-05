@@ -66,18 +66,14 @@ class TrayIcon(TrayIconWin):
         self.plugin_manage = PluginManage()
         self.tray_window   = None
         self.dock_selection = None
-        self.atom_names = [
-                None, 
-                "MANAGER", 
-                "_NET_SYSTEM_TRAY_OPCODE",
-                "_NET_SYSTEM_TRAY_OPIENTATION",
-                "_NET_SYSTEM_TRAY_VISUAL"
-                ]
-        #
+
         self.display = display.Display() 
-        #print "display:", self.display
+
         self.screen   = self.display.screen()
-        # 
+        self.opcode_atom = self.display.intern_atom("_NET_SYSTEM_TRAY_OPCODE")
+        self.visual_atom = self.display.intern_atom("_NET_SYSTEM_TRAY_VISUAL")
+        self.dock_atom = self.display.intern_atom("_NET_SYSTEM_TRAY_S%d" % (self.display.get_default_screen()))
+
         self.__init_tray_window()
 
     def __init_tray_window(self):
@@ -227,13 +223,7 @@ class TrayIcon(TrayIconWin):
 
     def init_tray(self):
         #print "init_tray..."
-        self.atom_names[0] = "_NET_SYSTEM_TRAY_S%d" % (self.display.get_default_screen())
         #
-        for atom_name in self.atom_names:
-            #print "atom_name:", atom_name
-            self.display.intern_atom(atom_name)
-        self.opcode_atom = self.display.intern_atom(self.atom_names[2])
-        self.visual_atom = self.display.intern_atom(self.atom_names[4])
         # 
         return True
 
@@ -244,7 +234,6 @@ class TrayIcon(TrayIconWin):
             if self.__find_tray_dock_num == 0:
                 self.__find_tray_dock_check = False
             #print "tray_find_dock..."
-            self.dock_atom = self.display.intern_atom(self.atom_names[0])
             self.dock_selection  = self.display.get_selection_owner(self.dock_atom)
 
             if self.dock_selection:
