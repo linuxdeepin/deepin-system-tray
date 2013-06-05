@@ -38,12 +38,12 @@ APP_DBUS_NAME = "com.deepin.trayicon"
 APP_OBJECT_NAME = "/com/deepin/trayicon"
 
 TRAY_HEIGHT = 16
-plugin_ids = ["date_time", 
-              "shutdown", 
-              "sound", 
-              "network", 
-              "mount_media", 
-              "power", 
+plugin_ids = ["date_time",
+              "shutdown",
+              "sound",
+              "network",
+              "mount_media",
+              "power",
               "bluetooth"
               ]
 
@@ -55,61 +55,52 @@ class TrayIcon(TrayIconWin):
         app_bus_name = dbus.service.BusName(APP_DBUS_NAME, bus=dbus.SessionBus())
         UniqueService(app_bus_name, APP_DBUS_NAME, APP_OBJECT_NAME)
         self.__save_trayicon = None
-        self.__find_tray_dock_check = True
-        self.__find_tray_dock_num   = 3
+        self.__found_dock = False
         self.metry = None
         self.__save_width = 0
         self.tray_icon_to_screen_width=10
         root = self.get_root_window()
         self.menu_screen = root.get_screen()
-        #
+
         self.plugin_manage = PluginManage()
-        self.tray_window   = None
-        self.dock_selection = None
 
-        self.display = display.Display() 
-
+        self.display = display.Display()
         self.screen   = self.display.screen()
+
         self.opcode_atom = self.display.intern_atom("_NET_SYSTEM_TRAY_OPCODE")
         self.visual_atom = self.display.intern_atom("_NET_SYSTEM_TRAY_VISUAL")
         self.dock_atom = self.display.intern_atom("_NET_SYSTEM_TRAY_S%d" % (self.display.get_default_screen()))
+        self.tray_window = None
 
-        self.__init_tray_window()
-
-    def __init_tray_window(self):
-        self.__main_hbox = gtk.HBox()
-        # 加载插件.
-        for id in plugin_ids:
-            print "id:", id
-            if self.plugin_manage.key_dict.has_key(id):
-                p_class = self.plugin_manage.key_dict[id]
-                gtk.timeout_add(20, self.__load_plugin_timeout, p_class)
-                #self.__load_plugin_timeout(p_class)
-        #
-        self.tray_window   = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.tray_window.add_events(gtk.gdk.ALL_EVENTS_MASK)
-        self.tray_window.add(self.__main_hbox)
-        self.tray_window.connect("expose-event", self.__window_expose_event)
-        self.tray_window.set_decorated(False)
-        self.tray_window.set_app_paintable(True)
-        self.tray_window.set_wmclass("deepintrayicon", "DeepinTrayIcon")
-        self.tray_window.connect("unmap", self.__tray_window_unmap_event)
-        self.tray_window.set_colormap(gtk.gdk.Screen().get_rgba_colormap())
-        self.tray_window.set_skip_pager_hint(True)
-        self.tray_window.set_skip_taskbar_hint(True)
-        self.tray_window.show_all()
-
-        screen  = self.tray_window.get_screen()
-        #display = screen.get_display()
-        root_win = screen.get_root_window()
-        root_win.add_filter(self.__tray_icon_manager_filter)
-        #
-        self.init_tray()
         self.__tray_find_dock()
+        gtk.timeout_add(2000, self.__tray_find_dock)
 
-    def __tray_window_unmap_event(self, widget):
-        self.__find_tray_dock_check = True
-        self.__find_tray_dock_num   = 3
+    def __build_tray_window(self):
+        self.__main_hbox = gtk.HBox()
+
+        for i in xrange(len(plugin_ids)):
+            p = plugin_ids[i]
+            if  self.plugin_manage.key_dict.has_key(p):
+                p_class = self.plugin_manage.key_dict[p]
+                print p_class
+                gtk.timeout_add(100 * i, self.__load_plugin_timeout, p_class)
+
+        tray_window   = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        tray_window.add(self.__main_hbox)
+        tray_window.connect("expose-event", self.__window_expose_event)
+        tray_window.set_decorated(False)
+        tray_window.set_wmclass("deepintrayicon", "DeepinTrayIcon")
+        tray_window.connect("destroy", self.lost_dock)
+        tray_window.set_colormap(gtk.gdk.Screen().get_rgba_colormap())
+        tray_window.set_skip_pager_hint(True)
+        tray_window.set_skip_taskbar_hint(True)
+        tray_window.show_all()
+        return tray_window
+
+    def lost_dock(self, w):
+        w.destroy()
+        self.__found_dock = False
+        self.__tray_find_dock()
 
     def __load_plugin_timeout(self, p_class):
         _class = p_class()
@@ -120,9 +111,10 @@ class TrayIcon(TrayIconWin):
         widget.connect('popup-menu-event', self.__tray_icon_popup_menu, _class)
         widget.connect("hide",             self.widget_hide_modify_statusicon_size)
         widget.connect("size-allocate",    self.widget_realize_event)
-        #
+
         self.__main_hbox.pack_end(widget)
         self.__main_hbox.show_all()
+        return False
 
     def __tray_icon_popup_menu(self, 
                              statusicon, 
@@ -200,12 +192,6 @@ class TrayIcon(TrayIconWin):
         else:
             return 0
 
-    def __tray_icon_manager_filter(self, event):
-        #print "__tray_icon_manager_filter:", event
-        if self.tray_window == None:
-            self.__init_tray_window()
-        return self.__tray_find_dock()
-
     def __window_expose_event(self, widget, event):
         cr = widget.window.cairo_create()
         rect = widget.allocation
@@ -221,47 +207,28 @@ class TrayIcon(TrayIconWin):
         propagate_expose(widget, event) 
         return True
 
-    def init_tray(self):
-        #print "init_tray..."
-        #
-        # 
-        return True
+    def __tray_find_dock(self, w=None):
+        if not self.__found_dock:
+            print "tray_find_dock..."
 
-    def __tray_find_dock(self):
-        print "find check:", self.__find_tray_dock_check
-        if self.__find_tray_dock_check:
-            self.__find_tray_dock_num -= 1
-            if self.__find_tray_dock_num == 0:
-                self.__find_tray_dock_check = False
-            #print "tray_find_dock..."
-            self.dock_selection  = self.display.get_selection_owner(self.dock_atom)
-
-            if self.dock_selection:
-                #print "dock_selection:", self.dock_selection.id
-                pass
-
-            if self.dock_selection: # 给 dock selection 发送消息.
-                self.tray_win = self.display.create_resource_object("window", self.dock_selection.id)
+            dock_selection  = self.display.get_selection_owner(self.dock_atom)
+            if dock_selection:
+                self.tray_win = self.display.create_resource_object("window", dock_selection.id)
                 self.tray_win.get_full_property(self.visual_atom, Xatom.VISUALID)
-                if self.tray_window:
-                    if self.tray_window.window:
-                        self.tray_widget_wind = self.display.create_resource_object("window", self.tray_window.window.xid)
-                    else:
-                        self.__init_tray_window()
-                        #self.__tray_find_dock()
+
+                if not self.tray_window or not self.tray_window.get_realized():
+                    self.tray_window = self.__build_tray_window()
                 self.__tray_send_opcode(
                         self.tray_win,
                         self.opcode_atom,
-                        [X.CurrentTime, 0L, self.tray_widget_wind.id, 0L, 0L],
+                        [X.CurrentTime, 0L, self.tray_window.window.xid, 0L, 0L],
                         X.NoEventMask
                         )
                 self.display.flush()
-                self.tray_window.show_all()
-                return False;
-            else: # 如果 dock selection 不存在.
-                self.__release_tray_window()
-
-        return True;
+                self.__found_dock = True
+            else:
+                self.__found_dock = False
+        return True
 
     def __tray_send_opcode(self,
                          dock_win,
@@ -277,16 +244,7 @@ class TrayIcon(TrayIconWin):
                     type        = X.ClientMessage
                     )
         dock_win.send_event(new_event, event_mask=mask)
-        
 
-    def __release_tray_window(self):
-        if None == self.tray_window:
-            return ;
-        else:
-            self.tray_window.hide_all()
-            return True
-        self.tray_window.destroy()
-        self.tray_window = None
 
     def widget_realize_event(self, widget, allocation):
         self.statusicon_modify_size()
@@ -320,8 +278,3 @@ class TrayIcon(TrayIconWin):
 if __name__ == "__main__":
     tray_icon = TrayIcon()
     gtk.main()
-
-
-
-
-
