@@ -56,6 +56,10 @@ class SelectButton(gtk.Button):
                              rect.width - 2,
                              rect.height - 2)
                 cr.stroke()              
+        if widget.state == gtk.STATE_INSENSITIVE:
+            text_color = "#a6a6a6"
+        else:
+            text_color = self.text_color
         # get font width/height.
         font_w, font_h = get_text_size(self.text, text_size=self.font_size)
         # draw text.
@@ -65,7 +69,7 @@ class SelectButton(gtk.Button):
                   x_padding,
                   rect.y + rect.height/2 - font_h/2,
                   text_size=self.font_size, 
-                  text_color=self.text_color)        
+                  text_color=text_color)
         # set size.
         if font_h > rect.height:
             widget.set_size_request(rect.width, font_h)
