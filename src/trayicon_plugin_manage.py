@@ -54,7 +54,10 @@ class PluginManage(object):
         self.key_dict = {}
         self.keywords = []
         self.config = Config(get_config_file())
-        tray_path_list = self.config.get("tray", "PATH").split(",")
+        try:
+            tray_path_list = self.config.get("tray", "PATH").split(",")
+        except:
+            tray_path_list = ["/usr/share/deepin-system-settings/modules"]
         for tray_path in tray_path_list:
             if tray_path != "":
                 if os.path.exists(tray_path) and os.path.isdir(tray_path):
