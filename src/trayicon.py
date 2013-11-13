@@ -21,8 +21,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import os
+import sys
 import gtk
+import dbus
 import cairo
+import subprocess
+
 from Xlib import display, Xatom, X
 import Xlib.protocol.event
 from trayicon_plugin_manage import PluginManage
@@ -30,9 +35,7 @@ from vtk.statusicon import Element
 from vtk.utils import propagate_expose
 from vtk.window import TrayIconWin
 from vtk.unique_service import UniqueService, is_exists
-import dbus
-import sys
-
+from deepin_utils.file import get_parent_dir
 
 APP_DBUS_NAME = "com.deepin.trayicon"
 APP_OBJECT_NAME = "/com/deepin/trayicon"
@@ -275,6 +278,18 @@ class TrayIcon(TrayIconWin):
     def get_tray_pointer(self):
         return self.tray_window.get_pointer()
 
+def check_is_in_virtual_pc():
+    '''just check vmware and virtualbox'''
+    cmd = ['lspci', '-b']
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p.wait()
+    s = p.communicate()[0]
+    s = s.lower()
+    path = os.path.join(get_parent_dir(__file__, 3), 'deepin-system-settings/modules/power/src/tray_shutdown_plugin.py')
+    if len(s.split("vmware")) > 1 or len(s.split("virtualbox")) > 1:
+        subprocess.Popen(['python', path, 'vpc'])
+
 if __name__ == "__main__":
+    check_is_in_virtual_pc()
     tray_icon = TrayIcon()
     gtk.main()
