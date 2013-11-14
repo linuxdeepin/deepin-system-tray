@@ -290,6 +290,6 @@ def check_is_in_virtual_pc():
         subprocess.Popen(['python', path, 'vpc'])
 
 if __name__ == "__main__":
-    check_is_in_virtual_pc()
     tray_icon = TrayIcon()
+    check_is_in_virtual_pc()
     gtk.main()
